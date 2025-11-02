@@ -80,14 +80,23 @@ npm run build
 
 ## Contributors
 
-- **SHEMA Arnaud** - contributor
-	- GitHub: [@arnaud-devs](https://github.com/arnaud-devs)
- 
-- **frankkatu** - Contributor
-	- GitHub: [@frankkatu](https://github.com/frankkatu)
+<p align="center">
+	<a href="https://github.com/arnaud-devs" title="SHEMA Arnaud">
+		<img src="https://github.com/arnaud-devs.png" width="96" alt="SHEMA Arnaud" />
+	</a>
+	<a href="https://github.com/frankkatu" title="frankkatu">
+		<img src="https://github.com/frankkatu.png" width="96" alt="frankkatu" />
+	</a>
+	<a href="https://github.com/MichelMUNEZERO" title="MichelMUNEZERO">
+		<img src="https://github.com/MichelMUNEZERO.png" width="96" alt="MichelMUNEZERO" />
+	</a>
+</p>
 
-- **MichelMUNEZERO** - Contributor
-	- GitHub: [@MichelMUNEZERO](https://github.com/MichelMUNEZERO)
+<p align="center">
+	<strong>SHEMA Arnaud</strong> • contributor<br />
+	<strong>frankkatu</strong> • Contributor<br />
+	<strong>MichelMUNEZERO</strong> • Contributor
+</p>
 
 ## License
 
