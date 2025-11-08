@@ -6,8 +6,6 @@ import { AppSidebar } from 'components/app-sidebar';
 const AdminLayout = () => {
   return (
     <div className=''>
-        Mobile side bar
-        <NavItems />
             <SidebarProvider>
       <AppSidebar />
       <main>
