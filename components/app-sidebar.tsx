@@ -17,7 +17,7 @@ import { NavLink } from "react-router"
 import { Link } from "react-router"
 export function AppSidebar() {
   return (
-    <Sidebar className="h-screen flex flex-col">
+    <Sidebar className="h-screen flex flex-col ">
       <SidebarHeader>
     <Link to="/">
     <div className='flex items-center gap-2 p-2'>

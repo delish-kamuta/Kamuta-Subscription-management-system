@@ -1,10 +1,13 @@
 import React from 'react'
+import { Header } from '../../../components/Header'
 
 const AllUsers = () => {
   return (
-    <div>
-      
-    </div>
+    <main className='dashboard wrapper'>
+          <Header title="Manage Clients"
+            description="Manage all clients and their activity" />
+          dashboard details
+        </main>
   )
 }
 

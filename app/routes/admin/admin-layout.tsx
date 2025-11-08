@@ -1,19 +1,21 @@
 import React from 'react'
 import { Outlet } from 'react-router';
-import { NavItems } from 'components/index';
 import { SidebarProvider, SidebarTrigger } from '~/components/ui/sidebar';
-import { AppSidebar } from 'components/app-sidebar';
+import { AppSidebar } from '../../../components/app-sidebar';
 const AdminLayout = () => {
   return (
-    <div className=''>
-            <SidebarProvider>
+    <div className='admin-layout'>
+     <aside className='max-w-[280px]'>
+       <SidebarProvider>
       <AppSidebar />
       <main>
         <SidebarTrigger />
-        {/** Main content goes here **/}
       </main>
     </SidebarProvider>
-      <Outlet />
+     </aside>
+      <aside className='children'>
+        <Outlet />
+      </aside>
     </div>
   )
 }

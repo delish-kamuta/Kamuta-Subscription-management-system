@@ -1,11 +1,14 @@
-import React from 'react'
-
-const dashboard = () => {
+import { Header } from "../../../components/Header";
+const user = {
+  name : "Shema"
+}
+const Dashboard = () => {
   return (
-    <div>
-      Welcome to the Admin Dashboard
-    </div>
+    <main className='dashboard wrapper'>
+      <Header title={`Welcome ${user?.name ? user.name : 'Guest'} 🤚`} description="Manage all subscription without any error" />
+      dashboard details
+    </main>
   )
 }
 
-export default dashboard
+export default Dashboard
