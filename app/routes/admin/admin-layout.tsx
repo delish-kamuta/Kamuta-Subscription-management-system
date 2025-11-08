@@ -1,12 +1,20 @@
 import React from 'react'
 import { Outlet } from 'react-router';
+import { NavItems } from 'components/index';
+import { SidebarProvider, SidebarTrigger } from '~/components/ui/sidebar';
+import { AppSidebar } from 'components/app-sidebar';
 const AdminLayout = () => {
   return (
     <div className=''>
         Mobile side bar
-        <aside className=' hidden lg:block max-w-[270px] '>
-            side bar
-        </aside>
+        <NavItems />
+            <SidebarProvider>
+      <AppSidebar />
+      <main>
+        <SidebarTrigger />
+        {/** Main content goes here **/}
+      </main>
+    </SidebarProvider>
       <Outlet />
     </div>
   )
