@@ -1,5 +1,5 @@
 import { useLocation } from "react-router"
-import cn from "~/lib/utils"
+import { cn } from "~/lib/utils"
 
 interface props{
     title: string,
