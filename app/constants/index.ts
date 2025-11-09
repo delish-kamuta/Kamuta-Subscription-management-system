@@ -124,3 +124,29 @@ export const RIGHT_CONFETTI = {
   angle: 135,
   origin: { x: 1, y: 1 },
 };
+export const dashboardStats = [
+  {
+    id: "paymentsToday",
+    title: "Total Payments Today",
+    value: 1280,
+    currentDay: 1260,          // positive percentage
+    lastDayCount: 1200,    // "up" or "down"
+  },
+  {
+    id: "activeSubscriptions",
+    title: "Active Subscriptions",
+    value: 430,
+    currentDay: 40,          // negative percentage
+    lastDayCount: 450,    // "up" or "down"
+  },
+  {
+    id: "mealsServed",
+    title: "Meals Served Today",
+    value: 650,
+    currentDay: 2,
+    lastDayCount: 3,
+  }
+];
+export const user = {
+  name : "Shema"
+}
