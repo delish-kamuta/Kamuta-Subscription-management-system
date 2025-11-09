@@ -1,4 +1,5 @@
 import { Header } from "../../../components/Header";
+import { SidebarTrigger } from "~/components/ui/sidebar";
 import  StatsCard  from "../../../components/StatsCard";
 import SubscriptionsTable from "../../../components/SubscriptionsTable";
 import { dashboardStats ,user } from "app/constants";
@@ -6,7 +7,11 @@ const Dashboard = () => {
 
   return (
     <main className='dashboard wrapper '>
-      <Header title={`Welcome ${user?.name ? user.name : 'Guest'} 🤚`} description="Manage all subscription without any error"/>
+      <Header
+        title={`Welcome ${user?.name ? user.name : 'Guest'} 🤚`}
+        description="Manage all subscription without any error"
+        action={<SidebarTrigger className="rounded-md p-1 border border-transparent  md:border-slate-200" />}
+      />
       <section className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
           {dashboardStats.map((stat) => (
