@@ -41,6 +41,7 @@ const subscriptionData = Array.from({ length: 8 }, (_, index) => ({
   paymentMethod: ["Cash", "Mobile Money", "Card"][Math.floor(Math.random() * 3)],
   purchased: 20,
   used: Math.floor(Math.random() * 20),
+  left: Math.floor(Math.random() * 20),
   lastMeal: "12 Sept, 2025 - 12:45 PM",
   status: ["Active", "Expired", "Pending"][Math.floor(Math.random() * 3)],
 }));
@@ -69,22 +70,22 @@ const SubscriptionsTable = ({ showCompact }: { showCompact?: boolean }) => {
                   />
                 </TableHead>
               )}
-
-              <TableHead>Appointment Date</TableHead>
-              <TableHead>Booked On</TableHead>
-              <TableHead>Patient Names</TableHead>
-              <TableHead>Doctor Assigned</TableHead>
-              <TableHead>Department</TableHead>
+              <TableHead>Id</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Subscription</TableHead>
+              <TableHead>Purchased</TableHead>
+              <TableHead>Left</TableHead>
+              <TableHead>Payments</TableHead>
+              <TableHead>Last Meal</TableHead>
+              <TableHead>Branch</TableHead>
               <TableHead>Status</TableHead>
+
               {!showCompact && <TableHead className="text-right">Action</TableHead>}
             </TableRow>
           </TableHeader>
 
           <TableBody>
             {subscriptionData.map((row, index) => {
-              // pick random status mapping to match example
-              const status = ["Cancelled", "Pending", "Completed"][index % 3];
-
               return (
                 <TableRow
                   key={row.id}
@@ -116,14 +117,7 @@ const SubscriptionsTable = ({ showCompact }: { showCompact?: boolean }) => {
                   )}
 
                   <TableCell>
-                    <div className="text-sm">
-                      <div className="font-medium">{row.date}</div>
-                      <div className="text-xs text-muted-foreground">{row.time}</div>
-                    </div>
-                  </TableCell>
-
-                  <TableCell>
-                    <div className="text-sm text-muted-foreground">{row.date}</div>
+                   <div className="font-medium">{row.id}</div>
                   </TableCell>
 
                   <TableCell>
@@ -131,17 +125,29 @@ const SubscriptionsTable = ({ showCompact }: { showCompact?: boolean }) => {
                   </TableCell>
 
                   <TableCell>
+                    <div className="font-medium">{row.subscriptionType}</div>
+                  </TableCell>
+
+                  <TableCell>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>Dr.Shema Arnuad</span>
+                      <span>{row.purchased}</span>
                     </div>
                   </TableCell>
 
                   <TableCell>
+                    <div className="text-sm">{row.left}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">{row.paymentMethod}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">{row.lastMeal}</div>
+                  </TableCell>
+                  <TableCell>
                     <div className="text-sm">{row.branch}</div>
                   </TableCell>
-
                   <TableCell>
-                    <StatusBadge status={status} />
+                    <StatusBadge status={row.status} />
                   </TableCell>
 
                   {!showCompact && (
