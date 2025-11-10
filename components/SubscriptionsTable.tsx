@@ -71,11 +71,10 @@ const SubscriptionsTable = ({ showCompact }: { showCompact?: boolean }) => {
                 </TableHead>
               )}
               <TableHead>Id</TableHead>
-              <TableHead>Client Name</TableHead>
-              <TableHead>Subscription Type</TableHead>
-              <TableHead>Meals Purchased</TableHead>
-              <TableHead>Meals used</TableHead>
-              <TableHead>Meals Left</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Subscription</TableHead>
+              <TableHead>Purchased</TableHead>
+              <TableHead>Left</TableHead>
               <TableHead>Payments</TableHead>
               <TableHead>Last Meal</TableHead>
               <TableHead>Branch</TableHead>
@@ -87,9 +86,6 @@ const SubscriptionsTable = ({ showCompact }: { showCompact?: boolean }) => {
 
           <TableBody>
             {subscriptionData.map((row, index) => {
-              // pick random status mapping to match example
-              const status = ["Cancelled", "Pending", "Completed"][index % 3];
-
               return (
                 <TableRow
                   key={row.id}
@@ -138,9 +134,6 @@ const SubscriptionsTable = ({ showCompact }: { showCompact?: boolean }) => {
                     </div>
                   </TableCell>
 
-                  <TableCell>
-                    <div className="text-sm">{row.used}</div>
-                  </TableCell>
                   <TableCell>
                     <div className="text-sm">{row.left}</div>
                   </TableCell>
