@@ -3,6 +3,9 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import  StatsCard  from "../../../components/StatsCard";
 import SubscriptionsTable from "../../../components/SubscriptionsTable";
 import { dashboardStats ,user } from "app/constants";
+import { ChartPieSimple } from "../../../components/pie-chart";
+
+
 const Dashboard = () => {
 
   return (
@@ -23,6 +26,7 @@ const Dashboard = () => {
       </section>
 
       <SubscriptionsTable />
+      <ChartPieSimple />
     </main>
   )
 }
