@@ -1,19 +1,25 @@
-import { LayoutDashboard, Banknote, User, Settings } from "lucide-react"
+import { LayoutDashboard, Banknote, User, Settings, HandPlatter , WalletCards } from "lucide-react"
 export const sidebarItems = [
   {
     id: 1,
     icon: LayoutDashboard,
-    label: "Dashboard",
+    label: "Overview",
     href: "/dashboard",
   },
   {
     id: 3,
-    icon: User,
-    label: "All Clients",
-    href: "/all-clients",
+    icon: HandPlatter,
+    label: "Meals Logs",
+    href: "/meals-logs",
   },
   {
     id: 4,
+    icon: WalletCards ,
+    label: "Subscriptions",
+    href: "/subscriptions",
+  },
+  {
+    id: 5,
     icon: Banknote,
     label: "Payments",
     href: "/payments",
