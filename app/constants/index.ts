@@ -1,4 +1,4 @@
-import { LayoutDashboard, Banknote, User, Settings, HandPlatter , WalletCards } from "lucide-react"
+import { LayoutDashboard, Banknote, Settings, HandPlatter , WalletCards } from "lucide-react"
 export const sidebarItems = [
   {
     id: 1,

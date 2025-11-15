@@ -33,7 +33,7 @@ const NavItems = () => {
               >
                 <item.icon />
                 {/* hide text when sidebar is collapsed (icons-only) */}
-                <span className="ml-2 group-data-[collapsible=icon]:hidden text-[13px] lg:text-[18px] ">{item.label}</span>
+                <span className="ml-2 group-data-[collapsible=icon]:hidden text-[13px] lg:text-[18px]">{item.label}</span>
               </div>
             )}
           </NavLink>
