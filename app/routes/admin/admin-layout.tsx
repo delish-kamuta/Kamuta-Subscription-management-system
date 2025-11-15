@@ -7,7 +7,7 @@ const AdminLayout = () => {
   return (
     <SidebarProvider>
       <div className="admin-layout">
-        <aside>
+        <aside className=''>
           <AppSidebar />
         </aside>
 

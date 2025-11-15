@@ -18,9 +18,9 @@ export function AppSidebar() {
   const { open, toggleSidebar} = useSidebar();
   return (
     // enable icon-style collapsing so icons stay visible when collapsed
-    <Sidebar collapsible="icon" className="h-screen flex flex-col ">
+    <Sidebar collapsible="icon" className="h-screen flex flex-col border-black/5  w-[21%] lg:w-[18%]  ">
       <SidebarHeader className="w-full">
-        <div className="flex items-center justify-between gap-2 p-2 w-full">
+        <div className="flex items-center justify-between gap-2 p-2 w-full border-b border-black/5 py-3">
           <Link to="/">
             <div className="flex items-center gap-2">
               <img

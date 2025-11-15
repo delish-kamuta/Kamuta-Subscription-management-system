@@ -13,7 +13,7 @@ const NavItems = () => {
   return (
     <>
     {sidebarItems.map((item) => (
-      <SidebarMenuItem key={item.label} className="rounded-2xl w-full group-data-[collapsible=icon]:py-[18px]   flex items-center justify-center ">
+      <SidebarMenuItem key={item.label} className="rounded-2xl w-full group-data-[collapsible=icon]:py-[18px] flex items-center justify-center ">
         {/* Provide tooltip so label is visible on hover when collapsed */}
         <SidebarMenuButton
           asChild
@@ -33,7 +33,7 @@ const NavItems = () => {
               >
                 <item.icon />
                 {/* hide text when sidebar is collapsed (icons-only) */}
-                <span className="ml-2 group-data-[collapsible=icon]:hidden">{item.label}</span>
+                <span className="ml-2 group-data-[collapsible=icon]:hidden text-[13px] lg:text-[18px]">{item.label}</span>
               </div>
             )}
           </NavLink>

@@ -4,12 +4,13 @@ import  StatsCard  from "../../../components/StatsCard";
 import SubscriptionsTable from "../../../components/SubscriptionsTable";
 import { dashboardStats ,user } from "app/constants";
 import { ChartPieSimple } from "../../../components/pie-chart";
+import { ChartBarMultiple} from "../../../components/BarChart";
 
 
 const Dashboard = () => {
 
   return (
-    <main className='dashboard wrapper '>
+    <main className='dashboard wrapper'>
       <Header
         title={`Welcome ${user?.name ? user.name : 'Guest'} 🤚`}
         description="Manage all subscription without any error"
@@ -24,9 +25,10 @@ const Dashboard = () => {
         </div>
 
       </section>
-
-      <SubscriptionsTable />
-      <ChartPieSimple />
+      <section className="grid grid-cols-1 gap-2 md:grid-cols-2">
+        <ChartBarMultiple />
+        <ChartPieSimple />
+      </section>
     </main>
   )
 }

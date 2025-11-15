@@ -20,51 +20,42 @@ import {
 
 export const description = "A simple pie chart"
 
+const style =[]
 const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 187, fill: "var(--color-firefox)" },
-  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 90, fill: "var(--color-other)" },
+  { meals: "0 Meals", client: 275, fill: "#2859C5" },
+  { meals: "1-5 Meals", client: 200, fill: "#3B87E6" },
+  { meals: "Plenty Meals", client: 187, fill: "#A0C4FC" },
 ]
 
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
+  client: {
+    label: "Clients",
   },
-  chrome: {
-    label: "Chrome",
-    color: "var(--chart-1)",
+  no_meals: {
+    label: "0 meals",
+    color: "#A0C4FC",
   },
-  safari: {
-    label: "Safari",
-    color: "var(--chart-2)",
+  meals_1_5: {
+    label: "1-5 meals",
+    color: "#A0C4FC",
   },
-  firefox: {
-    label: "Firefox",
-    color: "var(--chart-3)",
-  },
-  edge: {
-    label: "Edge",
-    color: "var(--chart-4)",
-  },
-  other: {
-    label: "Other",
-    color: "var(--chart-5)",
+  plenty_meals: {
+    label: "Plenty meals",
+    color: "#A0C4FC",
   },
 } satisfies ChartConfig
 
 export function ChartPieSimple() {
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col h-[60vh] md:h-[60vh] lg:h-[50vh] gap-2 border-none shadow-400">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Pie Chart</CardTitle>
+        <CardTitle>Remaining Meals Overview</CardTitle>
         <CardDescription>January - June 2024</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
+      <CardContent className="flex flex-col items-end lg:flex-row pt-0 h-[33vh] md:h-[32vh] lg:h-[33vh]">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
+          className="mx-auto aspect-square h-full w-full"
         >
           <PieChart>
             <ChartTooltip
@@ -73,22 +64,31 @@ export function ChartPieSimple() {
             />
             <Pie
               data={chartData}
-              dataKey="visitors"
-              nameKey="browser"
+              dataKey="client"
+              nameKey="meals"
               outerRadius={90}
               innerRadius={40}
               label={false}
             />
           </PieChart>
         </ChartContainer>
+        <div className=" flex flex-row md:flex-row lg:flex-col gap-2  justify-between w-full lg:w-[50%] ">
+          <div className="flex  items-center gap-3">
+            <div className="w-3 h-3 rounded-full bg-[#2859C5]"></div>
+            <p className="font-semibold " >0 meals</p>
+            </div>
+            <div className="flex   items-center gap-3">
+            <div className="w-3 h-3 rounded-full bg-[#3B87E6]"></div>
+            <p className="font-semibold" >1-5 meals</p>
+            </div>
+            <div className="flex items-center  gap-3">
+            <div className="w-3 h-3 rounded-full bg-[#A0C4FC]"></div>
+            <p className="font-semibold" >Plenty meals</p>
+            </div>
+        </div>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 leading-none font-medium">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="text-muted-foreground leading-none">
-          Showing total visitors for the last 6 months
-        </div>
+        
       </CardFooter>
     </Card>
   )
