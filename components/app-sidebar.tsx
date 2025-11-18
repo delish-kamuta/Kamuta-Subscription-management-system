@@ -13,9 +13,33 @@ import {
 import cn from "~/lib/utils"
 import NavItems from "./NavItems"
 import { sidebarItems } from "~/constants"
-import { NavLink } from "react-router"
+import { NavLink, useNavigate } from "react-router"
 import { Link } from "react-router"
+import { logout } from "~/appwrite/auth"
+import { useState } from "react"
+
 export function AppSidebar() {
+  const navigate = useNavigate()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      const result = await logout()
+      
+      if (result.success) {
+        navigate("/auth/login")
+      } else {
+        console.error("Logout failed:", result.error)
+        alert("Failed to logout. Please try again.")
+      }
+    } catch (error) {
+      console.error("Logout error:", error)
+      alert("An error occurred during logout.")
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
   return (
     <Sidebar className="h-screen flex flex-col ">
       <SidebarHeader>
@@ -42,8 +66,13 @@ export function AppSidebar() {
             <p className="text-sm font-medium">David Warner</p>
             <p className="text-xs text-muted-foreground">Admin</p>
           </div>
-          <button onClick={() => console.log('Logout clicked')} className="cursor-pointer">
-            <img src="/assets/icons/logout.svg" alt="" />
+          <button 
+            onClick={handleLogout} 
+            disabled={isLoggingOut}
+            className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Logout"
+          >
+            <img src="/assets/icons/logout.svg" alt="Logout" />
           </button>
         </div>
       </SidebarFooter>

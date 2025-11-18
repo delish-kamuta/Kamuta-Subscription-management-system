@@ -7,4 +7,6 @@ export default [
             route('settings','routes/admin/settings.tsx'),
             route('payments','routes/admin/payments.tsx')
         ]),
+            route('/auth/login', 'routes/auth/login.tsx'),
+            route('/auth/signup', 'routes/auth/signup.tsx'),
 ] satisfies RouteConfig;

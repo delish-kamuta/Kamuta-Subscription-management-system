@@ -1,11 +1,20 @@
 import { appwriteAccount, appwriteDatabases, appwrite_config } from "./client";
-import { Account, Client ,ID, type Models } from "appwrite";
+import { type Models, Query } from "appwrite";
 
-// User roles enum
+// User roles enum (matching WORKERS.role in schema)
 export enum UserRole {
-    STUDENT = "student",
-    WORKER = "worker",
+    CASHIER = "cashier",
+    WAITSTAFF = "waitstaff",
     ADMIN = "admin"
+}
+
+// Worker profile interface (matching WORKERS table schema)
+export interface WorkerProfile {
+    $id: string;
+    name: string;
+    role: UserRole;
+    branch_id?: string;
+    created_at: string;
 }
 
 // Types for authentication
@@ -19,7 +28,7 @@ export interface LoginResponse {
     success: boolean;
     user?: Models.User<Models.Preferences>;
     session?: Models.Session;
-    userProfile?: any;
+    workerProfile?: WorkerProfile;
     error?: string;
 }
 
@@ -33,77 +42,70 @@ export const login = async (data: LoginData): Promise<LoginResponse> => {
     try {
         const { email, password, role } = data;
 
-        // Step 1: Create email/password session
+        // Step 1: Create email/password session with Appwrite Auth
         const session = await appwriteAccount.createEmailPasswordSession({
             email: email,
             password: password
         });
 
-        // Step 2: Get current user from Appwrite
+        // Step 2: Get current authenticated user
         const user = await appwriteAccount.get();
 
-        // Step 3: Verify user exists in the appropriate collection based on role
-        let userProfile = null;
-        let collectionId = "";
-
-        switch (role) {
-            case UserRole.STUDENT:
-                collectionId = appwrite_config.studentsCollectionId;
-                break;
-            case UserRole.WORKER:
-                collectionId = appwrite_config.workersCollectionId;
-                break;
-            case UserRole.ADMIN:
-                // Admin might not have a specific collection, use preferences or custom logic
-                collectionId = appwrite_config.workersCollectionId; // or a separate admin collection
-                break;
-            default:
-                throw new Error("Invalid role specified");
-        }
-
-        // Step 4: Fetch user profile from the database using email
+        // Step 3: Query WORKERS collection to get worker profile and verify role
         try {
+            // @ts-ignore - using deprecated API until SDK is updated
             const response = await appwriteDatabases.listDocuments(
                 appwrite_config.databaseId,
-                collectionId,
-                // Query to find user by email
+                appwrite_config.workersCollectionId,
                 [
-                    // You may need to adjust this query based on your schema
-                    // This assumes you have an 'email' attribute in your collections
+                    Query.equal('$id', user.$id) // Match worker by Appwrite user ID
                 ]
             );
 
-            // Find matching user by email
-            userProfile = response.documents.find(
-                (doc: any) => doc.email?.toLowerCase() === email.toLowerCase()
-            );
-
-            if (!userProfile) {
-                // User authenticated but not found in the specified role collection
-                await appwriteAccount.deleteSession("current");
+            // Check if worker exists
+            if (response.documents.length === 0) {
+                await appwriteAccount.deleteSession({ sessionId: "current" });
                 return {
                     success: false,
-                    error: `No ${role} account found with this email`,
+                    error: "Worker profile not found. Please contact administrator.",
                 };
             }
+
+            const workerProfile = response.documents[0] as unknown as WorkerProfile;
+
+            // Step 4: Verify the role matches what user selected
+            if (workerProfile.role !== role) {
+                await appwriteAccount.deleteSession({ sessionId: "current" });
+                return {
+                    success: false,
+                    error: `Access denied. Your account role is '${workerProfile.role}', not '${role}'.`,
+                };
+            }
+
+            // Step 5: Store worker info in user preferences for quick access
+            await appwriteAccount.updatePrefs({
+                prefs: {
+                    role: workerProfile.role,
+                    workerId: workerProfile.$id,
+                    workerName: workerProfile.name,
+                    branchId: workerProfile.branch_id || null
+                }
+            });
+
+            return {
+                success: true,
+                user,
+                session,
+                workerProfile,
+            };
         } catch (dbError: any) {
             console.error("Database query error:", dbError);
-            await appwriteAccount.deleteSession("current");
+            await appwriteAccount.deleteSession({ sessionId: "current" });
             return {
                 success: false,
-                error: "Failed to verify user role",
+                error: "Failed to verify worker profile. Please try again.",
             };
         }
-
-        // Step 5: Store role in user preferences for future reference
-        await appwriteAccount.updatePrefs({ role });
-
-        return {
-            success: true,
-            user,
-            session,
-            userProfile,
-        };
     } catch (error: any) {
         console.error("Login error:", error);
         
@@ -128,7 +130,7 @@ export const login = async (data: LoginData): Promise<LoginResponse> => {
  */
 export const logout = async (): Promise<{ success: boolean; error?: string }> => {
     try {
-        await appwriteAccount.deleteSession("current");
+        await appwriteAccount.deleteSession({ sessionId: "current" });
         return { success: true };
     } catch (error: any) {
         console.error("Logout error:", error);
@@ -140,47 +142,40 @@ export const logout = async (): Promise<{ success: boolean; error?: string }> =>
 };
 
 /**
- * Get the currently logged-in user with their role
- * @returns Current user with profile or null if not authenticated
+ * Get the currently logged-in worker with their profile
+ * @returns Current user with worker profile or null if not authenticated
  */
 export const getCurrentUser = async (): Promise<{
     user: Models.User<Models.Preferences> | null;
     role: UserRole | null;
-    profile: any | null;
+    workerProfile: WorkerProfile | null;
 }> => {
     try {
         const user = await appwriteAccount.get();
         const role = (user.prefs.role as UserRole) || null;
+        const workerId = user.prefs.workerId as string;
         
-        let profile = null;
-        if (role) {
-            let collectionId = "";
-            switch (role) {
-                case UserRole.STUDENT:
-                    collectionId = appwrite_config.studentsCollectionId;
-                    break;
-                case UserRole.WORKER:
-                    collectionId = appwrite_config.workersCollectionId;
-                    break;
-                case UserRole.ADMIN:
-                    collectionId = appwrite_config.workersCollectionId;
-                    break;
-            }
-
-            if (collectionId) {
-                const response = await appwriteDatabases.listDocuments(
-                    appwrite_config.databaseId,
-                    collectionId
+        let workerProfile = null;
+        
+        if (workerId) {
+            try {
+                // Fetch fresh worker profile from database
+                const response = await appwriteDatabases.getDocument(
+                    {
+                        databaseId: appwrite_config.databaseId,
+                        collectionId: appwrite_config.workersCollectionId,
+                        documentId: workerId
+                    }
                 );
-                profile = response.documents.find(
-                    (doc: any) => doc.email?.toLowerCase() === user.email.toLowerCase()
-                );
+                workerProfile = response as unknown as WorkerProfile;
+            } catch (error) {
+                console.error("Failed to fetch worker profile:", error);
             }
         }
 
-        return { user, role, profile };
+        return { user, role, workerProfile };
     } catch (error) {
-        return { user: null, role: null, profile: null };
+        return { user: null, role: null, workerProfile: null };
     }
 };
 
