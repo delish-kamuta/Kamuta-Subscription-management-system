@@ -1,6 +1,6 @@
-import { SidebarTrigger } from "~/components/ui/sidebar";
 import { Header } from "../../../components/Header";
-import { paymentsData } from "app/constants";
+import { SidebarTrigger } from "~/components/ui/sidebar";
+import { mealsLogsData } from "app/constants";
 import { Search, ChevronDown, Calendar, MoreHorizontal, Download } from "lucide-react";
 import { useState } from "react";
 import {
@@ -14,33 +14,36 @@ import {
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 
-const Payments = () => {
+const MealsLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  const filteredData = paymentsData.filter(
+  const filteredData = mealsLogsData.filter(
     (item) =>
       item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.paymentId.includes(searchTerm)
+      item.clientId.includes(searchTerm)
   );
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedData = filteredData.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   return (
     <main className="dashboard wrapper">
       <Header
-        title="All Payments"
+        title="Meal Logs"
         description="Track activity, trends, and popular destinations in real time"
         action={
           <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
         }
       />
 
-      {/* Payments Table Section */}
-      <section className="mt-6 bg-white rounded-lg shadow-sm ">
+      {/* Meals Logs Table Section */}
+      <section className="mt-6 bg-white rounded-lg shadow-sm">
         {/* Search and Filters */}
         <div className="p-4 md:p-6 border-b border-gray-200">
           <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -59,7 +62,7 @@ const Payments = () => {
                 Branch <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
               <Button variant="outline" className="text-sm border-gray-300">
-                Cashier <ChevronDown className="w-4 h-4 ml-2" />
+                Scanned By <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
               <Button variant="outline" className="text-sm border-gray-300">
                 <Calendar className="w-4 h-4 mr-2" /> Date Range
@@ -67,52 +70,47 @@ const Payments = () => {
               <Button variant="outline" className="text-sm border-gray-300">
                 <Download className="w-4 h-4 mr-2" /> Export
               </Button>
-              <Button  className="text-sm bg-primary-100 text-white">Add Subscription</Button>
             </div>
           </div>
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto text-gray-500">
           <Table>
             <TableHeader>
-              <TableRow className="text-gray-500 ">
-                <TableHead className="whitespace-nowrap">Payment ID</TableHead>
+              <TableRow>
+                <TableHead className="whitespace-nowrap">Client ID</TableHead>
                 <TableHead className="whitespace-nowrap">Client Name</TableHead>
-                <TableHead className="whitespace-nowrap hidden md:table-cell">Branch</TableHead>
-                <TableHead className="whitespace-nowrap hidden lg:table-cell">Subscription Type</TableHead>
-                <TableHead className="whitespace-nowrap">Amount</TableHead>
-                <TableHead className="whitespace-nowrap hidden xl:table-cell">Total Meals</TableHead>
-                <TableHead className="whitespace-nowrap hidden lg:table-cell">Payment Date</TableHead>
-                <TableHead className="whitespace-nowrap hidden xl:table-cell">Notes</TableHead>
-                <TableHead className="whitespace-nowrap">Payment</TableHead>
+                <TableHead className="whitespace-nowrap">Meal Used</TableHead>
+                <TableHead className="whitespace-nowrap">Meals Left</TableHead>
+                <TableHead className="whitespace-nowrap hidden lg:table-cell">Date & Time</TableHead>
+                <TableHead className="whitespace-nowrap hidden md:table-cell">Scanned By</TableHead>
+                <TableHead className="whitespace-nowrap hidden xl:table-cell">Branch</TableHead>
                 <TableHead className="whitespace-nowrap">Action</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody className="text-gray-500 ">
+            <TableBody>
               {paginatedData.map((item, index) => (
                 <TableRow key={index}>
-                  <TableCell className="font-mono text-xs">{item.paymentId}</TableCell>
+                  <TableCell className="font-mono text-xs">{item.clientId}</TableCell>
                   <TableCell className="font-medium text-black">{item.clientName}</TableCell>
-                  <TableCell className="hidden md:table-cell">{item.branch}</TableCell>
-                  <TableCell className="hidden lg:table-cell">{item.subscriptionType}</TableCell>
-                  <TableCell className="font-semibold">{item.amountPaid}</TableCell>
-                  <TableCell className="hidden xl:table-cell">{item.totalMeals}</TableCell>
-                  <TableCell className="hidden lg:table-cell text-sm">{item.paymentDate}</TableCell>
-                  <TableCell className="hidden xl:table-cell text-sm text-gray-500">
-                    {item.addedNotes}
+                  <TableCell className="font-semibold">{item.mealUsed}</TableCell>
+                  <TableCell className="font-semibold">{item.mealsLeft}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <div className="flex flex-col">
+                      <span className="text-sm">
+                        {item.dateTime.split(" ")[0]}{" "}
+                        {item.dateTime.split(" ")[1]}{" "}
+                        {item.dateTime.split(" ")[2]}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {item.dateTime.split(" ")[3]}{" "}
+                        {item.dateTime.split(" ")[4]}
+                      </span>
+                    </div>
                   </TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
-                        item.payment === "Cash"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {item.payment}
-                    </span>
-                  </TableCell>
+                  <TableCell className="hidden md:table-cell">{item.scannedBy}</TableCell>
+                  <TableCell className="hidden xl:table-cell">{item.branch}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                       <MoreHorizontal className="h-4 w-4" />
@@ -134,7 +132,10 @@ const Payments = () => {
             ← Previous
           </Button>
           <div className="flex gap-2 flex-wrap justify-center">
-            {Array.from({ length: Math.min(6, totalPages) }, (_, i) => i + 1).map((page) => (
+            {Array.from(
+              { length: Math.min(6, totalPages) },
+              (_, i) => i + 1
+            ).map((page) => (
               <Button
                 key={page}
                 onClick={() => setCurrentPage(page)}
@@ -158,4 +159,4 @@ const Payments = () => {
   );
 };
 
-export default Payments;
+export default MealsLogs;

@@ -2,20 +2,24 @@ import React from 'react'
 import { Outlet } from 'react-router';
 import { SidebarProvider } from '~/components/ui/sidebar';
 import { AppSidebar } from '../../../components/app-sidebar';
-import { Ghost } from 'lucide-react';
+import { ProtectedRoute } from '../../../components/ProtectedRoute';
+import { UserRole } from '~/appwrite/auth';
+
 const AdminLayout = () => {
   return (
-    <SidebarProvider>
-      <div className="admin-layout">
-        <aside>
-          <AppSidebar />
-        </aside>
+    <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CASHIER, UserRole.WAITSTAFF]}>
+      <SidebarProvider>
+        <div className="admin-layout">
+          <aside className=''>
+            <AppSidebar />
+          </aside>
 
-        <main className="children">
-          <Outlet />
-        </main>
-      </div>
-    </SidebarProvider>
+          <main className="children">
+            <Outlet />
+          </main>
+        </div>
+      </SidebarProvider>
+    </ProtectedRoute>
   )
 }
 
