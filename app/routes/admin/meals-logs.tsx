@@ -1,35 +1,38 @@
-import { SidebarTrigger } from "~/components/ui/sidebar";
 import { Header } from "../../../components/Header";
-import { paymentsData } from "app/constants";
+import { SidebarTrigger } from "~/components/ui/sidebar";
+import { mealsLogsData } from "app/constants";
 import { Search, ChevronDown, Calendar } from "lucide-react";
 import { useState } from "react";
 
-const Payments = () => {
+const MealsLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  const filteredData = paymentsData.filter(
+  const filteredData = mealsLogsData.filter(
     (item) =>
       item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.paymentId.includes(searchTerm)
+      item.clientId.includes(searchTerm)
   );
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedData = filteredData.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
 
   return (
     <main className="dashboard wrapper">
       <Header
-        title="All Payments"
+        title="Meal Logs"
         description="Track activity, trends, and popular destinations in real time"
         action={
           <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
         }
       />
 
-      {/* Payments Table Section */}
+      {/* Meals Logs Table Section */}
       <section className="mt-6 bg-white rounded-lg shadow-sm">
         {/* Search and Filters */}
         <div className="p-6 border-b border-gray-200">
@@ -49,13 +52,10 @@ const Payments = () => {
                 Branch <ChevronDown className="w-4 h-4" />
               </button>
               <button className="px-4 py-2 border border-gray-300 rounded-md flex items-center gap-2 hover:bg-gray-50">
-                Cashier <ChevronDown className="w-4 h-4" />
+                Scanned By <ChevronDown className="w-4 h-4" />
               </button>
               <button className="px-4 py-2 border border-gray-300 rounded-md flex items-center gap-2 hover:bg-gray-50">
                 <Calendar className="w-4 h-4" /> Date Range
-              </button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                Add Subscription
               </button>
             </div>
           </div>
@@ -67,31 +67,25 @@ const Payments = () => {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Payment ID
+                  Client ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Client Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Meal Used
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Meals Left
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date & Time
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Scanned By
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Branch
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Subscription Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount Paid
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Meals
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Payment Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Added Notes
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Payment
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Action
@@ -102,39 +96,35 @@ const Payments = () => {
               {paginatedData.map((item, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.paymentId}
+                    {item.clientId}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {item.clientName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {item.mealUsed}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {item.mealsLeft}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex flex-col">
+                      <span>
+                        {item.dateTime.split(" ")[0]}{" "}
+                        {item.dateTime.split(" ")[1]}{" "}
+                        {item.dateTime.split(" ")[2]}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {item.dateTime.split(" ")[3]}{" "}
+                        {item.dateTime.split(" ")[4]}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {item.scannedBy}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {item.branch}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.subscriptionType}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.amountPaid}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.totalMeals}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.paymentDate}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {item.addedNotes}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        item.payment === "Cash"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {item.payment}
-                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <button className="text-gray-400 hover:text-gray-600">
@@ -157,7 +147,10 @@ const Payments = () => {
             ← Previous
           </button>
           <div className="flex gap-2">
-            {Array.from({ length: Math.min(6, totalPages) }, (_, i) => i + 1).map((page) => (
+            {Array.from(
+              { length: Math.min(6, totalPages) },
+              (_, i) => i + 1
+            ).map((page) => (
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
@@ -184,4 +177,4 @@ const Payments = () => {
   );
 };
 
-export default Payments;
+export default MealsLogs;

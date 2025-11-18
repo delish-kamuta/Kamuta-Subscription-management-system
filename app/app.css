@@ -375,7 +375,7 @@
   }
 
   .admin-layout {
-    @apply flex flex-col lg:flex-row h-screen w-full;
+    @apply flex  lg:flex-row h-screen w-full gap-1;
     .children {
       @apply w-full h-full bg-light-200 pt-12 lg:pt-10;
     }

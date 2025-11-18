@@ -1,22 +1,21 @@
 import React from 'react'
 import { Outlet } from 'react-router';
-import { SidebarProvider, SidebarTrigger } from '~/components/ui/sidebar';
+import { SidebarProvider } from '~/components/ui/sidebar';
 import { AppSidebar } from '../../../components/app-sidebar';
+import { Ghost } from 'lucide-react';
 const AdminLayout = () => {
   return (
-    <div className='admin-layout'>
-     <aside className='max-w-[280px]'>
-       <SidebarProvider>
-      <AppSidebar />
-      <main>
-        <SidebarTrigger />
-      </main>
+    <SidebarProvider>
+      <div className="admin-layout">
+        <aside>
+          <AppSidebar />
+        </aside>
+
+        <main className="children">
+          <Outlet />
+        </main>
+      </div>
     </SidebarProvider>
-     </aside>
-      <aside className='children'>
-        <Outlet />
-      </aside>
-    </div>
   )
 }
 
