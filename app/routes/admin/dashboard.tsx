@@ -2,16 +2,31 @@ import { Header } from "../../../components/Header";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import  StatsCard  from "../../../components/StatsCard";
 import SubscriptionsTable from "../../../components/SubscriptionsTable";
-import { dashboardStats ,user } from "app/constants";
+import { dashboardStats } from "app/constants";
 import { ChartPieSimple } from "../../../components/pie-chart";
 import { ChartBarMultiple} from "../../../components/BarChart";
+import { useEffect, useState } from "react";
+import { getCurrentUser } from "~/appwrite/auth";
 
 
 const Dashboard = () => {
+  const [userName, setUserName] = useState<string>("Guest");
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { workerProfile } = await getCurrentUser();
+      if (workerProfile?.name) {
+        setUserName(workerProfile.name);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   return (
     <main className='dashboard wrapper'>
       <Header
-        title={`Welcome ${user?.name ? user.name : "Guest"} 🤚`}
+        title={`Welcome ${userName} 🤚`}
         description="Track activity, trends, and popular destinations in real time"
         action={
           <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
