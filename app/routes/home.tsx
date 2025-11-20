@@ -207,11 +207,11 @@ const Home = () => {
               <div className="text-gray-300 space-y-2">
                 <p className="flex items-center gap-2">
                   <span>📞</span>
-                  <span>+250781268806</span>
+                  <span>+250791268906</span>
                 </p>
                 <p className="flex items-center gap-2">
                   <span>✉️</span>
-                  <span>mitchamumvizero253@gmail.com</span>
+                  <span>michelmunezero25@gmail.com</span>
                 </p>
                 <p>Support: 24/7 Available</p>
               </div>
