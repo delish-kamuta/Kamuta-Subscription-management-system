@@ -6,6 +6,7 @@ import {
 } from "@react-router/dev/routes";
 
 export default [
+  index("routes/home.tsx"),
   layout("routes/admin/admin-layout.tsx", [
     route("dashboard", "routes/admin/dashboard.tsx"),
     route("subscription", "routes/admin/subscription.tsx"),
@@ -13,7 +14,7 @@ export default [
     route("settings", "routes/admin/settings.tsx"),
     route("payments", "routes/admin/payments.tsx"),
   ]),
-        route('/auth/login', 'routes/auth/login.tsx'),
-        route('/auth/signup', 'routes/auth/signup.tsx'),
-        route('/unauthorized', 'routes/unauthorized.tsx'),
+  route("/auth/login", "routes/auth/login.tsx"),
+  route("/auth/signup", "routes/auth/signup.tsx"),
+  route("/unauthorized", "routes/unauthorized.tsx"),
 ] satisfies RouteConfig;
