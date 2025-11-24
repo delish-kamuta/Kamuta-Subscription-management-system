@@ -5,23 +5,9 @@ import SubscriptionsTable from "../../../components/SubscriptionsTable";
 import { dashboardStats } from "app/constants";
 import { ChartPieSimple } from "../../../components/pie-chart";
 import { ChartBarMultiple} from "../../../components/BarChart";
-import { useEffect, useState } from "react";
-import { getCurrentUser } from "~/appwrite/auth";
-
 
 const Dashboard = () => {
-  const [userName, setUserName] = useState<string>("Guest");
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { workerProfile } = await getCurrentUser();
-      if (workerProfile?.name) {
-        setUserName(workerProfile.name);
-      }
-    };
-
-    fetchUser();
-  }, []);
+  const userName = "Guest"; // TODO: Get from authentication system
 
   return (
     <main className='dashboard wrapper'>
