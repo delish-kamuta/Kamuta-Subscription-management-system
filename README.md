@@ -14,7 +14,6 @@ A modern real-time bus tracking application built with React and TypeScript.
 - **Animation**: tw-animate-css
 
 ### Backend Integration
-- **Backend Service**: Appwrite for authentication and database
 - **API Integration**: Built-in API endpoints with React Router
 
 ### Development & Build Tools
@@ -42,13 +41,6 @@ cd bus-tracker
 2. Install dependencies:
 ```bash
 npm install
-```
-
-3. Create a `.env.local` file with your Appwrite credentials:
-```env
-VITE_APPWRITE_PROJECT_ID=your_project_id
-VITE_APPWRITE_API_KEY=your_api_key
-VITE_APPWRITE_DATABASE_ID=your_database_id
 ```
 
 ### Development

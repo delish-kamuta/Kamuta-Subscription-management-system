@@ -15,31 +15,15 @@ import {
 import NavItems from "./NavItems";
 import { sidebarItems } from "~/constants"
 import { Link, useNavigate } from "react-router"
-import { logout } from "~/appwrite/auth"
-import { useState } from "react"
 
 export function AppSidebar() {
   const { open, toggleSidebar } = useSidebar();
   const navigate = useNavigate()
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true)
-      const result = await logout()
-      
-      if (result.success) {
-        navigate("/auth/login")
-      } else {
-        console.error("Logout failed:", result.error)
-        alert("Failed to logout. Please try again.")
-      }
-    } catch (error) {
-      console.error("Logout error:", error)
-      alert("An error occurred during logout.")
-    } finally {
-      setIsLoggingOut(false)
-    }
+  const handleLogout = () => {
+    // TODO: Implement logout logic
+    console.log("Logout clicked")
+    navigate("/auth/login")
   }
   return (
     // enable icon-style collapsing so icons stay visible when collapsed
@@ -82,8 +66,7 @@ export function AppSidebar() {
           </div>
           <button
             onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="cursor-pointer"
             title="Logout"
           >
             <img src="/assets/icons/logout.svg" alt="Logout" />
