@@ -15,7 +15,6 @@ import {
 import NavItems from "./NavItems";
 import { sidebarItems } from "~/constants"
 import { Link, useNavigate } from "react-router"
-import { logout } from "~/appwrite/auth"
 import { useState } from "react"
 
 export function AppSidebar() {
@@ -26,14 +25,11 @@ export function AppSidebar() {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true)
-      const result = await logout()
+      // TODO: Implement logout functionality
+      console.log('Logout clicked')
       
-      if (result.success) {
-        navigate("/auth/login")
-      } else {
-        console.error("Logout failed:", result.error)
-        alert("Failed to logout. Please try again.")
-      }
+      // For now, just navigate to login page
+      navigate("/auth/login")
     } catch (error) {
       console.error("Logout error:", error)
       alert("An error occurred during logout.")

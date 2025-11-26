@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Navigate } from "react-router"
-import { getCurrentUser, UserRole } from "~/appwrite/auth"
+import { UserRole } from "~/types/auth"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -15,15 +15,10 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { user, role } = await getCurrentUser()
-        
-        if (user && role) {
-          setIsAuthenticated(true)
-          setUserRole(role)
-        } else {
-          setIsAuthenticated(false)
-          setUserRole(null)
-        }
+        // TODO: Implement authentication check
+        // For now, assume user is authenticated as ADMIN
+        setIsAuthenticated(true)
+        setUserRole(UserRole.ADMIN)
       } catch (error) {
         console.error("Auth check error:", error)
         setIsAuthenticated(false)

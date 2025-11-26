@@ -1,34 +1,47 @@
-import { LayoutDashboard, Banknote, Settings, HandPlatter , WalletCards } from "lucide-react"
+import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode } from "lucide-react"
+
 export const sidebarItems = [
   {
     id: 1,
     icon: LayoutDashboard,
     label: "Overview",
     href: "/dashboard",
+    roles: ["client", "cashier", "scanner", "admin"], // Available to all roles
+  },
+  {
+    id: 2,
+    icon: QrCode,
+    label: "My QR Code",
+    href: "/my-qr-code",
+    roles: ["client"], // Only for clients (students)
   },
   {
     id: 3,
     icon: HandPlatter,
     label: "Meals Logs",
     href: "/meals-logs",
+    roles: ["scanner", "admin"], // Only for staff
   },
   {
     id: 4,
-    icon: WalletCards ,
+    icon: WalletCards,
     label: "Subscriptions",
     href: "/subscription",
+    roles: ["cashier", "admin"], // Only for cashier and admin
   },
   {
     id: 5,
     icon: Banknote,
     label: "Payments",
     href: "/payments",
+    roles: ["cashier", "admin"], // Only for cashier and admin
   },
   {
-    id: 5,
+    id: 6,
     icon: Settings,
     label: "Settings",
     href: "/settings",
+    roles: ["client", "cashier", "scanner", "admin"], // Available to all roles
   },
 ];
 

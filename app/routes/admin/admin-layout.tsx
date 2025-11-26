@@ -3,11 +3,11 @@ import { Outlet } from 'react-router';
 import { SidebarProvider } from '~/components/ui/sidebar';
 import { AppSidebar } from '../../../components/app-sidebar';
 import { ProtectedRoute } from '../../../components/ProtectedRoute';
-import { UserRole } from '~/appwrite/auth';
+import { UserRole } from '~/types/auth';
 
 const AdminLayout = () => {
   return (
-    <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CASHIER, UserRole.WAITSTAFF]}>
+    <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CASHIER, UserRole.WAITSTAFF, UserRole.CLIENT]}>
       <SidebarProvider>
         <div className="admin-layout">
           <aside className=''>

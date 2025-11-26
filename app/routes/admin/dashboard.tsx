@@ -6,23 +6,29 @@ import { dashboardStats } from "app/constants";
 import { ChartPieSimple } from "../../../components/pie-chart";
 import { ChartBarMultiple} from "../../../components/BarChart";
 import { useEffect, useState } from "react";
-import { getCurrentUser } from "~/appwrite/auth";
+import Client from "components/client";
 
 
 const Dashboard = () => {
   const [userName, setUserName] = useState<string>("Guest");
+  const [userRole, setUserRole] = useState<"client" | "cashier" | "scanner" | "admin">("client");
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const { workerProfile } = await getCurrentUser();
-      if (workerProfile?.name) {
-        setUserName(workerProfile.name);
-      }
-    };
-
-    fetchUser();
+    // TODO: Get user role from authentication context
+    // For now, using static role - replace with actual auth
+    const role = "cashier"; // Change this based on logged-in user
+    setUserRole(role as any);
+    setUserName(role);
   }, []);
 
+  // Client (Student) Dashboard
+  if (userRole === "client") {
+    return(
+      <Client userName={userName} />
+    )
+  }
+
+  // Admin/Staff Dashboard
   return (
     <main className='dashboard wrapper'>
       <Header

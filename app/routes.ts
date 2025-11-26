@@ -9,6 +9,7 @@ export default [
   index("routes/home.tsx"),
   layout("routes/admin/admin-layout.tsx", [
     route("dashboard", "routes/admin/dashboard.tsx"),
+    route("my-qr-code", "routes/admin/my-qr-code.tsx"),
     route("subscription", "routes/admin/subscription.tsx"),
     route("meals-logs", "routes/admin/meals-logs.tsx"),
     route("settings", "routes/admin/settings.tsx"),

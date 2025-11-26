@@ -9,10 +9,19 @@ import {
 import { sidebarItems } from '~/constants'
 import {cn} from '~/lib/utils';
 
-const NavItems = () => {
+interface NavItemsProps {
+  userRole?: "client" | "cashier" | "scanner" | "admin";
+}
+
+const NavItems = ({ userRole = "cashier" }: NavItemsProps) => {
+  // Filter sidebar items based on user role
+  const filteredItems = sidebarItems.filter((item) => 
+    item.roles?.includes(userRole)
+  );
+
   return (
     <>
-    {sidebarItems.map((item) => (
+    {filteredItems.map((item) => (
       <SidebarMenuItem key={item.label} className="rounded-2xl w-full group-data-[collapsible=icon]:py-[18px] flex items-center justify-center ">
         {/* Provide tooltip so label is visible on hover when collapsed */}
         <SidebarMenuButton
