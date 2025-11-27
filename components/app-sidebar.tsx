@@ -16,19 +16,25 @@ import NavItems from "./NavItems";
 import { sidebarItems } from "~/constants"
 import { Link, useNavigate } from "react-router"
 import { useState } from "react"
+import { useAppDispatch } from "~/store/hooks"
+import { logout as logoutAction } from "~/store/authSlice"
 
 export function AppSidebar() {
   const { open, toggleSidebar } = useSidebar();
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true)
-      // TODO: Implement logout functionality
-      console.log('Logout clicked')
       
-      // For now, just navigate to login page
+      // Dispatch logout action to clear Redux state
+      dispatch(logoutAction())
+      
+      console.log('User logged out')
+      
+      // Navigate to login page
       navigate("/auth/login")
     } catch (error) {
       console.error("Logout error:", error)

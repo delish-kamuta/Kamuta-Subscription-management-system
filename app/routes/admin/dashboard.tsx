@@ -7,22 +7,18 @@ import { ChartPieSimple } from "../../../components/pie-chart";
 import { ChartBarMultiple} from "../../../components/BarChart";
 import { useEffect, useState } from "react";
 import Client from "components/client";
+import { useAppSelector } from "~/store/hooks";
+import { UserRole } from "~/types/auth";
 
 
 const Dashboard = () => {
-  const [userName, setUserName] = useState<string>("Guest");
-  const [userRole, setUserRole] = useState<"client" | "cashier" | "scanner" | "admin">("client");
-
-  useEffect(() => {
-    // TODO: Get user role from authentication context
-    // For now, using static role - replace with actual auth
-    const role = "cashier"; // Change this based on logged-in user
-    setUserRole(role as any);
-    setUserName(role);
-  }, []);
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  
+  const userName = user?.name || "Guest";
+  const userRole = user?.role || UserRole.CASHIER;
 
   // Client (Student) Dashboard
-  if (userRole === "client") {
+  if (userRole === UserRole.CLIENT) {
     return(
       <Client userName={userName} />
     )
