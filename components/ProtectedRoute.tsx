@@ -3,7 +3,7 @@ import { Navigate } from "react-router"
 import { UserRole } from "~/types/auth"
 
 interface ProtectedRouteProps {
-  children: React.ReactNode
+  children: ReactNode
   allowedRoles: UserRole[]
 }
 

@@ -84,8 +84,7 @@ export function AppSidebar() {
           </div>
           <button
             onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="cursor-pointer"
             title="Logout"
           >
             <img src="/assets/icons/logout.svg" alt="Logout" />
