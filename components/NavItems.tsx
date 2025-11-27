@@ -1,22 +1,27 @@
-import React from 'react'
-import { Link } from 'react-router';
 import { NavLink } from 'react-router';
-import {
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarProvider
-} from '~/components/ui/sidebar'
+import { SidebarMenuItem , SidebarMenuButton} from '~/components/ui/sidebar'
 import { sidebarItems } from '~/constants'
 import {cn} from '~/lib/utils';
+import { useAppSelector } from '~/store/hooks';
+import { UserRole } from '~/types/auth';
 
-interface NavItemsProps {
-  userRole?: "client" | "cashier" | "scanner" | "admin";
-}
-
-const NavItems = ({ userRole = "cashier" }: NavItemsProps) => {
+const NavItems = () => {
   // Filter sidebar items based on user role
-  const filteredItems = sidebarItems.filter((item) => 
-    item.roles?.includes(userRole)
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const userRole = user?.role || UserRole.CASHIER;
+  
+  // Map UserRole enum to sidebar role strings
+  const roleMap: Record<UserRole, string> = {
+    [UserRole.CASHIER]: "cashier",
+    [UserRole.WAITSTAFF]: "scanner",
+    [UserRole.ADMIN]: "admin",
+    [UserRole.CLIENT]: "client"
+  };
+  
+  const mappedRole = roleMap[userRole];
+  
+  const filteredItems = sidebarItems.filter((item) =>
+    item.roles?.includes(mappedRole)
   );
 
   return (
