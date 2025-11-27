@@ -1,9 +1,9 @@
 import { useState } from "react"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
+import { UserRole } from "~/types/auth"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
 
-type UserRole = "admin" | "staff" | "customer"
 
 interface AuthFormProps {
   onSubmit?: (data: { email: string; password: string; role: UserRole }) => void | Promise<void>
@@ -13,7 +13,7 @@ interface AuthFormProps {
 export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [role, setRole] = useState<UserRole>("customer")
+  const [role, setRole] = useState<UserRole>(UserRole.CASHIER)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -104,9 +104,10 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
                 disabled={isLoading}
                 className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="customer">Cashier</option>
-                <option value="staff">Scanner</option>
-                <option value="admin">Admin</option>
+                <option value={UserRole.CASHIER}>Cashier</option>
+                <option value={UserRole.WAITSTAFF}>Scanner</option>
+                <option value={UserRole.ADMIN}>Admin</option>
+                <option value={UserRole.CLIENT}>Client</option>
               </select>
             </div>
           </CardContent>
@@ -124,14 +125,14 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
               {mode === "login" ? (
                 <>
                   Don't have an account?{" "}
-                  <a href="/signup" className="text-primary-100 hover:underline font-medium">
+                  <a href="signup" className="text-primary-100 hover:underline font-medium">
                     Sign up
                   </a>
                 </>
               ) : (
                 <>
                   Already have an account?{" "}
-                  <a href="/login" className="text-primary-100 hover:underline font-medium">
+                  <a href="login" className="text-primary-100 hover:underline font-medium">
                     Sign in
                   </a>
                 </>

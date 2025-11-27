@@ -1,18 +1,32 @@
-import React from 'react'
-import { Link } from 'react-router';
 import { NavLink } from 'react-router';
-import {
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarProvider
-} from '~/components/ui/sidebar'
+import { SidebarMenuItem , SidebarMenuButton} from '~/components/ui/sidebar'
 import { sidebarItems } from '~/constants'
 import {cn} from '~/lib/utils';
+import { useAppSelector } from '~/store/hooks';
+import { UserRole } from '~/types/auth';
 
 const NavItems = () => {
+  // Filter sidebar items based on user role
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const userRole = user?.role || UserRole.CASHIER;
+  
+  // Map UserRole enum to sidebar role strings
+  const roleMap: Record<UserRole, string> = {
+    [UserRole.CASHIER]: "cashier",
+    [UserRole.WAITSTAFF]: "scanner",
+    [UserRole.ADMIN]: "admin",
+    [UserRole.CLIENT]: "client"
+  };
+  
+  const mappedRole = roleMap[userRole];
+  
+  const filteredItems = sidebarItems.filter((item) =>
+    item.roles?.includes(mappedRole)
+  );
+
   return (
     <>
-    {sidebarItems.map((item) => (
+    {filteredItems.map((item) => (
       <SidebarMenuItem key={item.label} className="rounded-2xl w-full group-data-[collapsible=icon]:py-[18px] flex items-center justify-center ">
         {/* Provide tooltip so label is visible on hover when collapsed */}
         <SidebarMenuButton
