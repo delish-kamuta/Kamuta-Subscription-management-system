@@ -42,9 +42,12 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
   }
 
   return (
-    <div className="flex items-center  justify-center min-h-screen bg-gray-50 p-4">
+    <div className="flex  items-center  justify-center min-h-screen bg-gray-50 p-4 ">
       <Card className="w-full max-w-md border-black/10">
-        <CardHeader>
+        <CardHeader className="flex flex-col items-center">
+          <div className=" size-20 md:size-25">
+        <img src="../../assets/icons/user.png" alt="" />
+      </div>
           <CardTitle className="text-2xl font-bold text-center text-slate-700">
             {mode === "login" ? "Welcome Back" : "Create Account"}
           </CardTitle>
