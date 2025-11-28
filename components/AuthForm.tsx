@@ -43,12 +43,12 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
 
   return (
     <div className="flex items-center  justify-center min-h-screen bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-black/10">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">
+          <CardTitle className="text-2xl font-bold text-center text-slate-700">
             {mode === "login" ? "Welcome Back" : "Create Account"}
           </CardTitle>
-          <CardDescription className="text-center">
+          <CardDescription className="text-center text-slate-700">
             {mode === "login"
               ? "Enter your credentials to access your account"
               : "Fill in your details to get started"}
@@ -71,6 +71,7 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
                 id="email"
                 type="email"
                 placeholder="you@example.com"
+                className="border-black/10"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
@@ -86,6 +87,7 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
                 id="password"
                 type="password"
                 placeholder="••••••••"
+                className="border-black/10"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
@@ -102,10 +104,10 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
                 value={role}
                 onChange={(e) => setRole(e.target.value as UserRole)}
                 disabled={isLoading}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-9 w-full rounded-md border-black/10 border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value={UserRole.CASHIER}>Cashier</option>
-                <option value={UserRole.WAITSTAFF}>Scanner</option>
+                <option value={UserRole.WAITSTAFF}>Waitstaff</option>
                 <option value={UserRole.ADMIN}>Admin</option>
                 <option value={UserRole.CLIENT}>Client</option>
               </select>
@@ -115,7 +117,7 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
           <CardFooter className="flex flex-col space-y-4">
             <Button
               type="submit"
-              className="w-full bg-primary-100 hover:bg-primary-100/90"
+              className="w-full bg-primary-100 hover:bg-primary-100/90 text-white"
               disabled={isLoading}
             >
               {isLoading ? "Please wait..." : mode === "login" ? "Sign In" : "Sign Up"}
