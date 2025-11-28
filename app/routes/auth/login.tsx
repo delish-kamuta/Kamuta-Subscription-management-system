@@ -20,8 +20,12 @@ export default function LoginPage() {
     
     console.log('User logged in with role:', data.role)
     
-    // Redirect to dashboard
-    navigate("/dashboard")
+    // Redirect based on role
+    if (data.role === UserRole.WAITSTAFF) {
+      navigate("/scan-qr")
+    } else {
+      navigate("/dashboard")
+    }
   }
 
   return <AuthForm mode="login" onSubmit={handleLogin} />
