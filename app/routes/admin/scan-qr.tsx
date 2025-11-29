@@ -200,9 +200,9 @@ const ScanQR = () => {
                 }`}>
                   <div className="flex items-start gap-3">
                     {scanResult.success ? (
-                      <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 className="w-6 h-6 text-green-600 shrink-0 mt-0.5" />
                     ) : (
-                      <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+                      <XCircle className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
                     )}
                     <div className="flex-1">
                       <h3 className={`font-semibold ${
@@ -285,8 +285,8 @@ const ScanQR = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary-100 text-white rounded-full flex items-center justify-center font-bold">
+              <div className="flex gap-3">
+              <div className="shrink-0 w-8 h-8 bg-primary-100 text-white rounded-full flex items-center justify-center font-bold">
                 1
               </div>
               <div>
@@ -297,7 +297,7 @@ const ScanQR = () => {
               </div>
             </div>
             <div className="flex gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary-100 text-white rounded-full flex items-center justify-center font-bold">
+              <div className="shrink-0 w-8 h-8 bg-primary-100 text-white rounded-full flex items-center justify-center font-bold">
                 2
               </div>
               <div>
@@ -308,7 +308,7 @@ const ScanQR = () => {
               </div>
             </div>
             <div className="flex gap-3">
-              <div className="flex-shrink-0 w-8 h-8 bg-primary-100 text-white rounded-full flex items-center justify-center font-bold">
+              <div className="shrink-0 w-8 h-8 bg-primary-100 text-white rounded-full flex items-center justify-center font-bold">
                 3
               </div>
               <div>

@@ -1,12 +1,12 @@
 import { useState } from "react"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
-import { UserRole } from "~/types/auth"
+import { UserRole, CustomerType } from "~/types/auth"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
 
 
 interface AuthFormProps {
-  onSubmit?: (data: { email: string; password: string; role: UserRole }) => void | Promise<void>
+  onSubmit?: (data: { email: string; password: string; role: UserRole; customerType?: CustomerType }) => void | Promise<void>
   mode?: "login" | "signup"
 }
 
@@ -14,6 +14,7 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [role, setRole] = useState<UserRole>(UserRole.CASHIER)
+  const [customerType, setCustomerType] = useState<CustomerType>(CustomerType.STUDENT)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -33,7 +34,7 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
 
     setIsLoading(true)
     try {
-      await onSubmit?.({ email, password, role })
+      await onSubmit?.({ email, password, role, customerType: role === UserRole.CLIENT ? customerType : undefined })
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -46,8 +47,8 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
       <Card className="w-full max-w-md border-black/10">
         <CardHeader className="flex flex-col items-center">
           <div className=" size-20 md:size-25">
-        <img src="../../assets/icons/user.png" alt="" />
-      </div>
+            <img src="../../assets/icons/user.png" alt="" />
+          </div>
           <CardTitle className="text-2xl font-bold text-center text-slate-700">
             {mode === "login" ? "Welcome Back" : "Create Account"}
           </CardTitle>
@@ -83,6 +84,24 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
             </div>
 
             <div className="space-y-2">
+
+            {role === UserRole.CLIENT && (
+              <div className="space-y-2">
+                <label htmlFor="customerType" className="text-sm font-medium text-gray-700">
+                  Customer Type
+                </label>
+                <select
+                  id="customerType"
+                  value={customerType}
+                  onChange={(e) => setCustomerType(e.target.value as CustomerType)}
+                  disabled={isLoading}
+                  className="flex h-9 w-full rounded-md border-black/10 border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value={CustomerType.STUDENT}>Student</option>
+                  <option value={CustomerType.CAMPUS_WORKER}>Campus Worker</option>
+                </select>
+              </div>
+            )}
               <label htmlFor="password" className="text-sm font-medium text-gray-700">
                 Password
               </label>
