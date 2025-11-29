@@ -24,13 +24,19 @@ const Subscription = () => {
   const isCashier = role === UserRole.CASHIER;
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [customerTypeFilter, setCustomerTypeFilter] = useState<string>("All");
+  const [subscriptionTypeFilter , setSubscriptionTypeFilter] = useState<string>("All");
   const itemsPerPage = 8;
 
-  const filteredData = subscriptionData.filter(
-    (item) =>
+  const filteredData = subscriptionData.filter((item) => {
+    const matchesSearch =
       item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.includes(searchTerm)
-  );
+      item.id.includes(searchTerm);
+    const matchesCustomerType =
+      customerTypeFilter === "All" || item.customerType === customerTypeFilter;
+    const matchesSubscriptionType = subscriptionTypeFilter === 'All' || item.subscriptionType === subscriptionTypeFilter;
+    return matchesSearch && matchesCustomerType && matchesSubscriptionType;
+  });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -80,15 +86,30 @@ const Subscription = () => {
               />
             </div>
             <div className="flex flex-wrap gap-2 md:gap-3 w-full md:w-auto">
-              <Button variant="outline" className="text-sm border-gray-300">
-                Subscription <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
-              <Button variant="outline" className="text-sm border-gray-300">
-                Status <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
-              <Button variant="outline" className="text-sm border-gray-300">
+              <select name="" className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white" value={subscriptionTypeFilter} onChange={(e)=>setSubscriptionTypeFilter(e.target.value)}>
+                <option value="All">Subscription Type: All</option>
+                <option value="VVIP">VVIP</option>
+                <option value="Vip">VIP</option>
+                <option value="Ordinary">Ordinary</option>
+
+              </select>
+              <div className="relative">
+                <select
+                  value={customerTypeFilter}
+                  onChange={(e) => setCustomerTypeFilter(e.target.value)}
+                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+                >
+                  <option value="All">Customer Type: All</option>
+                  <option value="Student">Student</option>
+                  <option value="Campus Worker">Campus Worker</option>
+                  <option value="Regular">Regular</option>
+                </select>
+              </div>
+              {!isCashier &&(
+                <Button variant="outline" className="text-sm border-gray-300">
                 Branch <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
+              )}
               <Button variant="outline" className="text-sm border-gray-300">
                 <Calendar className="w-4 h-4 mr-2" /> Date Range
               </Button>
@@ -112,8 +133,11 @@ const Subscription = () => {
                 <TableHead className="whitespace-nowrap">Reg Number</TableHead>
                 <TableHead className="whitespace-nowrap">Client ID</TableHead>
                 <TableHead className="whitespace-nowrap hidden lg:table-cell">Subscription Type</TableHead>
+                <TableHead className="whitespace-nowrap hidden md:table-cell">Customer Type</TableHead>
                 <TableHead className="whitespace-nowrap hidden md:table-cell">Date Started</TableHead>
-                <TableHead className="whitespace-nowrap hidden xl:table-cell">Last Meal Date</TableHead>
+                {!isCashier && (
+                  <TableHead className="whitespace-nowrap hidden xl:table-cell">Branch</TableHead>
+                )}
                 <TableHead className="whitespace-nowrap">Total Meals</TableHead>
                 <TableHead className="whitespace-nowrap">Meals Left</TableHead>
                 <TableHead className="whitespace-nowrap">Payment</TableHead>
@@ -128,8 +152,11 @@ const Subscription = () => {
                   <TableCell className="font-mono text-xs">{item.id}</TableCell>
                   <TableCell className="font-medium text-black">{item.clientName}</TableCell>
                   <TableCell className="hidden lg:table-cell">{item.subscriptionType}</TableCell>
+                  <TableCell className="hidden md:table-cell">{item.customerType}</TableCell>
                   <TableCell className="hidden md:table-cell text-sm">{item.dateStarted}</TableCell>
-                  <TableCell className="hidden xl:table-cell text-sm">{item.lastMealDate}</TableCell>
+                  {!isCashier && (
+                    <TableCell className="hidden xl:table-cell text-sm">{item.branch}</TableCell>
+                  )}
                   <TableCell className="font-semibold">{item.totalMeals}</TableCell>
                   <TableCell className="font-semibold">{item.mealsLeft}</TableCell>
                   <TableCell>
