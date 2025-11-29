@@ -13,17 +13,48 @@ import {
 } from "~/components/ui/table";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
+import { exportToCsv } from "~\/lib\/utils";
 
 const MealsLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [branchFilter, setBranchFilter] = useState<string>("All");
+  const [scannedByFilter, setScannedByFilter] = useState<string>("All");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const itemsPerPage = 8;
 
-  const filteredData = mealsLogsData.filter(
-    (item) =>
-      item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.clientId.includes(searchTerm)
-  );
+  const MONTHS: Record<string, number> = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+  // dateTime format example: "Jan 6, 2022 07:00 AM"
+  const toDateKey = (value: string | undefined | null): number | null => {
+    if (!value) return null;
+    const v = value.trim();
+    const [datePart] = v.split(" ").slice(0, 3); // "Jan 6, 2022"
+    const cleaned = datePart.replace(",", "");
+    const segs = cleaned.split(/\s+/);
+    if (segs.length !== 3) return null;
+    const mon = MONTHS[segs[0] as keyof typeof MONTHS];
+    const d = Number(segs[1]);
+    const y = Number(segs[2]);
+    if (!mon || !d || !y) return null;
+    return y * 10000 + mon * 100 + d;
+  };
+
+  const filteredData = mealsLogsData.filter((item) => {
+    const matchesSearch = item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || item.clientId.includes(searchTerm);
+    const matchesBranch = branchFilter === "All" || item.branch === branchFilter;
+    const matchesScannedBy = scannedByFilter === "All" || item.scannedBy === scannedByFilter;
+    const itemKey = toDateKey(item.dateTime);
+    const fromKey = startDate ? Number(startDate.replace(/-/g, "")) : null; // YYYYMMDD
+    const toKey = endDate ? Number(endDate.replace(/-/g, "")) : null;
+    const withinRange = (() => {
+      if (!itemKey) return true;
+      if (fromKey && itemKey < fromKey) return false;
+      if (toKey && itemKey > toKey) return false;
+      return true;
+    })();
+    return matchesSearch && matchesBranch && matchesScannedBy && withinRange;
+  });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -31,6 +62,35 @@ const MealsLogs = () => {
     startIndex,
     startIndex + itemsPerPage
   );
+
+  const handleExport = () => {
+    const headers = [
+      "Client ID",
+      "Client Name",
+      "Meal Used",
+      "Meals Left",
+      "Date",
+      "Time",
+      "Scanned By",
+      "Branch",
+    ];
+    const rows = filteredData.map((item) => {
+      const dateSegs = item.dateTime.split(" ");
+      const dateStr = `${dateSegs[0]} ${dateSegs[1]} ${dateSegs[2]}`;
+      const timeStr = `${dateSegs[3]} ${dateSegs[4] ?? ""}`.trim();
+      return [
+        item.clientId,
+        item.clientName,
+        item.mealUsed,
+        item.mealsLeft,
+        dateStr,
+        timeStr,
+        item.scannedBy,
+        item.branch,
+      ];
+    });
+    exportToCsv(headers, rows, "meals_logs");
+  };
 
   return (
     <main className="dashboard wrapper">
@@ -58,16 +118,63 @@ const MealsLogs = () => {
               />
             </div>
             <div className="flex flex-wrap gap-2 md:gap-3 w-full md:w-auto">
-              <Button variant="outline" className="text-sm border-gray-300">
-                Branch <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
-              <Button variant="outline" className="text-sm border-gray-300">
-                Scanned By <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
-              <Button variant="outline" className="text-sm border-gray-300">
-                <Calendar className="w-4 h-4 mr-2" /> Date Range
-              </Button>
-              <Button variant="outline" className="text-sm border-gray-300">
+              <div className="relative">
+                <select
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+                >
+                  <option value="All">Branch: All</option>
+                  <option value="KIGALI">KIGALI</option>
+                  <option value="HUYE">HUYE</option>
+                  <option value="MUSANZE">MUSANZE</option>
+                  <option value="RUBAVU">RUBAVU</option>
+                  <option value="NYARUGENGE">NYARUGENGE</option>
+                  <option value="GASABO">GASABO</option>
+                  <option value="KICUKIRO">KICUKIRO</option>
+                  <option value="RUSIZI">RUSIZI</option>
+                </select>
+              </div>
+              <div className="relative">
+                <select
+                  value={scannedByFilter}
+                  onChange={(e) => setScannedByFilter(e.target.value)}
+                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+                >
+                  <option value="All">Scanned By: All</option>
+                  <option value="James Anderson">James Anderson</option>
+                  <option value="Michael Johnson">Michael Johnson</option>
+                  <option value="David Brown">David Brown</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1">
+                  <Calendar className="w-4 h-4" />
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="text-sm outline-none"
+                  />
+                  <span className="text-gray-400">to</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="text-sm outline-none"
+                  />
+                </div>
+                {(startDate || endDate) && (
+                  <Button
+                    variant="ghost"
+                    className="text-sm"
+                    onClick={() => { setStartDate(""); setEndDate(""); }}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+              <Button variant="outline" className="text-sm border-gray-300" onClick={handleExport}>
                 <Download className="w-4 h-4 mr-2" /> Export
               </Button>
             </div>

@@ -2,104 +2,31 @@ import { Header } from "../../../components/Header";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import StatsCard from "../../../components/StatsCard";
 import { subscriptionStats, subscriptionData } from "app/constants";
-import { Search, ChevronDown, Calendar, MoreHorizontal, Download } from "lucide-react";
-import { useState } from "react";
+import { Search, ChevronDown, Download } from "lucide-react";
+// Local component state no longer needed after hook integration
 import { useAppSelector } from "~\/store\/hooks";
 import { UserRole } from "~\/types\/auth";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
+import { exportToCsv } from "~\/lib\/utils";
+import { useSubscriptionFilters } from "~\/hooks\/useSubscriptionFilters";
+import SubscriptionTable from "~\/components\/subscriptions\/SubscriptionTable";
 
 const Subscription = () => {
   const { user } = useAppSelector((state) => state.auth);
   const role = user?.role;
   const isAdminOrCashier = role === UserRole.ADMIN || role === UserRole.CASHIER;
   const isCashier = role === UserRole.CASHIER;
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [customerTypeFilter, setCustomerTypeFilter] = useState<string>("All");
-  const [subscriptionTypeFilter , setSubscriptionTypeFilter] = useState<string>("All");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
-  const itemsPerPage = 8;
-
-  const MONTHS: Record<string, number> = {
-    Jan: 1,
-    Feb: 2,
-    Mar: 3,
-    Apr: 4,
-    May: 5,
-    Jun: 6,
-    Jul: 7,
-    Aug: 8,
-    Sep: 9,
-    Oct: 10,
-    Nov: 11,
-    Dec: 12,
-  };
-
-  // Convert a date string to a comparable yyyymmdd number.
-  // Supports formats: "YYYY-MM-DD" and "Mon D, YYYY" (e.g., "Jan 6, 2022").
-  const toDateKey = (value: string | undefined | null): number | null => {
-    if (!value) return null;
-    const v = value.trim();
-    // ISO-like format from <input type="date">
-    if (v.includes("-")) {
-      const parts = v.split("-");
-      if (parts.length !== 3) return null;
-      const y = Number(parts[0]);
-      const m = Number(parts[1]);
-      const d = Number(parts[2]);
-      if (!y || !m || !d) return null;
-      return y * 10000 + m * 100 + d;
-    }
-    // "Mon D, YYYY"
-    const cleaned = v.replace(",", "");
-    const segs = cleaned.split(/\s+/);
-    if (segs.length !== 3) return null;
-    const mon = MONTHS[segs[0] as keyof typeof MONTHS];
-    const d = Number(segs[1]);
-    const y = Number(segs[2]);
-    if (!mon || !d || !y) return null;
-    return y * 10000 + mon * 100 + d;
-  };
-
-  const filteredData = subscriptionData.filter((item) => {
-    const matchesSearch =
-      item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.id.includes(searchTerm);
-    const matchesCustomerType =
-      customerTypeFilter === "All" || item.customerType === customerTypeFilter;
-    const matchesSubscriptionType = subscriptionTypeFilter === 'All' || item.subscriptionType === subscriptionTypeFilter;
-    const itemKey = toDateKey(item.dateStarted);
-    const fromKey = toDateKey(startDate);
-    const toKey = toDateKey(endDate);
-    const withinRange = (() => {
-      if (!itemKey) return true;
-      if (fromKey && itemKey < fromKey) return false;
-      if (toKey && itemKey > toKey) return false;
-      return true;
-    })();
-    return matchesSearch && matchesCustomerType && matchesSubscriptionType && withinRange;
-  });
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
+  const {
+    state: { searchTerm, subscriptionTypeFilter, customerTypeFilter, startDate, endDate, currentPage },
+    setters: { setSearchTerm, setSubscriptionTypeFilter, setCustomerTypeFilter, setStartDate, setEndDate, setCurrentPage, clearDates },
+    filteredData,
+    paginatedData,
+    totalPages,
+    exportRows,
+  } = useSubscriptionFilters({ data: subscriptionData });
 
   const handleExport = () => {
-    const rows = filteredData; // export all filtered rows (not only current page)
-
     const headers = [
       "Reg Number",
       "Client ID",
@@ -111,49 +38,8 @@ const Subscription = () => {
       "Meals Left",
       "Payment",
     ];
-
-    const escape = (val: unknown) => {
-      const s = val == null ? "" : String(val);
-      const needsQuotes = /[",\n\r]/.test(s);
-      const escaped = s.replace(/"/g, '""');
-      return needsQuotes ? `"${escaped}"` : escaped;
-    };
-
-    const lines: string[] = [];
-    lines.push(headers.map(escape).join(","));
-
-    for (const item of rows) {
-      const row = [
-        item.id,
-        item.clientName,
-        item.subscriptionType,
-        item.customerType,
-        item.dateStarted,
-        ...(isCashier ? [] : [item.branch ?? ""]),
-        item.totalMeals,
-        item.mealsLeft,
-        item.payment,
-      ];
-      lines.push(row.map(escape).join(","));
-    }
-
-    const csvContent = lines.join("\r\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const now = new Date();
-    const ts = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
-      now.getDate()
-    ).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(
-      2,
-      "0"
-    )}`;
-    a.href = url;
-    a.download = `subscriptions_${ts}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const rows = exportRows(!isCashier);
+    exportToCsv(headers, rows, "subscriptions");
   };
 
   return (
@@ -244,7 +130,7 @@ const Subscription = () => {
                   <Button
                     variant="ghost"
                     className="text-sm"
-                    onClick={() => { setStartDate(""); setEndDate(""); }}
+                    onClick={clearDates}
                   >
                     Clear
                   </Button>
@@ -264,67 +150,12 @@ const Subscription = () => {
 
         </div>
         {/* Table */}
-        <div className="overflow-x-auto text-gray-500">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="whitespace-nowrap">Reg Number</TableHead>
-                <TableHead className="whitespace-nowrap">Client ID</TableHead>
-                <TableHead className="whitespace-nowrap hidden lg:table-cell">Subscription Type</TableHead>
-                <TableHead className="whitespace-nowrap hidden md:table-cell">Customer Type</TableHead>
-                <TableHead className="whitespace-nowrap hidden md:table-cell">Date Started</TableHead>
-                {!isCashier && (
-                  <TableHead className="whitespace-nowrap hidden xl:table-cell">Branch</TableHead>
-                )}
-                <TableHead className="whitespace-nowrap">Total Meals</TableHead>
-                <TableHead className="whitespace-nowrap">Meals Left</TableHead>
-                <TableHead className="whitespace-nowrap">Payment</TableHead>
-                {!isCashier && (
-                  <TableHead className="whitespace-nowrap">Action</TableHead>
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-mono text-xs">{item.id}</TableCell>
-                  <TableCell className="font-medium text-black">{item.clientName}</TableCell>
-                  <TableCell className="hidden lg:table-cell">{item.subscriptionType}</TableCell>
-                  <TableCell className="hidden md:table-cell">{item.customerType}</TableCell>
-                  <TableCell className="hidden md:table-cell text-sm">{item.dateStarted}</TableCell>
-                  {!isCashier && (
-                    <TableCell className="hidden xl:table-cell text-sm">{item.branch}</TableCell>
-                  )}
-                  <TableCell className="font-semibold">{item.totalMeals}</TableCell>
-                  <TableCell className="font-semibold">{item.mealsLeft}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
-                        item.payment === "Cash"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {item.payment}
-                    </span>
-                  </TableCell>
-                  {!isCashier && (
-                    <TableCell>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <SubscriptionTable items={paginatedData} isCashier={isCashier} />
 
         {/* Pagination */}
         <div className="px-4 md:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
             variant="outline"
           >
@@ -346,7 +177,7 @@ const Subscription = () => {
             ))}
           </div>
           <Button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
             variant="outline"
           >
