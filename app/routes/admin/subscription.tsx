@@ -97,6 +97,65 @@ const Subscription = () => {
     startIndex + itemsPerPage
   );
 
+  const handleExport = () => {
+    const rows = filteredData; // export all filtered rows (not only current page)
+
+    const headers = [
+      "Reg Number",
+      "Client ID",
+      "Subscription Type",
+      "Customer Type",
+      "Date Started",
+      ...(isCashier ? [] : ["Branch"]),
+      "Total Meals",
+      "Meals Left",
+      "Payment",
+    ];
+
+    const escape = (val: unknown) => {
+      const s = val == null ? "" : String(val);
+      const needsQuotes = /[",\n\r]/.test(s);
+      const escaped = s.replace(/"/g, '""');
+      return needsQuotes ? `"${escaped}"` : escaped;
+    };
+
+    const lines: string[] = [];
+    lines.push(headers.map(escape).join(","));
+
+    for (const item of rows) {
+      const row = [
+        item.id,
+        item.clientName,
+        item.subscriptionType,
+        item.customerType,
+        item.dateStarted,
+        ...(isCashier ? [] : [item.branch ?? ""]),
+        item.totalMeals,
+        item.mealsLeft,
+        item.payment,
+      ];
+      lines.push(row.map(escape).join(","));
+    }
+
+    const csvContent = lines.join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const now = new Date();
+    const ts = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+      now.getDate()
+    ).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(
+      2,
+      "0"
+    )}`;
+    a.href = url;
+    a.download = `subscriptions_${ts}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <main className="dashboard wrapper">
       <Header
@@ -108,7 +167,8 @@ const Subscription = () => {
       />
 
       {/* Stats Cards Section */}
-      <section className="flex flex-col gap-6">
+      {!isCashier&&(
+        <section className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
           {subscriptionStats.map((stat) => (
             <StatsCard
@@ -121,13 +181,13 @@ const Subscription = () => {
           ))}
         </div>
       </section>
+      )}
 
       {/* Subscription Table Section */}
-      <section className="mt-6 bg-white rounded-lg shadow-sm ">
+      <section className="bg-white rounded-lg shadow-sm ">
         {/* Search and Filters */}
-        <div className="p-4 md:p-6 border-b border-gray-200">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div className="w-full md:flex-1 md:max-w-md relative">
+        <div className="flex flex-col p-4 border-b border-gray-200 gap-4">
+          <div className="w-full md:flex-1 md:max-w-md relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 type="text"
@@ -137,19 +197,21 @@ const Subscription = () => {
                 className="w-full pl-10 border-gray-300"
               />
             </div>
+        <div className="">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <div className="flex flex-wrap gap-2 md:gap-3 w-full md:w-auto">
-              <select name="" className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white" value={subscriptionTypeFilter} onChange={(e)=>setSubscriptionTypeFilter(e.target.value)}>
+              <select name="" className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white w-full md:w-auto" value={subscriptionTypeFilter} onChange={(e)=>setSubscriptionTypeFilter(e.target.value)}>
                 <option value="All">Subscription Type: All</option>
                 <option value="VVIP">VVIP</option>
                 <option value="Vip">VIP</option>
                 <option value="Ordinary">Ordinary</option>
 
               </select>
-              <div className="relative">
+              <div className="relative w-full md:w-auto">
                 <select
                   value={customerTypeFilter}
                   onChange={(e) => setCustomerTypeFilter(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white w-full md:w-auto "
                 >
                   <option value="All">Customer Type: All</option>
                   <option value="Student">Student</option>
@@ -162,9 +224,8 @@ const Subscription = () => {
                 Branch <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
               )}
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1">
-                  <Calendar className="w-4 h-4" />
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1 w-full md:w-auto">
                   <input
                     type="date"
                     value={startDate}
@@ -189,7 +250,7 @@ const Subscription = () => {
                   </Button>
                 )}
               </div>
-              <Button variant="outline" className="text-sm border-gray-300">
+              <Button variant="outline" className="text-sm border-gray-300" onClick={handleExport}>
                 <Download className="w-4 h-4 mr-2" /> Export
               </Button>
               {isAdminOrCashier ? (
@@ -201,6 +262,7 @@ const Subscription = () => {
           </div>
         </div>
 
+        </div>
         {/* Table */}
         <div className="overflow-x-auto text-gray-500">
           <Table>
