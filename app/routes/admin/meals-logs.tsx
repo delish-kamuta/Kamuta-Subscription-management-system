@@ -1,7 +1,7 @@
 import { Header } from "../../../components/Header";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { mealsLogsData } from "app/constants";
-import { Search, ChevronDown, Calendar, MoreHorizontal, Download } from "lucide-react";
+import { Search, Calendar, MoreHorizontal, Download } from "lucide-react";
 import { useState } from "react";
 import {
   Table,
@@ -14,6 +14,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~\/lib\/utils";
+import { toDateKey, isWithinRange } from "~\/lib\/date";
 
 const MealsLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,35 +25,16 @@ const MealsLogs = () => {
   const [endDate, setEndDate] = useState<string>("");
   const itemsPerPage = 8;
 
-  const MONTHS: Record<string, number> = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
-  // dateTime format example: "Jan 6, 2022 07:00 AM"
-  const toDateKey = (value: string | undefined | null): number | null => {
-    if (!value) return null;
-    const v = value.trim();
-    const [datePart] = v.split(" ").slice(0, 3); // "Jan 6, 2022"
-    const cleaned = datePart.replace(",", "");
-    const segs = cleaned.split(/\s+/);
-    if (segs.length !== 3) return null;
-    const mon = MONTHS[segs[0] as keyof typeof MONTHS];
-    const d = Number(segs[1]);
-    const y = Number(segs[2]);
-    if (!mon || !d || !y) return null;
-    return y * 10000 + mon * 100 + d;
-  };
+  // Use shared date utils for consistent range filtering
 
   const filteredData = mealsLogsData.filter((item) => {
     const matchesSearch = item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || item.clientId.includes(searchTerm);
     const matchesBranch = branchFilter === "All" || item.branch === branchFilter;
     const matchesScannedBy = scannedByFilter === "All" || item.scannedBy === scannedByFilter;
     const itemKey = toDateKey(item.dateTime);
-    const fromKey = startDate ? Number(startDate.replace(/-/g, "")) : null; // YYYYMMDD
-    const toKey = endDate ? Number(endDate.replace(/-/g, "")) : null;
-    const withinRange = (() => {
-      if (!itemKey) return true;
-      if (fromKey && itemKey < fromKey) return false;
-      if (toKey && itemKey > toKey) return false;
-      return true;
-    })();
+    const fromKey = toDateKey(startDate);
+    const toKey = toDateKey(endDate);
+    const withinRange = isWithinRange(itemKey, fromKey, toKey);
     return matchesSearch && matchesBranch && matchesScannedBy && withinRange;
   });
 
