@@ -2,10 +2,13 @@ import {Button} from '~/components/ui/button'
 import { Search,Ticket,Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '~/components/ui/sheet'
+import { subscriptionData } from 'app/constants'
 
 const QuickAction = () => {
   const [openRegister, setOpenRegister] = useState(false);
   const [openFind, setOpenFind] = useState(false);
+  const [findQuery, setFindQuery] = useState('');
+  const [findResults, setFindResults] = useState<any[]>([]);
   const [openTicket, setOpenTicket] = useState(false);
   return (
 <div className='flex flex-col gap-5 w-full'>
@@ -15,7 +18,7 @@ const QuickAction = () => {
     <div className='flex flex-col justify-between lg:gap-5 md:flex-row md:gap-0 gap-5'>
       <Button size='icon-lg' onClick={() => setOpenRegister(true)} className=' md:w-auto lg:w-[30%] px-2 bg-blue-600 text-white h-[50px] w-full '><Wallet/>Register New Subscription</Button>
       <Button size='icon-lg' onClick={() => setOpenFind(true)} className='md:w-[30%] lg:w-[30%] bg-blue-600 text-white h-[50px] w-full'> <Search/>Find Client</Button>
-      <Button size='icon-lg' onClick={() => setOpenTicket(true)} className='md:w-[30%] lg:w-[30%] bg-blue-600 text-white h-[50px] w-full'> <Ticket/>Sell walk-in Ticket</Button>
+      <Button size='icon-lg' onClick={() => setOpenTicket(true)} className='md:w-[30%] lg:w-[30%] bg-blue-600 text-white h-[50px] w-full'> <Ticket/>Generate Ticket</Button>
     </div>
     {/* Register Subscription Sheet */}
     <Sheet open={openRegister} onOpenChange={setOpenRegister}>
@@ -64,40 +67,108 @@ const QuickAction = () => {
     </Sheet>
     {/* Find Client Sheet */}
     <Sheet open={openFind} onOpenChange={setOpenFind}>
-      <SheetContent side='right' className='w-full sm:max-w-md'>
+      <SheetContent side='right' className='w-full sm:max-w-lg p-6 bg-white border-none'>
         <SheetHeader>
           <SheetTitle>Find Client</SheetTitle>
           <SheetDescription>Search by name or ID to view details.</SheetDescription>
         </SheetHeader>
-        <div className='mt-4 space-y-3'>
-          <input className='w-full border rounded-md px-3 py-2' placeholder='Search by name or ID' />
+        <div className='mt-4 space-y-4'>
+          <div className='flex gap-2'>
+            <input
+              className='flex-1 border rounded-md px-3 py-2'
+              placeholder='Search by name or Reg number'
+              value={findQuery}
+              onChange={(e) => setFindQuery(e.target.value)}
+            />
+            <Button
+              onClick={() => {
+                const q = findQuery.trim().toLowerCase();
+                const results = subscriptionData.filter((s) =>
+                  s.clientName.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
+                );
+                setFindResults(results);
+              }}
+            >
+              Search
+            </Button>
+          </div>
+          {/* Results */}
+          <div className='border rounded-md'>
+            <div className='grid grid-cols-5 gap-2 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700'>
+              <span>Reg #</span>
+              <span>Client</span>
+              <span className='hidden md:block'>Type</span>
+              <span className='hidden md:block'>Meals Left</span>
+              <span className='text-right'>Action</span>
+            </div>
+            <div className='max-h-64 overflow-y-auto'>
+              {findResults.length === 0 ? (
+                <div className='px-3 py-4 text-sm text-gray-500'>No results</div>
+              ) : (
+                findResults.map((item) => (
+                  <div key={item.id} className='grid grid-cols-5 gap-2 px-3 py-2 border-t text-sm'>
+                    <span className='font-mono'>{item.id}</span>
+                    <span className='font-medium'>{item.clientName}</span>
+                    <span className='hidden md:block'>{item.subscriptionType}</span>
+                    <span className='hidden md:block'>{item.mealsLeft}</span>
+                    <span className='text-right'>
+                      <Button size='sm' variant='outline' onClick={() => setOpenFind(false)}>View</Button>
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
           <div className='flex justify-end gap-2'>
             <Button variant='outline' onClick={() => setOpenFind(false)}>Close</Button>
-            <Button>Search</Button>
           </div>
         </div>
       </SheetContent>
     </Sheet>
-    {/* Sell Ticket Sheet */}
+    {/* Generate Ticket Sheet */}
     <Sheet open={openTicket} onOpenChange={setOpenTicket}>
-      <SheetContent side='right' className='w-full sm:max-w-md'>
+      <SheetContent side='right' className='w-full sm:max-w-lg bg-white p-6 border-none'>
         <SheetHeader>
-          <SheetTitle>Sell Walk-in Ticket</SheetTitle>
-          <SheetDescription>Record a walk-in ticket sale.</SheetDescription>
+          <SheetTitle>Generate Ticket</SheetTitle>
+          <SheetDescription>Select items and quantities, then generate.</SheetDescription>
         </SheetHeader>
-        <div className='mt-4 space-y-3'>
-          <input className='w-full border rounded-md px-3 py-2' placeholder='Customer Name (optional)' />
-          <select className='w-full border rounded-md px-3 py-2'>
-            <option>Meal Type</option>
-            <option>Breakfast</option>
-            <option>Lunch</option>
-            <option>Dinner</option>
-          </select>
-          <div className='flex justify-end gap-2'>
-            <Button variant='outline' onClick={() => setOpenTicket(false)}>Cancel</Button>
-            <Button>Record Sale</Button>
+        <form className='mt-6 space-y-6'>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium text-gray-700'>Meal type</label>
+              <select className='w-full border rounded-md px-3 py-2'>
+                <option value='Standard'>Standard</option>
+                <option value='Breakfast'>Breakfast</option>
+                <option value='Lunch'>Lunch</option>
+                <option value='Dinner'>Dinner</option>
+              </select>
+            </div>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium text-gray-700'>Quantity</label>
+              <input type='number' min={1} className='w-full border rounded-md px-3 py-2' placeholder='e.g., 1' />
+            </div>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium text-gray-700'>Extras</label>
+              <select className='w-full border rounded-md px-3 py-2'>
+                <option value='None'>None</option>
+                <option value='FANTA'>FANTA</option>
+                <option value='Coke'>Coke</option>
+                <option value='Juice'>Juice</option>
+              </select>
+            </div>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium text-gray-700'>Quantity of Extras</label>
+              <input type='number' min={0} className='w-full border rounded-md px-3 py-2' placeholder='e.g., 0' />
+            </div>
+            <div className='space-y-2 md:col-span-2'>
+              <label className='text-sm font-medium text-gray-700'>Total Price: RWF</label>
+              <input type='number' min={0} className='w-full border rounded-md px-3 py-2' placeholder='e.g., 2000' />
+            </div>
           </div>
-        </div>
+          <div className='flex justify-end'>
+            <Button className='bg-blue-600 text-white px-6'>Generate Ticket</Button>
+          </div>
+        </form>
       </SheetContent>
     </Sheet>
 </div>
