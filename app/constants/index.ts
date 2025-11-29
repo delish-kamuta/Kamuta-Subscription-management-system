@@ -27,7 +27,7 @@ export const sidebarItems = [
     icon: HandPlatter,
     label: "Meals Logs",
     href: "/meals-logs",
-    roles: ["admin"], // Only for staff
+    roles: ["admin","cashier"], // Only for staff and cashier
   },
   {
     id: 5,
@@ -41,14 +41,14 @@ export const sidebarItems = [
     icon: Banknote,
     label: "Payments",
     href: "/payments",
-    roles: ["cashier", "admin"], // Only for cashier and admin
+    roles: ["admin"], // Only for admin
   },
   {
     id: 7,
     icon: Settings,
     label: "Settings",
     href: "/settings",
-    roles: ["client", "cashier", "scanner", "admin"], // Available to all roles
+    roles: ["admin"], // Available to all roles
   },
 ];
 

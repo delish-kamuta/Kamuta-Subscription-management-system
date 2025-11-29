@@ -4,6 +4,8 @@ import StatsCard from "../../../components/StatsCard";
 import { subscriptionStats, subscriptionData } from "app/constants";
 import { Search, ChevronDown, Calendar, MoreHorizontal, Download } from "lucide-react";
 import { useState } from "react";
+import { useAppSelector } from "~\/store\/hooks";
+import { UserRole } from "~\/types\/auth";
 import {
   Table,
   TableBody,
@@ -16,6 +18,10 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 
 const Subscription = () => {
+  const { user } = useAppSelector((state) => state.auth);
+  const role = user?.role;
+  const isAdminOrCashier = role === UserRole.ADMIN || role === UserRole.CASHIER;
+  const isCashier = role === UserRole.CASHIER;
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -89,7 +95,11 @@ const Subscription = () => {
               <Button variant="outline" className="text-sm border-gray-300">
                 <Download className="w-4 h-4 mr-2" /> Export
               </Button>
-              <Button className="text-sm text-white bg-primary-100">Add Subscription</Button>
+              {isAdminOrCashier ? (
+                <Button className="text-sm text-white bg-primary-100">Generate QR Code</Button>
+              ) : (
+                <Button className="text-sm text-white bg-primary-100">Add Subscription</Button>
+              )}
             </div>
           </div>
         </div>
@@ -107,7 +117,9 @@ const Subscription = () => {
                 <TableHead className="whitespace-nowrap">Total Meals</TableHead>
                 <TableHead className="whitespace-nowrap">Meals Left</TableHead>
                 <TableHead className="whitespace-nowrap">Payment</TableHead>
-                <TableHead className="whitespace-nowrap">Action</TableHead>
+                {!isCashier && (
+                  <TableHead className="whitespace-nowrap">Action</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -131,11 +143,13 @@ const Subscription = () => {
                       {item.payment}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                  {!isCashier && (
+                    <TableCell>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
