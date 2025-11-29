@@ -24,6 +24,24 @@ const QuickAction = () => {
   const [ticketQr, setTicketQr] = useState<string>('');
   const [ticketGenerated, setTicketGenerated] = useState<boolean>(false);
 
+  // Auto-refresh QR every 30s while ticket sheet is open and generated
+  useEffect(() => {
+    if (!openTicket || !ticketGenerated) return;
+
+    const refresh = () => {
+      const type = selectedClient?.customerType || 'Student';
+      const dateStr = dayjs().format('D MMM YYYY');
+      const qrContent = JSON.stringify({ id: ticketId, type, meal: mealType, extras, date: dateStr, ts: Date.now() });
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrContent)}&cacheBust=${Date.now()}`;
+      setTicketQr(qrUrl);
+    };
+
+    // Initial refresh immediately to ensure up-to-date timestamp
+    refresh();
+    const interval = setInterval(refresh, 20000);
+    return () => clearInterval(interval);
+  }, [openTicket, ticketGenerated, ticketId, mealType, extras, selectedClient]);
+
   // Print ticket content in a clean window
   const handlePrint = () => {
     const win = window.open('', '_blank', 'width=800,height=900');
