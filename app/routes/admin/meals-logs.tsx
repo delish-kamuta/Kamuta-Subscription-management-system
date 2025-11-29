@@ -3,6 +3,7 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { mealsLogsData } from "app/constants";
 import { Search, Calendar, MoreHorizontal, Download } from "lucide-react";
 import { useState } from "react";
+import { UserRole } from "~/types/auth";
 import {
   Table,
   TableBody,
@@ -15,6 +16,7 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~\/lib\/utils";
 import { toDateKey, isWithinRange } from "~\/lib\/date";
+import { useAppSelector } from "~/store/hooks";
 
 const MealsLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,6 +26,11 @@ const MealsLogs = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const itemsPerPage = 8;
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+    
+    const userName = user?.name || "Guest";
+    const userRole = user?.role || UserRole.CASHIER;
+    const isCashier = userRole === UserRole.CASHIER;
 
   // Use shared date utils for consistent range filtering
 
@@ -101,7 +108,8 @@ const MealsLogs = () => {
             </div>
             <div className="flex flex-wrap gap-2 md:gap-3 w-full md:w-auto">
               <div className="relative">
-                <select
+                {!isCashier&&(
+                  <select
                   value={branchFilter}
                   onChange={(e) => setBranchFilter(e.target.value)}
                   className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
@@ -116,6 +124,7 @@ const MealsLogs = () => {
                   <option value="KICUKIRO">KICUKIRO</option>
                   <option value="RUSIZI">RUSIZI</option>
                 </select>
+                )}
               </div>
               <div className="relative">
                 <select
@@ -174,8 +183,12 @@ const MealsLogs = () => {
                 <TableHead className="whitespace-nowrap">Meals Left</TableHead>
                 <TableHead className="whitespace-nowrap hidden lg:table-cell">Date & Time</TableHead>
                 <TableHead className="whitespace-nowrap hidden md:table-cell">Scanned By</TableHead>
-                <TableHead className="whitespace-nowrap hidden xl:table-cell">Branch</TableHead>
-                <TableHead className="whitespace-nowrap">Action</TableHead>
+                {!isCashier&&(
+                  <TableHead className="whitespace-nowrap hidden xl:table-cell">Branch</TableHead>
+                )}
+                {!isCashier&&(
+                  <TableHead className="whitespace-nowrap">Action</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -199,12 +212,16 @@ const MealsLogs = () => {
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{item.scannedBy}</TableCell>
-                  <TableCell className="hidden xl:table-cell">{item.branch}</TableCell>
-                  <TableCell>
+                  {!isCashier&&(
+                    <TableCell className="hidden xl:table-cell">{item.branch}</TableCell>
+                  )}
+                  {!isCashier&&(
+                    <TableCell>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
