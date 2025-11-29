@@ -7,8 +7,8 @@ import { UserRole } from '~/types/auth';
 
 const AdminLayout = () => {
   return (
-    <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CASHIER, UserRole.WAITSTAFF, UserRole.CLIENT]}>
-      <SidebarProvider>
+    <SidebarProvider>
+      <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CASHIER, UserRole.WAITSTAFF, UserRole.CLIENT]}>
         <div className="admin-layout">
           <aside className=''>
             <AppSidebar />
@@ -18,8 +18,8 @@ const AdminLayout = () => {
             <Outlet />
           </main>
         </div>
-      </SidebarProvider>
-    </ProtectedRoute>
+      </ProtectedRoute>
+    </SidebarProvider>
   )
 }
 

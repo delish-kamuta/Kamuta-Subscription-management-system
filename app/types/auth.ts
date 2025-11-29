@@ -4,3 +4,8 @@ export enum UserRole {
   WAITSTAFF = "WAITSTAFF",
   CLIENT  = "CLIENT"
 }
+
+export enum CustomerType {
+  STUDENT = "STUDENT",
+  CAMPUS_WORKER = "CAMPUS_WORKER",
+}

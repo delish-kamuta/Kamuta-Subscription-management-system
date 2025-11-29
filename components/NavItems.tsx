@@ -3,12 +3,13 @@ import { SidebarMenuItem , SidebarMenuButton} from '~/components/ui/sidebar'
 import { sidebarItems } from '~/constants'
 import {cn} from '~/lib/utils';
 import { useAppSelector } from '~/store/hooks';
-import { UserRole } from '~/types/auth';
+import { UserRole, CustomerType } from '~/types/auth';
 
 const NavItems = () => {
   // Filter sidebar items based on user role
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-  const userRole = user?.role || UserRole.CASHIER;
+  // Default to CLIENT for guests (regular client without login)
+  const userRole = user?.role || UserRole.CLIENT;
   
   // Map UserRole enum to sidebar role strings
   const roleMap: Record<UserRole, string> = {
@@ -20,9 +21,16 @@ const NavItems = () => {
   
   const mappedRole = roleMap[userRole];
   
-  const filteredItems = sidebarItems.filter((item) =>
-    item.roles?.includes(mappedRole)
-  );
+  const filteredItems = sidebarItems
+    .filter((item) => item.roles?.includes(mappedRole))
+    .filter((item) => {
+      // Hide "My QR Code" for guests and regular clients
+      if (item.label === "My QR Code") {
+        if (!isAuthenticated) return false;
+        return user?.customerType === CustomerType.STUDENT || user?.customerType === CustomerType.CAMPUS_WORKER;
+      }
+      return true;
+    });
 
   return (
     <>

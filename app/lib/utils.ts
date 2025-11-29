@@ -68,3 +68,38 @@ export const formatKey = (key: keyof TripFormData) => {
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (str) => str.toUpperCase());
 };
+
+// Reusable CSV export utility
+export function exportToCsv(
+  headers: Array<string>,
+  rows: Array<Array<unknown>>, // array of row arrays in header order
+  filenameBase: string
+) {
+  const escape = (val: unknown) => {
+    const s = val == null ? "" : String(val);
+    const needsQuotes = /[",\n\r]/.test(s);
+    const escaped = s.replace(/"/g, '""');
+    return needsQuotes ? `"${escaped}"` : escaped;
+  };
+
+  const lines: string[] = [];
+  lines.push(headers.map(escape).join(","));
+  for (const row of rows) {
+    lines.push(row.map(escape).join(","));
+  }
+
+  const csvContent = lines.join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const now = new Date();
+  const ts = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+    now.getDate()
+  ).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+  a.href = url;
+  a.download = `${filenameBase}_${ts}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}

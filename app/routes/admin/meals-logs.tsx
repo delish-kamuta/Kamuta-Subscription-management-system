@@ -1,8 +1,9 @@
 import { Header } from "../../../components/Header";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { mealsLogsData } from "app/constants";
-import { Search, ChevronDown, Calendar, MoreHorizontal, Download } from "lucide-react";
+import { Search, Calendar, MoreHorizontal, Download } from "lucide-react";
 import { useState } from "react";
+import { UserRole } from "~/types/auth";
 import {
   Table,
   TableBody,
@@ -13,17 +14,36 @@ import {
 } from "~/components/ui/table";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
+import { exportToCsv } from "~\/lib\/utils";
+import { toDateKey, isWithinRange } from "~\/lib\/date";
+import { useAppSelector } from "~/store/hooks";
 
 const MealsLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [branchFilter, setBranchFilter] = useState<string>("All");
+  const [scannedByFilter, setScannedByFilter] = useState<string>("All");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const itemsPerPage = 8;
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+    
+    const userName = user?.name || "Guest";
+    const userRole = user?.role || UserRole.CASHIER;
+    const isCashier = userRole === UserRole.CASHIER;
 
-  const filteredData = mealsLogsData.filter(
-    (item) =>
-      item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.clientId.includes(searchTerm)
-  );
+  // Use shared date utils for consistent range filtering
+
+  const filteredData = mealsLogsData.filter((item) => {
+    const matchesSearch = item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || item.clientId.includes(searchTerm);
+    const matchesBranch = branchFilter === "All" || item.branch === branchFilter;
+    const matchesScannedBy = scannedByFilter === "All" || item.scannedBy === scannedByFilter;
+    const itemKey = toDateKey(item.dateTime);
+    const fromKey = toDateKey(startDate);
+    const toKey = toDateKey(endDate);
+    const withinRange = isWithinRange(itemKey, fromKey, toKey);
+    return matchesSearch && matchesBranch && matchesScannedBy && withinRange;
+  });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -31,6 +51,35 @@ const MealsLogs = () => {
     startIndex,
     startIndex + itemsPerPage
   );
+
+  const handleExport = () => {
+    const headers = [
+      "Client ID",
+      "Client Name",
+      "Meal Used",
+      "Meals Left",
+      "Date",
+      "Time",
+      "Scanned By",
+      "Branch",
+    ];
+    const rows = filteredData.map((item) => {
+      const dateSegs = item.dateTime.split(" ");
+      const dateStr = `${dateSegs[0]} ${dateSegs[1]} ${dateSegs[2]}`;
+      const timeStr = `${dateSegs[3]} ${dateSegs[4] ?? ""}`.trim();
+      return [
+        item.clientId,
+        item.clientName,
+        item.mealUsed,
+        item.mealsLeft,
+        dateStr,
+        timeStr,
+        item.scannedBy,
+        item.branch,
+      ];
+    });
+    exportToCsv(headers, rows, "meals_logs");
+  };
 
   return (
     <main className="dashboard wrapper">
@@ -58,16 +107,65 @@ const MealsLogs = () => {
               />
             </div>
             <div className="flex flex-wrap gap-2 md:gap-3 w-full md:w-auto">
-              <Button variant="outline" className="text-sm border-gray-300">
-                Branch <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
-              <Button variant="outline" className="text-sm border-gray-300">
-                Scanned By <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
-              <Button variant="outline" className="text-sm border-gray-300">
-                <Calendar className="w-4 h-4 mr-2" /> Date Range
-              </Button>
-              <Button variant="outline" className="text-sm border-gray-300">
+              <div className="relative">
+                {!isCashier&&(
+                  <select
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+                >
+                  <option value="All">Branch: All</option>
+                  <option value="KIGALI">KIGALI</option>
+                  <option value="HUYE">HUYE</option>
+                  <option value="MUSANZE">MUSANZE</option>
+                  <option value="RUBAVU">RUBAVU</option>
+                  <option value="NYARUGENGE">NYARUGENGE</option>
+                  <option value="GASABO">GASABO</option>
+                  <option value="KICUKIRO">KICUKIRO</option>
+                  <option value="RUSIZI">RUSIZI</option>
+                </select>
+                )}
+              </div>
+              <div className="relative">
+                <select
+                  value={scannedByFilter}
+                  onChange={(e) => setScannedByFilter(e.target.value)}
+                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+                >
+                  <option value="All">Scanned By: All</option>
+                  <option value="James Anderson">James Anderson</option>
+                  <option value="Michael Johnson">Michael Johnson</option>
+                  <option value="David Brown">David Brown</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1">
+                  <Calendar className="w-4 h-4" />
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="text-sm outline-none"
+                  />
+                  <span className="text-gray-400">to</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="text-sm outline-none"
+                  />
+                </div>
+                {(startDate || endDate) && (
+                  <Button
+                    variant="ghost"
+                    className="text-sm"
+                    onClick={() => { setStartDate(""); setEndDate(""); }}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+              <Button variant="outline" className="text-sm border-gray-300" onClick={handleExport}>
                 <Download className="w-4 h-4 mr-2" /> Export
               </Button>
             </div>
@@ -85,8 +183,12 @@ const MealsLogs = () => {
                 <TableHead className="whitespace-nowrap">Meals Left</TableHead>
                 <TableHead className="whitespace-nowrap hidden lg:table-cell">Date & Time</TableHead>
                 <TableHead className="whitespace-nowrap hidden md:table-cell">Scanned By</TableHead>
-                <TableHead className="whitespace-nowrap hidden xl:table-cell">Branch</TableHead>
-                <TableHead className="whitespace-nowrap">Action</TableHead>
+                {!isCashier&&(
+                  <TableHead className="whitespace-nowrap hidden xl:table-cell">Branch</TableHead>
+                )}
+                {!isCashier&&(
+                  <TableHead className="whitespace-nowrap">Action</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -110,12 +212,16 @@ const MealsLogs = () => {
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{item.scannedBy}</TableCell>
-                  <TableCell className="hidden xl:table-cell">{item.branch}</TableCell>
-                  <TableCell>
+                  {!isCashier&&(
+                    <TableCell className="hidden xl:table-cell">{item.branch}</TableCell>
+                  )}
+                  {!isCashier&&(
+                    <TableCell>
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

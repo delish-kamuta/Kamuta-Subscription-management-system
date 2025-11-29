@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react"
+import { type ReactNode } from "react"
 import { Navigate } from "react-router"
 import { UserRole } from "~/types/auth"
+import { useAppSelector } from "~/store/hooks"
+
 
 interface ProtectedRouteProps {
   children: ReactNode
@@ -8,48 +10,15 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const [loading, setLoading] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userRole, setUserRole] = useState<UserRole | null>(null)
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // TODO: Implement authentication check
-        // For now, assume user is authenticated as ADMIN
-        setIsAuthenticated(true)
-        setUserRole(UserRole.ADMIN)
-      } catch (error) {
-        console.error("Auth check error:", error)
-        setIsAuthenticated(false)
-        setUserRole(null)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    checkAuth()
-  }, [])
-
-  // Show loading spinner while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-      </div>
-    )
-  }
-
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/auth/login" replace />
   }
 
-  // Redirect to unauthorized if user doesn't have required role
-  if (userRole && !allowedRoles.includes(userRole)) {
+  if (user?.role && !allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />
   }
 
-  // Render children if authenticated and authorized
   return <>{children}</>
 }

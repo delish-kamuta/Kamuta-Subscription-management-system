@@ -7,6 +7,7 @@ import {
 
 export default [
   index("routes/home.tsx"),
+  // Protected layout: requires login and appropriate roles
   layout("routes/admin/admin-layout.tsx", [
     route("dashboard", "routes/admin/dashboard.tsx"),
     route("my-qr-code", "routes/admin/my-qr-code.tsx"),
