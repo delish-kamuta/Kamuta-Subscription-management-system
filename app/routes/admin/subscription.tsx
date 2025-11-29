@@ -26,7 +26,50 @@ const Subscription = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [customerTypeFilter, setCustomerTypeFilter] = useState<string>("All");
   const [subscriptionTypeFilter , setSubscriptionTypeFilter] = useState<string>("All");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const itemsPerPage = 8;
+
+  const MONTHS: Record<string, number> = {
+    Jan: 1,
+    Feb: 2,
+    Mar: 3,
+    Apr: 4,
+    May: 5,
+    Jun: 6,
+    Jul: 7,
+    Aug: 8,
+    Sep: 9,
+    Oct: 10,
+    Nov: 11,
+    Dec: 12,
+  };
+
+  // Convert a date string to a comparable yyyymmdd number.
+  // Supports formats: "YYYY-MM-DD" and "Mon D, YYYY" (e.g., "Jan 6, 2022").
+  const toDateKey = (value: string | undefined | null): number | null => {
+    if (!value) return null;
+    const v = value.trim();
+    // ISO-like format from <input type="date">
+    if (v.includes("-")) {
+      const parts = v.split("-");
+      if (parts.length !== 3) return null;
+      const y = Number(parts[0]);
+      const m = Number(parts[1]);
+      const d = Number(parts[2]);
+      if (!y || !m || !d) return null;
+      return y * 10000 + m * 100 + d;
+    }
+    // "Mon D, YYYY"
+    const cleaned = v.replace(",", "");
+    const segs = cleaned.split(/\s+/);
+    if (segs.length !== 3) return null;
+    const mon = MONTHS[segs[0] as keyof typeof MONTHS];
+    const d = Number(segs[1]);
+    const y = Number(segs[2]);
+    if (!mon || !d || !y) return null;
+    return y * 10000 + mon * 100 + d;
+  };
 
   const filteredData = subscriptionData.filter((item) => {
     const matchesSearch =
@@ -35,7 +78,16 @@ const Subscription = () => {
     const matchesCustomerType =
       customerTypeFilter === "All" || item.customerType === customerTypeFilter;
     const matchesSubscriptionType = subscriptionTypeFilter === 'All' || item.subscriptionType === subscriptionTypeFilter;
-    return matchesSearch && matchesCustomerType && matchesSubscriptionType;
+    const itemKey = toDateKey(item.dateStarted);
+    const fromKey = toDateKey(startDate);
+    const toKey = toDateKey(endDate);
+    const withinRange = (() => {
+      if (!itemKey) return true;
+      if (fromKey && itemKey < fromKey) return false;
+      if (toKey && itemKey > toKey) return false;
+      return true;
+    })();
+    return matchesSearch && matchesCustomerType && matchesSubscriptionType && withinRange;
   });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -110,9 +162,33 @@ const Subscription = () => {
                 Branch <ChevronDown className="w-4 h-4 ml-2" />
               </Button>
               )}
-              <Button variant="outline" className="text-sm border-gray-300">
-                <Calendar className="w-4 h-4 mr-2" /> Date Range
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1">
+                  <Calendar className="w-4 h-4" />
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="text-sm outline-none"
+                  />
+                  <span className="text-gray-400">to</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="text-sm outline-none"
+                  />
+                </div>
+                {(startDate || endDate) && (
+                  <Button
+                    variant="ghost"
+                    className="text-sm"
+                    onClick={() => { setStartDate(""); setEndDate(""); }}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
               <Button variant="outline" className="text-sm border-gray-300">
                 <Download className="w-4 h-4 mr-2" /> Export
               </Button>
