@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import Client from "components/client";
 import { useAppSelector } from "~/store/hooks";
 import { UserRole } from "~/types/auth";
+import QuickAction from "../../../components/Quick-action"
 
 
 const Dashboard = () => {
@@ -37,6 +38,8 @@ const Dashboard = () => {
 
       {/* Stats Cards Section */}
       <section className="flex flex-col gap-6">
+        {userRole === UserRole.CASHIER ?
+        <QuickAction/>:
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
           {dashboardStats.map((stat) => (
             <StatsCard
@@ -48,6 +51,7 @@ const Dashboard = () => {
             />
           ))}
         </div>
+}
       </section>
       <section className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <ChartBarMultiple />
