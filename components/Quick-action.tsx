@@ -168,7 +168,15 @@ const QuickAction = () => {
                 <option value='Ordinary'>Ordinary</option>
               </select>
             </div>
-            <div className='space-y-2 md:col-span-2'>
+            <div className='space-y-2'>
+              <label className='text-sm font-medium text-gray-700'>Branch</label>
+              <select className='w-full border rounded-md px-3 py-2'>
+                <option value='VVIP'>KIGALI</option>
+                <option value='Vip'>HUYE</option>
+                <option value='Ordinary'>NYAGATARE</option>
+              </select>
+            </div>
+            <div className='space-y-2 md:col-span-1'>
               <label className='text-sm font-medium text-gray-700'>Payment mode</label>
               <select className='w-full border rounded-md px-3 py-2'>
                 <option value=''>select payment method</option>
@@ -176,6 +184,10 @@ const QuickAction = () => {
                 <option value='Card'>Card</option>
                 <option value='Mobile Money'>Mobile Money</option>
               </select>
+            </div>
+            <div className='space-y-2 md:col-span-2'>
+              <label className='text-sm font-medium text-gray-700'>Amount to Pay</label>
+              <input type='number' min={1} className='w-full border rounded-md px-3 py-2' placeholder='e.g., 3000 Rwf' />
             </div>
           </div>
           <div className='flex justify-end'>
@@ -241,7 +253,7 @@ const QuickAction = () => {
                           setOpenTicket(true);
                         }}
                       >
-                        Generate Ticket
+                        Ticket
                       </Button>
                     </span>
                   </div>
@@ -267,6 +279,7 @@ const QuickAction = () => {
             <div className='space-y-2'>
               <label className='text-sm font-medium text-gray-700'>Meal type</label>
               <select className='w-full border rounded-md px-3 py-2' value={mealType} onChange={(e) => setMealType(e.target.value)}>
+                <option value='None'>None</option>
                 <option value='Standard'>Standard</option>
                 <option value='Breakfast'>Breakfast</option>
                 <option value='Lunch'>Lunch</option>
