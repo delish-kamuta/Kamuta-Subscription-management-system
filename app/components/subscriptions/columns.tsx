@@ -9,13 +9,35 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
-import React, { useState } from "react";
-
+import React, { useState, useEffect } from "react";
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
   const [editForm, setEditForm] = useState<SubscriptionItem>(item);
+  const [qrUrl, setQrUrl] = useState<string>('');
+
+  // Generate QR code when QR sheet opens
+  useEffect(() => {
+    if (!qrOpen) return;
+
+    const refreshQr = () => {
+      const qrData = JSON.stringify({
+        id: item.id,
+        name: item.clientName,
+        type: item.customerType,
+        mealsLeft: item.mealsLeft,
+        ts: Date.now()
+      });
+      const url = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrData)}&cacheBust=${Date.now()}`;
+      setQrUrl(url);
+    };
+
+    refreshQr();
+    const interval = setInterval(refreshQr, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
+  }, [qrOpen, item]);
 
   const handleDelete = () => {
     if (confirm(`Are you sure you want to delete subscription for ${item.clientName}?`)) {
@@ -70,7 +92,7 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
 
               <button
                 onClick={() => {
-                  alert(`Generate QR for ${item.clientName}`);
+                  setQrOpen(true);
                   setIsOpen(false);
                 }}
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -248,6 +270,83 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
             <div className="flex gap-2 pt-4">
               <Button onClick={handleEditSave} className="flex-1">Save Changes</Button>
               <Button onClick={() => setEditOpen(false)} variant="outline" className="flex-1">Cancel</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Generate QR Sheet */}
+      <Sheet open={qrOpen} onOpenChange={setQrOpen}>
+        <SheetContent className="overflow-y-auto bg-white p-6">
+          <SheetHeader>
+            <SheetTitle>Client QR Code</SheetTitle>
+            <SheetDescription>QR code for {item.clientName}</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-6">
+            {/* Client Info */}
+            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Registration Number:</span>
+                <span className="text-sm font-mono font-medium">{item.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Client Name:</span>
+                <span className="text-sm font-medium">{item.clientName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Customer Type:</span>
+                <span className="text-sm">{item.customerType}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Meals Left:</span>
+                <span className="text-sm font-semibold text-green-600">{item.mealsLeft}</span>
+              </div>
+            </div>
+
+            {/* QR Code Display */}
+            <div className="flex flex-col items-center justify-center bg-white border-2 border-gray-200 rounded-lg p-6">
+              {qrUrl ? (
+                <img 
+                  src={qrUrl} 
+                  alt={`QR Code for ${item.clientName}`}
+                  className="w-64 h-64"
+                />
+              ) : (
+                <div className="w-64 h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+                  <span className="text-gray-400">Loading QR...</span>
+                </div>
+              )}
+              <p className="text-xs text-gray-500 mt-4 text-center">
+                QR code refreshes automatically every 30 seconds
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => {
+                  // Refresh QR immediately
+                  const qrData = JSON.stringify({
+                    id: item.id,
+                    name: item.clientName,
+                    type: item.customerType,
+                    mealsLeft: item.mealsLeft,
+                    ts: Date.now()
+                  });
+                  const url = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrData)}&cacheBust=${Date.now()}`;
+                  setQrUrl(url);
+                }}
+                variant="outline"
+                className="flex-1"
+              >
+                Refresh QR
+              </Button>
+              <Button 
+                onClick={() => setQrOpen(false)}
+                className="flex-1"
+              >
+                Close
+              </Button>
             </div>
           </div>
         </SheetContent>
