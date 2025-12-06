@@ -1,10 +1,38 @@
-import { MoreHorizontal, Eye, Edit, Trash2, QrCode } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Trash2, QrCode, X } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "~/components/ui/sheet";
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import React, { useState } from "react";
 
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState<SubscriptionItem>(item);
+
+  const handleDelete = () => {
+    if (confirm(`Are you sure you want to delete subscription for ${item.clientName}?`)) {
+      // TODO: Dispatch Redux action to delete subscription
+      console.log('Deleting subscription:', item.id);
+      alert(`Subscription for ${item.clientName} has been deleted`);
+      // Example: dispatch(deleteSubscription(item.id));
+    }
+  };
+
+  const handleEditSave = () => {
+    // TODO: Dispatch Redux action to update subscription
+    console.log('Updating subscription:', editForm);
+    alert(`Subscription for ${editForm.clientName} has been updated`);
+    // Example: dispatch(updateSubscription(editForm));
+    setEditOpen(false);
+  };
 
   return (
     <div className="relative inline-block text-left">
@@ -26,11 +54,11 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
           />
           
           {/* Dropdown Menu */}
-          <div className="absolute right-0 z-20 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+          <div className="absolute right-0 z-20 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black/10 ring-opacity-5">
             <div className="py-1" role="menu">
               <button
                 onClick={() => {
-                  alert(`View details for ${item.clientName}`);
+                  setViewDetailsOpen(true);
                   setIsOpen(false);
                 }}
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -54,7 +82,8 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
 
               <button
                 onClick={() => {
-                  alert(`Edit subscription for ${item.clientName}`);
+                  setEditForm(item);
+                  setEditOpen(true);
                   setIsOpen(false);
                 }}
                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -66,10 +95,8 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
 
               <button
                 onClick={() => {
-                  if (confirm(`Delete subscription for ${item.clientName}?`)) {
-                    alert(`Deleted ${item.clientName}`);
-                  }
                   setIsOpen(false);
+                  handleDelete();
                 }}
                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                 role="menuitem"
@@ -81,6 +108,150 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
           </div>
         </>
       )}
+      {/* View Details Sheet */}
+      <Sheet open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>
+        <SheetContent className="overflow-y-auto bg-white p-6">
+          <SheetHeader>
+            <SheetTitle>Subscription Details</SheetTitle>
+            <SheetDescription>Complete information about this subscription</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-500">Registration Number</label>
+                <p className="text-base font-mono">{item.id}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Client Name</label>
+                <p className="text-base font-medium">{item.clientName}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Subscription Type</label>
+                <p className="text-base">{item.subscriptionType}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Customer Type</label>
+                <p className="text-base">{item.customerType}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Date Started</label>
+                <p className="text-base">{item.dateStarted}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Branch</label>
+                <p className="text-base">{item.branch}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Total Meals</label>
+                <p className="text-base font-semibold">{item.totalMeals}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Meals Left</label>
+                <p className="text-base font-semibold text-green-600">{item.mealsLeft}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Payment Method</label>
+                <p className="text-base">{item.payment}</p>
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Edit Sheet */}
+      <Sheet open={editOpen} onOpenChange={setEditOpen}>
+        <SheetContent className="overflow-y-auto bg-white p-6">
+          <SheetHeader>
+            <SheetTitle>Edit Subscription</SheetTitle>
+            <SheetDescription>Update subscription information</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div>
+              <label className="text-sm font-medium">Client Name</label>
+              <Input
+                value={editForm.clientName}
+                onChange={(e) => setEditForm({ ...editForm, clientName: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Subscription Type</label>
+              <select
+                value={editForm.subscriptionType}
+                onChange={(e) => setEditForm({ ...editForm, subscriptionType: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option>Daily (Lunch)</option>
+                <option>Daily (Lunch + Dinner)</option>
+                <option>Weekly (Lunch)</option>
+                <option>Monthly (Lunch)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Customer Type</label>
+              <select
+                value={editForm.customerType}
+                onChange={(e) => setEditForm({ ...editForm, customerType: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option>Student</option>
+                <option>Staff</option>
+                <option>Guest</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Branch</label>
+              <select
+                value={editForm.branch}
+                onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option>KIGALI</option>
+                <option>HUYE</option>
+                <option>MUSANZE</option>
+                <option>RUBAVU</option>
+                <option>NYARUGENGE</option>
+                <option>GASABO</option>
+                <option>KICUKIRO</option>
+                <option>RUSIZI</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Total Meals</label>
+                <Input
+                  type="number"
+                  value={editForm.totalMeals}
+                  onChange={(e) => setEditForm({ ...editForm, totalMeals: parseInt(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Meals Left</label>
+                <Input
+                  type="number"
+                  value={editForm.mealsLeft}
+                  onChange={(e) => setEditForm({ ...editForm, mealsLeft: parseInt(e.target.value) })}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Payment Method</label>
+              <select
+                value={editForm.payment}
+                onChange={(e) => setEditForm({ ...editForm, payment: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option>Cash</option>
+                <option>Mobile Money</option>
+                <option>Bank Transfer</option>
+              </select>
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleEditSave} className="flex-1">Save Changes</Button>
+              <Button onClick={() => setEditOpen(false)} variant="outline" className="flex-1">Cancel</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

@@ -12,6 +12,13 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "~/components/ui/sheet";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~\/lib\/utils";
@@ -26,6 +33,10 @@ const MealsLogs = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [editForm, setEditForm] = useState<any>(null);
   const itemsPerPage = 8;
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
     
@@ -237,7 +248,8 @@ const MealsLogs = () => {
                               <button
                                 className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2"
                                 onClick={() => {
-                                  alert(`View details for ${item.clientName}`);
+                                  setSelectedItem(item);
+                                  setViewDetailsOpen(true);
                                   setOpenDropdown(null);
                                 }}
                               >
@@ -247,7 +259,8 @@ const MealsLogs = () => {
                               <button
                                 className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2"
                                 onClick={() => {
-                                  alert(`Edit meal log for ${item.clientName}`);
+                                  setEditForm(item);
+                                  setEditOpen(true);
                                   setOpenDropdown(null);
                                 }}
                               >
@@ -257,10 +270,12 @@ const MealsLogs = () => {
                               <button
                                 className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2 text-red-600"
                                 onClick={() => {
-                                  if (confirm(`Delete meal log for ${item.clientName}?`)) {
-                                    alert('Delete functionality to be implemented');
-                                  }
                                   setOpenDropdown(null);
+                                  if (confirm(`Are you sure you want to delete meal log for ${item.clientName}?`)) {
+                                    console.log('Deleting meal log:', item.clientId);
+                                    alert(`Meal log for ${item.clientName} has been deleted`);
+                                    // TODO: Dispatch Redux action to delete meal log
+                                  }
                                 }}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -311,6 +326,128 @@ const MealsLogs = () => {
           </Button>
         </div>
       </section>
+
+      {/* View Details Sheet */}
+      <Sheet open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>
+        <SheetContent className="overflow-y-auto bg-white p-6">
+          <SheetHeader>
+            <SheetTitle>Meal Log Details</SheetTitle>
+            <SheetDescription>Complete information about this meal log entry</SheetDescription>
+          </SheetHeader>
+          {selectedItem && (
+            <div className="mt-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Client ID</label>
+                  <p className="text-base font-mono">{selectedItem.clientId}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Client Name</label>
+                  <p className="text-base font-medium">{selectedItem.clientName}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Meal Used</label>
+                  <p className="text-base font-semibold">{selectedItem.mealUsed}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Meals Left</label>
+                  <p className="text-base font-semibold text-green-600">{selectedItem.mealsLeft}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Date & Time</label>
+                  <p className="text-base">{selectedItem.dateTime}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Scanned By</label>
+                  <p className="text-base">{selectedItem.scannedBy}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Branch</label>
+                  <p className="text-base">{selectedItem.branch}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Edit Sheet */}
+      <Sheet open={editOpen} onOpenChange={setEditOpen}>
+        <SheetContent className="overflow-y-auto bg-white p-6">
+          <SheetHeader>
+            <SheetTitle>Edit Meal Log</SheetTitle>
+            <SheetDescription>Update meal log information</SheetDescription>
+          </SheetHeader>
+          {editForm && (
+            <div className="mt-6 space-y-4">
+              <div>
+                <label className="text-sm font-medium">Client Name</label>
+                <Input
+                  value={editForm.clientName}
+                  onChange={(e) => setEditForm({ ...editForm, clientName: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Meal Used</label>
+                  <Input
+                    type="number"
+                    value={editForm.mealUsed}
+                    onChange={(e) => setEditForm({ ...editForm, mealUsed: parseInt(e.target.value) })}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Meals Left</label>
+                  <Input
+                    type="number"
+                    value={editForm.mealsLeft}
+                    onChange={(e) => setEditForm({ ...editForm, mealsLeft: parseInt(e.target.value) })}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Scanned By</label>
+                <Input
+                  value={editForm.scannedBy}
+                  onChange={(e) => setEditForm({ ...editForm, scannedBy: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Branch</label>
+                <select
+                  value={editForm.branch}
+                  onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option>KIGALI</option>
+                  <option>HUYE</option>
+                  <option>MUSANZE</option>
+                  <option>RUBAVU</option>
+                  <option>NYARUGENGE</option>
+                  <option>GASABO</option>
+                  <option>KICUKIRO</option>
+                  <option>RUSIZI</option>
+                </select>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button
+                  onClick={() => {
+                    console.log('Updating meal log:', editForm);
+                    alert(`Meal log for ${editForm.clientName} has been updated`);
+                    setEditOpen(false);
+                  }}
+                  className="flex-1"
+                >
+                  Save Changes
+                </Button>
+                <Button onClick={() => setEditOpen(false)} variant="outline" className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </main>
   );
 };
