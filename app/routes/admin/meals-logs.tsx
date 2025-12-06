@@ -1,7 +1,7 @@
 import { Header } from "../../../components/Header";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { mealsLogsData } from "app/constants";
-import { Search, Calendar, MoreHorizontal, Download } from "lucide-react";
+import { Search, Calendar, MoreHorizontal, Download, Eye, Edit, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { UserRole } from "~/types/auth";
 import {
@@ -25,6 +25,7 @@ const MealsLogs = () => {
   const [scannedByFilter, setScannedByFilter] = useState<string>("All");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
   const itemsPerPage = 8;
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
     
@@ -217,10 +218,59 @@ const MealsLogs = () => {
                   )}
                   {!isCashier&&(
                     <TableCell>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+                      <div className="relative">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => setOpenDropdown(openDropdown === index ? null : index)}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                        {openDropdown === index && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => setOpenDropdown(null)}
+                            />
+                            <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-20">
+                              <button
+                                className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2"
+                                onClick={() => {
+                                  alert(`View details for ${item.clientName}`);
+                                  setOpenDropdown(null);
+                                }}
+                              >
+                                <Eye className="h-4 w-4 text-blue-600" />
+                                View Details
+                              </button>
+                              <button
+                                className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2"
+                                onClick={() => {
+                                  alert(`Edit meal log for ${item.clientName}`);
+                                  setOpenDropdown(null);
+                                }}
+                              >
+                                <Edit className="h-4 w-4 text-gray-600" />
+                                Edit
+                              </button>
+                              <button
+                                className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2 text-red-600"
+                                onClick={() => {
+                                  if (confirm(`Delete meal log for ${item.clientName}?`)) {
+                                    alert('Delete functionality to be implemented');
+                                  }
+                                  setOpenDropdown(null);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
                   )}
                 </TableRow>
               ))}
