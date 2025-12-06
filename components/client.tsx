@@ -54,9 +54,9 @@ const Client = ({userName}:props) => {
         </section>
         {/* Meals Log */}
         <section className="bg-white p-6 rounded-lg shadow mt-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center flex-col md:flex-row justify-between mb-4">
             <h2 className="text-xl font-semibold">Meals Log</h2>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 md:flex-row flex-col">
               <label className="text-sm">From</label>
               <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="border px-2 py-1 rounded" />
               <label className="text-sm">To</label>
