@@ -74,7 +74,6 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          
           {/* Dropdown Menu */}
           <div className="absolute right-0 z-20 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black/10 ring-opacity-5">
             <div className="py-1" role="menu">
@@ -181,7 +180,7 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
       </Sheet>
 
       {/* Edit Sheet */}
-      <Sheet open={editOpen} onOpenChange={setEditOpen}>
+      <Sheet open={editOpen} onOpenChange={setEditOpen} >
         <SheetContent className="overflow-y-auto bg-white p-6">
           <SheetHeader>
             <SheetTitle>Edit Subscription</SheetTitle>

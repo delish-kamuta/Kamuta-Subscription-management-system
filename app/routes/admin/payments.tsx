@@ -20,6 +20,7 @@ import {
 } from "~/components/ui/sheet";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
+import { exportToCsv } from "~/lib/utils";
 
 const Payments = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,6 +41,32 @@ const Payments = () => {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+
+  const handleExport = () => {
+    const headers = [
+      "Payment ID",
+      "Client Name",
+      "Branch",
+      "Subscription Type",
+      "Amount Paid",
+      "Total Meals",
+      "Payment Date",
+      "Notes",
+      "Payment Method"
+    ];
+    const rows = filteredData.map((item) => [
+      item.paymentId,
+      item.clientName,
+      item.branch,
+      item.subscriptionType,
+      item.amountPaid,
+      item.totalMeals,
+      item.paymentDate,
+      item.addedNotes,
+      item.payment
+    ]);
+    exportToCsv(headers, rows, "payments");
+  };
 
   return (
     <main className="dashboard wrapper">
@@ -76,10 +103,9 @@ const Payments = () => {
               <Button variant="outline" className="text-sm border-gray-300">
                 <Calendar className="w-4 h-4 mr-2" /> Date Range
               </Button>
-              <Button variant="outline" className="text-sm border-gray-300">
+              <Button variant="outline" className="text-sm border-gray-300" onClick={handleExport}>
                 <Download className="w-4 h-4 mr-2" /> Export
               </Button>
-              <Button  className="text-sm bg-primary-100 text-white">Add Subscription</Button>
             </div>
           </div>
         </div>
@@ -222,7 +248,7 @@ const Payments = () => {
 
       {/* View Details Sheet */}
       <Sheet open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>
-        <SheetContent className="overflow-y-auto">
+        <SheetContent className="overflow-y-auto bg-white p-6">
           <SheetHeader>
             <SheetTitle>Payment Details</SheetTitle>
             <SheetDescription>Complete information about this payment</SheetDescription>
@@ -274,7 +300,7 @@ const Payments = () => {
 
       {/* Edit Sheet */}
       <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent className="overflow-y-auto">
+        <SheetContent className="overflow-y-auto  bg-white p-6">
           <SheetHeader>
             <SheetTitle>Edit Payment</SheetTitle>
             <SheetDescription>Update payment information</SheetDescription>
