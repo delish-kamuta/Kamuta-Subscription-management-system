@@ -2,10 +2,26 @@ import { Header } from "../../../components/Header";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { useEffect, useState } from "react";
 
-
 const MyQRCode = () => {
   const [userName, setUserName] = useState<string>("Guest");
   const [studentId, setStudentId] = useState<string>("");
+  const [qrUrl, setQrUrl] = useState<string>('');
+
+  // For demo: populate with sample values if empty
+  useEffect(() => {
+    if (!userName || userName === 'Guest') setUserName('James Anderson');
+    if (!studentId) setStudentId('ST-12345');
+  }, []);
+
+  // Generate basic QR with student ID
+  // TODO: Replace with backend token when ready
+  useEffect(() => {
+    if (studentId) {
+      const qrData = JSON.stringify({ id: studentId, name: userName });
+      const url = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(qrData)}`;
+      setQrUrl(url);
+    }
+  }, [studentId, userName]);
 
   return (
     <main className='my-qr-code wrapper'>
@@ -19,11 +35,12 @@ const MyQRCode = () => {
 
       {/* QR Code Display Section */}
       <section className="flex flex-col items-center justify-center gap-6 py-8">
-        <div className="bg-white p-8 rounded-lg shadow-lg">
-          {/* QR Code placeholder - replace with actual QR code generation library */}
-          <div className="w-64 h-64 bg-gray-200 flex items-center justify-center text-gray-500">
-            QR Code for {studentId}
-          </div>
+        <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center">
+          {qrUrl ? (
+            <img src={qrUrl} alt="Student QR Code" className="w-64 h-64" />
+          ) : (
+            <div className="w-64 h-64 bg-gray-200 flex items-center justify-center text-gray-500">Generating QR…</div>
+          )}
         </div>
         <div className="text-center">
           <p className="text-lg font-semibold">{userName}</p>
