@@ -124,8 +124,8 @@ export const RIGHT_CONFETTI = {
 };
 export const dashboardStats = [
   {
-    id: "totalPayment",
-    title: "Total payment",
+    id: "totalIncome",
+    title: "Total Revenue",
     value: 12450,
     currentDay: 1320, // 12% increase
     lastDayCount: 1200,

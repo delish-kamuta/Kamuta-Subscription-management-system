@@ -21,6 +21,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~/lib/utils";
+import StatsCard from "../../../components/StatsCard";
 
 const Payments = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,6 +32,71 @@ const Payments = () => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>(null);
   const itemsPerPage = 8;
+
+  // Financial calculations
+  const totalRevenue = paymentsData.reduce((sum, payment) => sum + payment.amountPaid, 0);
+  
+  // Get today's and yesterday's date
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  const todayStr = today.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const yesterdayStr = yesterday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  
+  // Calculate today's and yesterday's revenue
+  const todayRevenue = paymentsData
+    .filter(p => p.paymentDate === todayStr)
+    .reduce((sum, p) => sum + p.amountPaid, 0);
+    
+  const yesterdayRevenue = paymentsData
+    .filter(p => p.paymentDate === yesterdayStr)
+    .reduce((sum, p) => sum + p.amountPaid, 0);
+
+  // Calculate this week and last week revenue
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  });
+
+  const last14Days = Array.from({ length: 14 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  });
+
+  const thisWeekRevenue = paymentsData
+    .filter(p => last7Days.includes(p.paymentDate))
+    .reduce((sum, p) => sum + p.amountPaid, 0);
+
+  const lastWeekRevenue = paymentsData
+    .filter(p => last14Days.slice(7).includes(p.paymentDate))
+    .reduce((sum, p) => sum + p.amountPaid, 0);
+
+  // Count today's and yesterday's payments
+  const todayPaymentsCount = paymentsData.filter(p => p.paymentDate === todayStr).length;
+  const yesterdayPaymentsCount = paymentsData.filter(p => p.paymentDate === yesterdayStr).length;
+
+  // Calculate daily revenue for chart
+  const dailyRevenue = last7Days.reverse().map(dateStr => ({
+    date: dateStr,
+    amount: paymentsData
+      .filter(p => p.paymentDate === dateStr)
+      .reduce((sum, p) => sum + p.amountPaid, 0)
+  }));
+
+  // Payment method breakdown
+  const paymentMethods = paymentsData.reduce((acc, payment) => {
+    const method = payment.payment;
+    acc[method] = (acc[method] || 0) + payment.amountPaid;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Top 5 high-value payments
+  const topPayments = [...paymentsData]
+    .sort((a, b) => b.amountPaid - a.amountPaid)
+    .slice(0, 5);
 
   const filteredData = paymentsData.filter(
     (item) =>
@@ -77,6 +143,83 @@ const Payments = () => {
           <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
         }
       />
+
+      {/* Financial Summary Section */}
+      <section className="mt-6 space-y-6">
+        {/* Revenue Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatsCard
+            title="Total Revenue"
+            value={totalRevenue}
+            currentDay={todayRevenue}
+            lastDayCount={yesterdayRevenue}
+          />
+          <StatsCard
+            title="Weekly Revenue"
+            value={thisWeekRevenue}
+            currentDay={thisWeekRevenue}
+            lastDayCount={lastWeekRevenue}
+          />
+          <StatsCard
+            title="Total Payments"
+            value={paymentsData.length}
+            currentDay={todayPaymentsCount}
+            lastDayCount={yesterdayPaymentsCount}
+          />
+        </div>
+
+        {/* Daily Revenue & Payment Breakdown */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Daily Revenue Chart */}
+          <div className="bg-white rounded-lg p-6 shadow-md border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">Daily Revenue (Last 7 Days)</h3>
+            <div className="space-y-3">
+              {dailyRevenue.map((day, idx) => (
+                <div key={idx} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600 w-24">{day.date}</span>
+                  <div className="flex-1 mx-4">
+                    <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="bg-blue-500 h-full rounded-full transition-all"
+                        style={{ width: `${(day.amount / Math.max(...dailyRevenue.map(d => d.amount))) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-sm font-semibold text-gray-900 w-24 text-right">
+                    {day.amount.toLocaleString()} Rwf
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Payment Methods Breakdown */}
+          <div className="bg-white rounded-lg p-6 shadow-md border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">Payment Method Breakdown</h3>
+            <div className="space-y-4">
+              {Object.entries(paymentMethods).map(([method, amount], idx) => {
+                const percentage = ((amount / totalRevenue) * 100).toFixed(1);
+                const colors = ['bg-green-500', 'bg-blue-500', 'bg-purple-500'];
+                return (
+                  <div key={idx}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">{method}</span>
+                      <span className="text-sm font-semibold text-gray-900">{amount.toLocaleString()} Rwf</span>
+                    </div>
+                    <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className={`${colors[idx % colors.length]} h-full rounded-full transition-all`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-500 mt-1">{percentage}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Payments Table Section */}
       <section className="mt-6 bg-white rounded-lg shadow-sm ">

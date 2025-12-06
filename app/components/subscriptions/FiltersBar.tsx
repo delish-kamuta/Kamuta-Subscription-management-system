@@ -166,8 +166,8 @@ export default function FiltersBar({
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <div className='space-y-2'>
                 <label className='text-sm font-medium text-gray-700'>Name</label>
-                <input 
-                  className='w-full border rounded-md px-3 py-2' 
+                <input
+                  className='w-full border rounded-md px-3 py-2'
                   placeholder='Enter full name'
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
