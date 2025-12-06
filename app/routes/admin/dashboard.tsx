@@ -17,7 +17,7 @@ const Dashboard = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   
   const userName = user?.name || "Guest";
-  const userRole = user?.role || UserRole.CASHIER;
+  const userRole = user?.role;
   const isCashier = userRole === UserRole.CASHIER;
 
   // Compute recent subscriptions (latest by dateStarted)
