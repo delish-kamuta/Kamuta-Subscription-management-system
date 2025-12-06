@@ -6,14 +6,14 @@ export const sidebarItems = [
     icon: LayoutDashboard,
     label: "Overview",
     href: "/dashboard",
-    roles: ["client", "cashier", "admin"], // Available to all roles
+    roles: ["client","student", "cashier", "admin"], // Available to all roles
   },
   {
     id: 2,
     icon: QrCode,
     label: "My QR Code",
     href: "/my-qr-code",
-    roles: ["client"], // Only for clients (students)
+    roles: ["client","student"], // Only for clients (students)
   },
   {
     id: 3,
