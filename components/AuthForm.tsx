@@ -6,15 +6,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 
 interface AuthFormProps {
-  onSubmit?: (data: { email: string; password: string; role: UserRole; customerType?: CustomerType }) => void | Promise<void>
+  onSubmit?: (data: { phone: string; password: string }) => void | Promise<void>
   mode?: "login" | "signup"
 }
 
 export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
-  const [email, setEmail] = useState("")
+  const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
-  const [role, setRole] = useState<UserRole>(UserRole.CASHIER)
-  const [customerType, setCustomerType] = useState<CustomerType>(CustomerType.STUDENT)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -22,19 +20,14 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
     e.preventDefault()
     setError("")
     
-    if (!email || !password) {
+    if (!phone || !password) {
       setError("Please fill in all fields")
-      return
-    }
-
-    if (mode === "signup" && !role) {
-      setError("Please select a role")
       return
     }
 
     setIsLoading(true)
     try {
-      await onSubmit?.({ email, password, role, customerType: role === UserRole.CLIENT ? customerType : undefined })
+      await onSubmit?.({ phone, password })
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {
@@ -68,40 +61,22 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
             )}
 
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
+              <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                Phone Number
               </label>
               <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
+                id="phone"
+                type="tel"
+                placeholder="+250788123456"
                 className="border-black/10"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 disabled={isLoading}
                 required
               />
             </div>
 
             <div className="space-y-2">
-
-            {role === UserRole.CLIENT && (
-              <div className="space-y-2">
-                <label htmlFor="customerType" className="text-sm font-medium text-gray-700">
-                  Customer Type
-                </label>
-                <select
-                  id="customerType"
-                  value={customerType}
-                  onChange={(e) => setCustomerType(e.target.value as CustomerType)}
-                  disabled={isLoading}
-                  className="flex h-9 w-full rounded-md border-black/10 border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value={CustomerType.STUDENT}>Student</option>
-                  <option value={CustomerType.CAMPUS_WORKER}>Campus Worker</option>
-                </select>
-              </div>
-            )}
               <label htmlFor="password" className="text-sm font-medium text-gray-700">
                 Password
               </label>
@@ -115,24 +90,6 @@ export function AuthForm({ onSubmit, mode = "login" }: AuthFormProps) {
                 disabled={isLoading}
                 required
               />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="role" className="text-sm font-medium text-gray-700">
-                Role
-              </label>
-              <select
-                id="role"
-                value={role}
-                onChange={(e) => setRole(e.target.value as UserRole)}
-                disabled={isLoading}
-                className="flex h-9 w-full rounded-md border-black/10 border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value={UserRole.CASHIER}>Cashier</option>
-                <option value={UserRole.WAITSTAFF}>Waitstaff</option>
-                <option value={UserRole.ADMIN}>Admin</option>
-                <option value={UserRole.CLIENT}>Client</option>
-              </select>
             </div>
           </CardContent>
 

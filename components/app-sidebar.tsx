@@ -16,13 +16,14 @@ import NavItems from "./NavItems";
 import { sidebarItems } from "~/constants"
 import { Link, useNavigate } from "react-router"
 import { useState } from "react"
-import { useAppDispatch } from "~/store/hooks"
+import { useAppDispatch, useAppSelector } from "~/store/hooks"
 import { logout as logoutAction } from "~/store/authSlice"
 
 export function AppSidebar() {
   const { open, toggleSidebar } = useSidebar();
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const { user } = useAppSelector((state) => state.auth)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const handleLogout = async () => {
@@ -79,8 +80,8 @@ export function AppSidebar() {
             alt="logo"
           />
           <div className="ml-2 group-data-[collapsible=icon]:hidden">
-            <p className="text-sm font-medium">Adrian Hajdin</p>
-            <p className="text-xs text-muted-foreground">adrian@jsmaster...</p>
+            <p className="text-sm font-medium">{user?.name || "Guest"}</p>
+            <p className="text-xs text-muted-foreground">{user?.role || "No role"}</p>
           </div>
           <button
             onClick={handleLogout}

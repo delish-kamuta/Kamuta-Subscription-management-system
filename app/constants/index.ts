@@ -1,4 +1,4 @@
-import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode, ScanLine } from "lucide-react"
+import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode, ScanLine, Users } from "lucide-react"
 
 export const sidebarItems = [
   {
@@ -6,14 +6,14 @@ export const sidebarItems = [
     icon: LayoutDashboard,
     label: "Overview",
     href: "/dashboard",
-    roles: ["client", "cashier", "admin"], // Available to all roles
+    roles: ["client","student", "cashier", "admin"], // Available to all roles
   },
   {
     id: 2,
     icon: QrCode,
     label: "My QR Code",
     href: "/my-qr-code",
-    roles: ["client"], // Only for clients (students)
+    roles: ["client","student"], // Only for clients (students)
   },
   {
     id: 3,
@@ -45,10 +45,10 @@ export const sidebarItems = [
   },
   {
     id: 7,
-    icon: Settings,
-    label: "Settings",
-    href: "/settings",
-    roles: ["admin"], // Available to all roles
+    icon: Users,
+    label: "Users",
+    href: "/users",
+    roles: ["admin"], // Only for admin
   },
 ];
 
@@ -124,8 +124,8 @@ export const RIGHT_CONFETTI = {
 };
 export const dashboardStats = [
   {
-    id: "totalPayment",
-    title: "Total payment",
+    id: "totalIncome",
+    title: "Total Revenue",
     value: 12450,
     currentDay: 1320, // 12% increase
     lastDayCount: 1200,
