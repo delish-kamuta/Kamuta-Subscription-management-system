@@ -53,12 +53,10 @@ export default function PaymentTable({
         <TableRow>
           <TableHead>ID</TableHead>
           <TableHead>Customer Name</TableHead>
-          <TableHead>Reg Number</TableHead>
           <TableHead>Amount</TableHead>
           <TableHead>Payment Method</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Branch</TableHead>
-          <TableHead>Cashier</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -67,14 +65,12 @@ export default function PaymentTable({
           <TableRow key={payment.id}>
             <TableCell className="font-medium">#{payment.id}</TableCell>
             <TableCell>{payment.customerName}</TableCell>
-            <TableCell className="text-muted-foreground">{payment.regNumber}</TableCell>
             <TableCell className="font-semibold text-green-600">{payment.amount}</TableCell>
             <TableCell>{payment.paymentMethod}</TableCell>
             <TableCell className="text-muted-foreground">
               {new Date(payment.date).toLocaleDateString()}
             </TableCell>
             <TableCell>{payment.branch}</TableCell>
-            <TableCell className="text-muted-foreground">{payment.cashier}</TableCell>
             <TableCell>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
