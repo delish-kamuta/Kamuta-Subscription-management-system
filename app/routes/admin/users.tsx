@@ -8,7 +8,8 @@ import { ActionsBar } from "../../components/components/ActionsBar"
 import { UsersTable } from "../../components/components/UsersTable"
 import { AddUserSheet } from "../../components/components/AddUserSheet"
 import { AddBranchSheet } from "../../components/components/AddBranchSheet"
-import { useAppSelector } from "~/store/hooks"
+import { useAppSelector, useAppDispatch } from "~/store/hooks"
+import { fetchUsersThunk, addUserOptimistic, updateUserOptimistic, removeUserOptimistic } from "~/store/usersSlice"
 import { UserRole } from "~/types/auth"
 
 interface User {
@@ -33,10 +34,12 @@ interface BranchOption {
 }
 
 export default function UsersPage() {
+  const dispatch = useAppDispatch()
   const { user: currentUser } = useAppSelector((state) => state.auth)
   const roleState = useAppSelector((state) => state.roles)
-  const [users, setUsers] = useState<User[]>([])
-  const [usersLoading, setUsersLoading] = useState(false)
+  const usersState = useAppSelector((state) => state.users)
+  const users = usersState.items as User[]
+  const usersLoading = usersState.loading
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [isAddBranchOpen, setIsAddBranchOpen] = useState(false)
   const [isViewUserOpen, setIsViewUserOpen] = useState(false)
@@ -67,31 +70,14 @@ export default function UsersPage() {
   })
 
   useEffect(() => {
-    // Prefetch users and branches on mount to reduce UI latency
-    fetchUsers()
+    // Prefetch users and branches on mount to reduce UI latency, only if not loaded
+    if (!usersState.loaded) {
+      dispatch(fetchUsersThunk())
+    }
     fetchBranches()
   }, [])
 
-  const fetchUsers = async () => {
-    try {
-      setUsersLoading(true)
-      const tokenError = ensureValidTokenOrMessage()
-      if (tokenError) {
-        console.error(tokenError)
-        return
-      }
-
-      const response = await authFetch('https://restaurant-bn-api.onrender.com/api/users')
-      if (response.ok) {
-        const result = await response.json()
-        setUsers(result.data || [])
-      }
-    } catch (err) {
-      // Silent fail to avoid noisy logs
-    } finally {
-      setUsersLoading(false)
-    }
-  }
+  // fetchUsers replaced by redux thunk
 
 
   const fetchBranches = async () => {
@@ -223,6 +209,19 @@ export default function UsersPage() {
 
       const result = await response.json()
       setSuccessMessage('User added successfully!')
+      // Optimistically add
+      const created = (result && (result.data || result.user || result)) as Partial<User>
+      if (created) {
+        dispatch(addUserOptimistic({
+          id: String(created.id ?? crypto.randomUUID?.() ?? Date.now()),
+          full_name: String(created.full_name ?? formData.full_name),
+          phone: String(created.phone ?? formData.phone),
+          role: String(created.role ?? formData.role),
+          branch_id: String(created.branch_id ?? formData.branch_id),
+          created_at: String(created.created_at ?? new Date().toISOString()),
+          student: created.student ?? (formData.role.toLowerCase() === 'student' ? { reg_number: formData.reg_number } : undefined),
+        }))
+      }
       
       // Reset form
       setFormData({
@@ -373,7 +372,7 @@ export default function UsersPage() {
               return
             }
             setSuccessMessage('User deleted')
-            setUsers((prev) => prev.filter((u) => u.id !== user.id))
+            dispatch(removeUserOptimistic(user.id))
             setTimeout(() => setSuccessMessage(''), 2000)
           } catch (e) {
             setError(e instanceof Error ? e.message : 'Delete failed')
@@ -489,7 +488,7 @@ export default function UsersPage() {
                 return
               }
               setSuccessMessage('User updated')
-              setUsers((prev) => prev.map((u) => u.id === selectedUser.id ? { ...u, ...body, student: selectedUser.student } : u))
+              dispatch(updateUserOptimistic({ id: selectedUser.id, ...body, student: selectedUser.student }))
               setIsEditUserOpen(false)
               setTimeout(() => setSuccessMessage(''), 2000)
             } catch (err) {
