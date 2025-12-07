@@ -8,8 +8,7 @@ import { ActionsBar } from "../../components/components/ActionsBar"
 import { UsersTable } from "../../components/components/UsersTable"
 import { AddUserSheet } from "../../components/components/AddUserSheet"
 import { AddBranchSheet } from "../../components/components/AddBranchSheet"
-import { useAppDispatch, useAppSelector } from "~/store/hooks"
-import { setRoles } from "~/store/rolesSlice"
+import { useAppSelector } from "~/store/hooks"
 import { UserRole } from "~/types/auth"
 
 interface User {
@@ -19,7 +18,13 @@ interface User {
   role: string
   branch_id: string
   created_at: string
-  reg_number?: string
+  student?: {
+    reg_number : string
+  }
+}
+
+interface student {
+  reg_number:string;
 }
 
 interface BranchOption {
@@ -28,10 +33,10 @@ interface BranchOption {
 }
 
 export default function UsersPage() {
-  const dispatch = useAppDispatch()
   const { user: currentUser } = useAppSelector((state) => state.auth)
   const roleState = useAppSelector((state) => state.roles)
   const [users, setUsers] = useState<User[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [isAddBranchOpen, setIsAddBranchOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -44,7 +49,7 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
-    role: "Student",
+    role: "student",
     branch_id: "",
     password: "",
     reg_number: "",
@@ -59,11 +64,13 @@ export default function UsersPage() {
   })
 
   useEffect(() => {
-    // Disabled fetch while backend GET is unauthorized
+    // Try to load users on mount; if unauthorized, table will rely on optimistic updates
+    fetchUsers()
   }, [])
 
   const fetchUsers = async () => {
     try {
+      setUsersLoading(true)
       const tokenError = ensureValidTokenOrMessage()
       if (tokenError) {
         console.error(tokenError)
@@ -77,8 +84,11 @@ export default function UsersPage() {
       }
     } catch (err) {
       // Silent fail to avoid noisy logs
+    } finally {
+      setUsersLoading(false)
     }
   }
+
 
   const fetchBranches = async () => {
     try {
@@ -96,18 +106,7 @@ export default function UsersPage() {
     } catch {}
   }
 
-  const fetchRoles = async () => {
-    try {
-      const tokenError = ensureValidTokenOrMessage()
-      if (tokenError) return
-      const response = await authFetch('https://restaurant-bn-api.onrender.com/api/roles')
-      if (response.ok) {
-        const result = await response.json()
-        const options = (result.data || []).map((r: any) => ({ id: r.id, name: r.name || r.role || r }))
-        dispatch(setRoles(options))
-      }
-    } catch {}
-  }
+  // Roles are seeded in Redux (no endpoint yet)
 
   // Static branch options while backend GET is unauthorized
   const staticBranches: BranchOption[] = [
@@ -130,19 +129,49 @@ export default function UsersPage() {
         return
       }
 
+      // Build payload: branch is required for all roles including students
+      const isStudent = formData.role.toLowerCase() === 'student'
+      const payload: any = {
+        full_name: formData.full_name.trim(),
+        phone: formData.phone.trim(),
+        role: formData.role,
+        password: formData.password,
+        reg_number : formData.reg_number,
+      }
+
+      console.log(payload)
+      // Branch is mandatory
+      if (!formData.branch_id) {
+        setError('Please select a branch.')
+        setIsLoading(false)
+        return
+      }
+      // Validate that selected branch exists in loaded branches to avoid invalid IDs
+      const selected = branches.find(b => String(b.id) === String(formData.branch_id))
+      if (!selected) {
+        setError('Selected branch is invalid. Please load branches or create one first.')
+        setIsLoading(false)
+        return
+      }
+      // Coerce numeric IDs if they look numeric, otherwise send as provided
+      const maybeNum = Number(formData.branch_id)
+      payload.branch_id = Number.isNaN(maybeNum) ? formData.branch_id : maybeNum
+
+      if (isStudent && formData.reg_number) {
+        payload.reg_number = formData.reg_number.trim()
+      }
+
+      // Do not send empty reg_number field
+      if (typeof payload.reg_number === 'string' && payload.reg_number.trim() === '') {
+        delete payload.reg_number
+      }
+
       const response = await authFetch('https://restaurant-bn-api.onrender.com/api/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          full_name: formData.full_name,
-          phone: formData.phone,
-          role: formData.role.toLowerCase(),
-          branch_id: formData.branch_id,
-          password: formData.password,
-          ...(formData.role.toLowerCase() === 'student' && formData.reg_number ? { reg_number: formData.reg_number } : {}),
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
@@ -154,7 +183,14 @@ export default function UsersPage() {
             const details = errorData.errors.map((e: any) => e.message || e).join('; ')
             errorMessage = `${errorMessage}${details ? ` — ${details}` : ''}`
           }
-        } catch {}
+        } catch {
+          try {
+            const text = await response.text()
+            if (text) {
+              errorMessage = `${errorMessage} — ${text.slice(0, 300)}`
+            }
+          } catch {}
+        }
         if (response.status === 401) {
           errorMessage = 'Unauthorized. Your session may have expired or lacks permission.'
         }
@@ -170,13 +206,14 @@ export default function UsersPage() {
       setFormData({
         full_name: "",
         phone: "",
-        role: "Student",
+        role: "student",
         branch_id: "",
         password: "",
         reg_number: "",
       })
       
-      fetchUsers()
+      // Attempt to refresh from server if authorized; otherwise optimistic row remains
+      // Moved fetching outside the handler to the mount effect
       
       // Close sheet after 2 seconds
       setTimeout(() => {
@@ -291,11 +328,11 @@ export default function UsersPage() {
       <ActionsBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onOpenAddUser={() => { setIsAddUserOpen(true); fetchBranches(); fetchRoles(); }}
+        onOpenAddUser={() => { setIsAddUserOpen(true); fetchBranches(); }}
         onOpenAddBranch={() => setIsAddBranchOpen(true)}
       />
 
-      <UsersTable users={filteredUsers} />
+      <UsersTable users={filteredUsers} isLoading={usersLoading} />
 
       <AddUserSheet
         open={isAddUserOpen}

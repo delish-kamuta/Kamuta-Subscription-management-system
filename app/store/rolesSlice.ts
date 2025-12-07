@@ -11,8 +11,15 @@ interface RolesState {
 }
 
 const initialState: RolesState = {
-  roles: [],
-  loaded: false,
+  // Seed with backend enum until an API exists
+  roles: [
+    { name: 'student' },
+    { name: 'Worker' },
+    { name: 'cashier' },
+    { name: 'branch_manager' },
+    { name: 'Admin' },
+  ],
+  loaded: true,
 }
 
 const rolesSlice = createSlice({

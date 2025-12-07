@@ -29,7 +29,13 @@ export function AddUserSheet({ open, onOpenChange, error, successMessage, isLoad
   const branchOptions = branches.length > 0 ? branches : staticBranches
   const roleOptions = (roles && roles.length > 0)
     ? roles
-    : [{ name: 'Student' }, { name: 'Cashier' }, { name: 'Admin' }, { name: 'Waitstaff' }]
+    : [
+        { name: 'student' },
+        { name: 'Worker' },
+        { name: 'cashier' },
+        { name: 'branch_manager' },
+        { name: 'Admin' },
+      ]
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -77,7 +83,13 @@ export function AddUserSheet({ open, onOpenChange, error, successMessage, isLoad
 
           <div className="space-y-2">
             <label htmlFor="branch_id" className="text-sm font-medium">Branch *</label>
-            <select id="branch_id" value={formData.branch_id} onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })} required className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+            <select
+              id="branch_id"
+              value={formData.branch_id}
+              onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
+              required={true}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
               <option value="">Select a branch</option>
               {branchOptions.map((branch) => (
                 <option key={branch.id} value={branch.id}>{branch.name}</option>
