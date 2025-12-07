@@ -19,7 +19,7 @@ interface User {
   branch_id: string
   created_at: string
   student?: {
-    reg_number : string
+    reg_number?: string
   }
 }
 
@@ -39,6 +39,9 @@ export default function UsersPage() {
   const [usersLoading, setUsersLoading] = useState(false)
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [isAddBranchOpen, setIsAddBranchOpen] = useState(false)
+  const [isViewUserOpen, setIsViewUserOpen] = useState(false)
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [error, setError] = useState("")
@@ -105,6 +108,24 @@ export default function UsersPage() {
       }
     } catch {}
   }
+
+  
+    // Ensure a specific branch id is present in the options by fetching it directly if necessary
+    const ensureBranchPresent = async (branchId: string) => {
+      if (!branchId) return
+      const exists = branches.some(b => String(b.id) === String(branchId))
+      if (exists) return
+      try {
+        const tokenError = ensureValidTokenOrMessage()
+        if (tokenError) return
+        const resp = await authFetch(`https://restaurant-bn-api.onrender.com/api/branches/${branchId}`)
+        if (resp.ok) {
+          const data = await resp.json()
+          const name = data?.data?.name || data?.name || String(branchId)
+          setBranches(prev => [{ id: branchId, name }, ...prev])
+        }
+      } catch {}
+    }
 
   // Roles are seeded in Redux (no endpoint yet)
 
@@ -332,7 +353,32 @@ export default function UsersPage() {
         onOpenAddBranch={() => setIsAddBranchOpen(true)}
       />
 
-      <UsersTable users={filteredUsers} isLoading={usersLoading} />
+      <UsersTable
+        users={filteredUsers}
+        isLoading={usersLoading}
+        onView={async (user) => { setSelectedUser(user); await fetchBranches(); await ensureBranchPresent(user.branch_id); setIsViewUserOpen(true) }}
+        onEdit={async (user) => { setSelectedUser(user); await fetchBranches(); await ensureBranchPresent(user.branch_id); setIsEditUserOpen(true) }}
+        onDelete={async (user) => {
+          const ok = confirm(`Delete user ${user.full_name}?`)
+          if (!ok) return
+          try {
+            const tokenError = ensureValidTokenOrMessage()
+            if (tokenError) { setError(tokenError); return }
+            const resp = await authFetch(`https://restaurant-bn-api.onrender.com/api/users/${user.id}`, { method: 'DELETE' })
+            if (!resp.ok) {
+              let msg = 'Failed to delete user'
+              try { const j = await resp.json(); msg = j.message || j.error || msg } catch {}
+              setError(msg)
+              return
+            }
+            setSuccessMessage('User deleted')
+            setUsers((prev) => prev.filter((u) => u.id !== user.id))
+            setTimeout(() => setSuccessMessage(''), 2000)
+          } catch (e) {
+            setError(e instanceof Error ? e.message : 'Delete failed')
+          }
+        }}
+      />
 
       <AddUserSheet
         open={isAddUserOpen}
@@ -358,6 +404,101 @@ export default function UsersPage() {
         setBranchForm={setBranchForm}
         onSubmit={handleAddBranch}
       />
+
+      {/* View User Sheet (read-only using AddUserSheet) */}
+      {selectedUser && (
+        <AddUserSheet
+          open={isViewUserOpen}
+          onOpenChange={(v) => { setIsViewUserOpen(v); if (!v) setSelectedUser(null) }}
+          error={""}
+          successMessage={""}
+          isLoading={false}
+          formData={{
+            full_name: selectedUser.full_name,
+            phone: selectedUser.phone,
+            role: selectedUser.role,
+            branch_id: selectedUser.branch_id,
+            password: '',
+            reg_number: selectedUser?.student?.reg_number || ''
+          }}
+          setFormData={() => {}}
+          branches={branches}
+          staticBranches={staticBranches}
+          roles={roleState.roles}
+          onSubmit={(e) => { e.preventDefault(); setIsViewUserOpen(false) }}
+        />
+      )}
+
+      {/* Edit User Sheet */}
+      {selectedUser && (
+        <AddUserSheet
+          open={isEditUserOpen}
+          onOpenChange={(v) => { setIsEditUserOpen(v); if (!v) setSelectedUser(null) }}
+          error={error}
+          successMessage={successMessage}
+          isLoading={isLoading}
+          formData={{
+            full_name: selectedUser.full_name,
+            phone: selectedUser.phone,
+            role: selectedUser.role,
+            branch_id: selectedUser.branch_id,
+            password: '',
+            reg_number: selectedUser?.student?.reg_number || ''
+          }}
+          setFormData={(fd) => {
+            if (!selectedUser) return
+            setSelectedUser({
+              ...selectedUser,
+              full_name: fd.full_name,
+              phone: fd.phone,
+              role: fd.role,
+              branch_id: fd.branch_id,
+              student: { reg_number: fd.reg_number },
+            })
+          }}
+          branches={branches}
+          staticBranches={staticBranches}
+          roles={roleState.roles}
+          onSubmit={async (e) => {
+            e.preventDefault()
+            if (!selectedUser) return
+            try {
+              setIsLoading(true)
+              const tokenError = ensureValidTokenOrMessage()
+              if (tokenError) { setError(tokenError); setIsLoading(false); return }
+              const body: any = {
+                full_name: selectedUser.full_name,
+                phone: selectedUser.phone,
+                role: selectedUser.role,
+                branch_id: selectedUser.branch_id,
+              }
+              if (selectedUser.role.toLowerCase() === 'student' && selectedUser.student?.reg_number) {
+                body.reg_number = selectedUser.student.reg_number
+              }
+              const resp = await authFetch(`https://restaurant-bn-api.onrender.com/api/users/${selectedUser.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+              })
+              if (!resp.ok) {
+                let msg = 'Failed to update user'
+                try { const j = await resp.json(); msg = j.message || j.error || msg } catch {}
+                setError(msg)
+                setIsLoading(false)
+                return
+              }
+              setSuccessMessage('User updated')
+              setUsers((prev) => prev.map((u) => u.id === selectedUser.id ? { ...u, ...body, student: selectedUser.student } : u))
+              setIsEditUserOpen(false)
+              setTimeout(() => setSuccessMessage(''), 2000)
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Update failed')
+            } finally {
+              setIsLoading(false)
+            }
+          }}
+        />
+      )}
     </main>
   )
 }
