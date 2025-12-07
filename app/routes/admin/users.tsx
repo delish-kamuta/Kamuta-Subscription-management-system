@@ -8,8 +8,8 @@ import { ActionsBar } from "../../components/components/ActionsBar"
 import { UsersTable } from "../../components/components/UsersTable"
 import { AddUserSheet } from "../../components/components/AddUserSheet"
 import { AddBranchSheet } from "../../components/components/AddBranchSheet"
-import { useAppDispatch, useAppSelector } from "~/store/hooks"
-import { setRoles } from "~/store/rolesSlice"
+import { useAppSelector, useAppDispatch } from "~/store/hooks"
+import { fetchUsersThunk, addUserOptimistic, updateUserOptimistic, removeUserOptimistic } from "~/store/usersSlice"
 import { UserRole } from "~/types/auth"
 
 interface User {
@@ -19,7 +19,13 @@ interface User {
   role: string
   branch_id: string
   created_at: string
-  reg_number?: string
+  student?: {
+    reg_number?: string
+  }
+}
+
+interface student {
+  reg_number:string;
 }
 
 interface BranchOption {
@@ -31,9 +37,14 @@ export default function UsersPage() {
   const dispatch = useAppDispatch()
   const { user: currentUser } = useAppSelector((state) => state.auth)
   const roleState = useAppSelector((state) => state.roles)
-  const [users, setUsers] = useState<User[]>([])
+  const usersState = useAppSelector((state) => state.users)
+  const users = usersState.items as User[]
+  const usersLoading = usersState.loading
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [isAddBranchOpen, setIsAddBranchOpen] = useState(false)
+  const [isViewUserOpen, setIsViewUserOpen] = useState(false)
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [error, setError] = useState("")
@@ -44,7 +55,7 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({
     full_name: "",
     phone: "",
-    role: "Student",
+    role: "student",
     branch_id: "",
     password: "",
     reg_number: "",
@@ -59,26 +70,15 @@ export default function UsersPage() {
   })
 
   useEffect(() => {
-    // Disabled fetch while backend GET is unauthorized
+    // Prefetch users and branches on mount to reduce UI latency, only if not loaded
+    if (!usersState.loaded) {
+      dispatch(fetchUsersThunk())
+    }
+    fetchBranches()
   }, [])
 
-  const fetchUsers = async () => {
-    try {
-      const tokenError = ensureValidTokenOrMessage()
-      if (tokenError) {
-        console.error(tokenError)
-        return
-      }
+  // fetchUsers replaced by redux thunk
 
-      const response = await authFetch('https://restaurant-bn-api.onrender.com/api/users')
-      if (response.ok) {
-        const result = await response.json()
-        setUsers(result.data || [])
-      }
-    } catch (err) {
-      // Silent fail to avoid noisy logs
-    }
-  }
 
   const fetchBranches = async () => {
     try {
@@ -96,18 +96,25 @@ export default function UsersPage() {
     } catch {}
   }
 
-  const fetchRoles = async () => {
-    try {
-      const tokenError = ensureValidTokenOrMessage()
-      if (tokenError) return
-      const response = await authFetch('https://restaurant-bn-api.onrender.com/api/roles')
-      if (response.ok) {
-        const result = await response.json()
-        const options = (result.data || []).map((r: any) => ({ id: r.id, name: r.name || r.role || r }))
-        dispatch(setRoles(options))
-      }
-    } catch {}
-  }
+  
+    // Ensure a specific branch id is present in the options by fetching it directly if necessary
+    const ensureBranchPresent = async (branchId: string) => {
+      if (!branchId) return
+      const exists = branches.some(b => String(b.id) === String(branchId))
+      if (exists) return
+      try {
+        const tokenError = ensureValidTokenOrMessage()
+        if (tokenError) return
+        const resp = await authFetch(`https://restaurant-bn-api.onrender.com/api/branches/${branchId}`)
+        if (resp.ok) {
+          const data = await resp.json()
+          const name = data?.data?.name || data?.name || String(branchId)
+          setBranches(prev => [{ id: branchId, name }, ...prev])
+        }
+      } catch {}
+    }
+
+  // Roles are seeded in Redux (no endpoint yet)
 
   // Static branch options while backend GET is unauthorized
   const staticBranches: BranchOption[] = [
@@ -130,19 +137,49 @@ export default function UsersPage() {
         return
       }
 
+      // Build payload: branch is required for all roles including students
+      const isStudent = formData.role.toLowerCase() === 'student'
+      const payload: any = {
+        full_name: formData.full_name.trim(),
+        phone: formData.phone.trim(),
+        role: formData.role,
+        password: formData.password,
+        reg_number : formData.reg_number,
+      }
+
+      console.log(payload)
+      // Branch is mandatory
+      if (!formData.branch_id) {
+        setError('Please select a branch.')
+        setIsLoading(false)
+        return
+      }
+      // Validate that selected branch exists in loaded branches to avoid invalid IDs
+      const selected = branches.find(b => String(b.id) === String(formData.branch_id))
+      if (!selected) {
+        setError('Selected branch is invalid. Please load branches or create one first.')
+        setIsLoading(false)
+        return
+      }
+      // Coerce numeric IDs if they look numeric, otherwise send as provided
+      const maybeNum = Number(formData.branch_id)
+      payload.branch_id = Number.isNaN(maybeNum) ? formData.branch_id : maybeNum
+
+      if (isStudent && formData.reg_number) {
+        payload.reg_number = formData.reg_number.trim()
+      }
+
+      // Do not send empty reg_number field
+      if (typeof payload.reg_number === 'string' && payload.reg_number.trim() === '') {
+        delete payload.reg_number
+      }
+
       const response = await authFetch('https://restaurant-bn-api.onrender.com/api/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          full_name: formData.full_name,
-          phone: formData.phone,
-          role: formData.role.toLowerCase(),
-          branch_id: formData.branch_id,
-          password: formData.password,
-          ...(formData.role.toLowerCase() === 'student' && formData.reg_number ? { reg_number: formData.reg_number } : {}),
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
@@ -154,7 +191,14 @@ export default function UsersPage() {
             const details = errorData.errors.map((e: any) => e.message || e).join('; ')
             errorMessage = `${errorMessage}${details ? ` — ${details}` : ''}`
           }
-        } catch {}
+        } catch {
+          try {
+            const text = await response.text()
+            if (text) {
+              errorMessage = `${errorMessage} — ${text.slice(0, 300)}`
+            }
+          } catch {}
+        }
         if (response.status === 401) {
           errorMessage = 'Unauthorized. Your session may have expired or lacks permission.'
         }
@@ -165,18 +209,32 @@ export default function UsersPage() {
 
       const result = await response.json()
       setSuccessMessage('User added successfully!')
+      // Optimistically add
+      const created = (result && (result.data || result.user || result)) as Partial<User>
+      if (created) {
+        dispatch(addUserOptimistic({
+          id: String(created.id ?? crypto.randomUUID?.() ?? Date.now()),
+          full_name: String(created.full_name ?? formData.full_name),
+          phone: String(created.phone ?? formData.phone),
+          role: String(created.role ?? formData.role),
+          branch_id: String(created.branch_id ?? formData.branch_id),
+          created_at: String(created.created_at ?? new Date().toISOString()),
+          student: created.student ?? (formData.role.toLowerCase() === 'student' ? { reg_number: formData.reg_number } : undefined),
+        }))
+      }
       
       // Reset form
       setFormData({
         full_name: "",
         phone: "",
-        role: "Student",
+        role: "student",
         branch_id: "",
         password: "",
         reg_number: "",
       })
       
-      fetchUsers()
+      // Attempt to refresh from server if authorized; otherwise optimistic row remains
+      // Moved fetching outside the handler to the mount effect
       
       // Close sheet after 2 seconds
       setTimeout(() => {
@@ -291,16 +349,42 @@ export default function UsersPage() {
       <ActionsBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onOpenAddUser={() => { setIsAddUserOpen(true); fetchBranches(); fetchRoles(); }}
+        onOpenAddUser={() => { setIsAddUserOpen(true); fetchBranches(); }}
         onOpenAddBranch={() => setIsAddBranchOpen(true)}
       />
 
-      <UsersTable users={filteredUsers} />
+      <UsersTable
+        users={filteredUsers}
+        isLoading={usersLoading}
+        onView={(user) => { setSelectedUser(user); setIsViewUserOpen(true); ensureBranchPresent(user.branch_id) }}
+        onEdit={(user) => { setSelectedUser(user); setIsEditUserOpen(true); ensureBranchPresent(user.branch_id) }}
+        onDelete={async (user) => {
+          const ok = confirm(`Delete user ${user.full_name}?`)
+          if (!ok) return
+          try {
+            const tokenError = ensureValidTokenOrMessage()
+            if (tokenError) { setError(tokenError); return }
+            const resp = await authFetch(`https://restaurant-bn-api.onrender.com/api/users/${user.id}`, { method: 'DELETE' })
+            if (!resp.ok) {
+              let msg = 'Failed to delete user'
+              try { const j = await resp.json(); msg = j.message || j.error || msg } catch {}
+              setError(msg)
+              return
+            }
+            setSuccessMessage('User deleted')
+            dispatch(removeUserOptimistic(user.id))
+            setTimeout(() => setSuccessMessage(''), 2000)
+          } catch (e) {
+            setError(e instanceof Error ? e.message : 'Delete failed')
+          }
+        }}
+      />
 
       <AddUserSheet
         open={isAddUserOpen}
         onOpenChange={setIsAddUserOpen}
         error={error}
+        action = {"Add User"}
         successMessage={successMessage}
         isLoading={isLoading}
         formData={formData}
@@ -321,6 +405,103 @@ export default function UsersPage() {
         setBranchForm={setBranchForm}
         onSubmit={handleAddBranch}
       />
+
+      {/* View User Sheet (read-only using AddUserSheet) */}
+      {selectedUser && (
+        <AddUserSheet
+          open={isViewUserOpen}
+          onOpenChange={(v) => { setIsViewUserOpen(v); if (!v) setSelectedUser(null) }}
+          error={""}
+          action ={"View User"}
+          successMessage={""}
+          isLoading={false}
+          formData={{
+            full_name: selectedUser.full_name,
+            phone: selectedUser.phone,
+            role: selectedUser.role,
+            branch_id: selectedUser.branch_id,
+            password: '',
+            reg_number: selectedUser?.student?.reg_number || ''
+          }}
+          setFormData={() => {}}
+          branches={branches}
+          staticBranches={staticBranches}
+          roles={roleState.roles}
+          onSubmit={(e) => { e.preventDefault(); setIsViewUserOpen(false) }}
+        />
+      )}
+
+      {/* Edit User Sheet */}
+      {selectedUser && (
+        <AddUserSheet
+          open={isEditUserOpen}
+          onOpenChange={(v) => { setIsEditUserOpen(v); if (!v) setSelectedUser(null) }}
+          error={error}
+          action = {"Edit User"}
+          successMessage={successMessage}
+          isLoading={isLoading}
+          formData={{
+            full_name: selectedUser.full_name,
+            phone: selectedUser.phone,
+            role: selectedUser.role,
+            branch_id: selectedUser.branch_id,
+            password: '',
+            reg_number: selectedUser?.student?.reg_number || ''
+          }}
+          setFormData={(fd) => {
+            if (!selectedUser) return
+            setSelectedUser({
+              ...selectedUser,
+              full_name: fd.full_name,
+              phone: fd.phone,
+              role: fd.role,
+              branch_id: fd.branch_id,
+              student: { reg_number: fd.reg_number },
+            })
+          }}
+          branches={branches}
+          staticBranches={staticBranches}
+          roles={roleState.roles}
+          onSubmit={async (e) => {
+            e.preventDefault()
+            if (!selectedUser) return
+            try {
+              setIsLoading(true)
+              const tokenError = ensureValidTokenOrMessage()
+              if (tokenError) { setError(tokenError); setIsLoading(false); return }
+              const body: any = {
+                full_name: selectedUser.full_name,
+                phone: selectedUser.phone,
+                role: selectedUser.role,
+                branch_id: selectedUser.branch_id,
+              }
+              if (selectedUser.role.toLowerCase() === 'student' && selectedUser.student?.reg_number) {
+                body.reg_number = selectedUser.student.reg_number
+              }
+              const resp = await authFetch(`https://restaurant-bn-api.onrender.com/api/users/${selectedUser.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body),
+              })
+              if (!resp.ok) {
+                let msg = 'Failed to update user'
+                try { const j = await resp.json(); msg = j.message || j.error || msg } catch {}
+                setError(msg)
+                setIsLoading(false)
+                return
+              }
+              setSuccessMessage('User updated')
+              dispatch(updateUserOptimistic({ id: selectedUser.id, ...body, student: selectedUser.student }))
+              setIsEditUserOpen(false)
+              setTimeout(() => setSuccessMessage(''), 2000)
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Update failed')
+            } finally {
+              setIsLoading(false)
+            }
+          }}
+        />
+      )}
     </main>
   )
 }

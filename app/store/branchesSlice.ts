@@ -1,0 +1,69 @@
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { getToken } from "~/lib/api";
+
+export interface BranchItem { id: string; name?: string }
+interface BranchesState {
+  items: BranchItem[];
+  loaded: boolean;
+  loading: boolean;
+  error?: string;
+  lastFetched?: number;
+}
+
+const initialState: BranchesState = {
+  items: [],
+  loaded: false,
+  loading: false,
+  error: undefined,
+  lastFetched: undefined,
+};
+
+export const fetchBranchesThunk = createAsyncThunk(
+  "branches/fetchAll",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = getToken();
+      const resp = await fetch("https://restaurant-bn-api.onrender.com/api/branches", {
+        headers: { Authorization: token || "" },
+      });
+      if (!resp.ok) {
+        let msg = `Failed to load branches (${resp.status})`;
+        try {
+          const j = await resp.json();
+          msg = j.message || j.error || msg;
+        } catch {}
+        return rejectWithValue(msg);
+      }
+      const data = await resp.json();
+      const list = Array.isArray(data?.data) ? data.data : [];
+      return list.map((b: any) => ({ id: String(b.id), name: String(b.name || "") })) as BranchItem[];
+    } catch (e: any) {
+      return rejectWithValue(e?.message || "Unable to fetch branches");
+    }
+  }
+);
+
+const branchesSlice = createSlice({
+  name: "branches",
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchBranchesThunk.pending, (state) => {
+        state.loading = true;
+        state.error = undefined;
+      })
+      .addCase(fetchBranchesThunk.fulfilled, (state, action) => {
+        state.items = action.payload;
+        state.loading = false;
+        state.loaded = true;
+        state.lastFetched = Date.now();
+      })
+      .addCase(fetchBranchesThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || "Failed to fetch branches";
+      });
+  },
+});
+
+export default branchesSlice.reducer;

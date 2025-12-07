@@ -24,7 +24,7 @@ export function ActionsBar({ searchQuery, onSearchChange, onOpenAddUser, onOpenA
         />
       </div>
       <div className="flex gap-3 w-full md:w-auto">
-        <Button onClick={onOpenAddUser} className="bg-primary-100 hover:bg-primary-100/90 flex-1">
+        <Button onClick={onOpenAddUser} className="bg-primary-100 hover:bg-primary-100/90 flex-1 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Add New User
         </Button>

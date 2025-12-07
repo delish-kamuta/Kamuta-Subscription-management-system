@@ -8,7 +8,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAppDispatch, useAppSelector } from "~/store/hooks";
+import { fetchBranchesThunk } from "~/store/branchesSlice";
 
 interface FiltersBarProps {
   // values
@@ -53,28 +55,138 @@ export default function FiltersBar({
     regNumber: '',
     days: '',
     subscriptionType: 'VVIP',
-    branch: 'KIGALI',
+    branch: '',
     paymentMode: '',
     amount: ''
   });
+  const dispatch = useAppDispatch();
+  const { items: branches, loading: branchesLoading, error: branchesError, loaded: branchesLoaded } = useAppSelector((s) => s.branches);
+  const authToken = useAppSelector((s) => (s.auth as any)?.token || (s.auth as any)?.user?.token);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch actual branches from backend when sheet opens (and on mount for convenience)
+  useEffect(() => {
+    if (!branchesLoaded && !branchesLoading) {
+      dispatch(fetchBranchesThunk());
+    }
+  }, [branchesLoaded, branchesLoading, dispatch]);
+
+  useEffect(() => {
+    if (!formData.branch && branches.length > 0) {
+      setFormData((fd) => ({ ...fd, branch: branches[0].id }));
+    }
+  }, [branches]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Dispatch Redux action to add subscription
-    console.log('Adding subscription:', formData);
-    alert(`Subscription for ${formData.name} has been created`);
-    // Reset form
-    setFormData({
-      name: '',
-      regNumber: '',
-      days: '',
-      subscriptionType: 'VVIP',
-      branch: 'KIGALI',
-      paymentMode: '',
-      amount: ''
-    });
-    setOpenAddSubscription(false);
+    setSubmitting(true);
+    setServerError('');
+    try {
+      const token = authToken;
+      if (!token) {
+        setServerError('Not authenticated. Please log in again.');
+        setSubmitting(false);
+        return;
+      }
+
+      // 1) Ensure/create student via users endpoint as role "student"
+      // Build payload according to previous users API structure
+      const newUserPayload: any = {
+        name: formData.name.trim(),
+        role: 'student',
+        branch_id: await resolveBranchId(formData.branch, token),
+      };
+      if (formData.regNumber.trim()) {
+        newUserPayload.reg_number = formData.regNumber.trim();
+      }
+
+      const createUserResp = await fetch('https://restaurant-bn-api.onrender.com/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Users API uses raw token Authorization per existing app convention
+          'Authorization': token,
+        },
+        body: JSON.stringify(newUserPayload),
+      });
+
+      if (!createUserResp.ok) {
+        let msg = 'Failed to create student';
+        try {
+          const j = await createUserResp.json();
+          msg = j.message || j.error || msg;
+        } catch {}
+        throw new Error(msg);
+      }
+      const createdUser = await createUserResp.json();
+      const studentId: number = Number(createdUser?.data?.id || createdUser?.id);
+      if (!studentId) throw new Error('Student ID missing from create user response');
+
+      // 2) Create student subscription
+      const subscriptionResp = await fetch('https://restaurant-bn-api.onrender.com/api/student-subscriptions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `${token}`,
+        },
+        body: JSON.stringify({
+          studentId,
+          branchId: newUserPayload.branch_id,
+          mealType: normalizeMealType(formData.subscriptionType),
+          mealCount: Number(formData.days)*2 || 1,
+          // Optional fields that backend may ignore: amount/paymentMode could be part of payments API
+        }),
+      });
+
+      if (!subscriptionResp.ok) {
+        let msg = 'Failed to create subscription';
+        try {
+          const j = await subscriptionResp.json();
+          msg = j.message || j.error || msg;
+        } catch {}
+        throw new Error(msg);
+      }
+
+      alert(`Subscription for ${formData.name} has been created`);
+      setFormData({
+        name: '',
+        regNumber: '',
+        days: '',
+        subscriptionType: 'VVIP',
+        branch: 'KIGALI',
+        paymentMode: '',
+        amount: ''
+      });
+      setOpenAddSubscription(false);
+    } catch (err: any) {
+      setServerError(err?.message || 'Request failed');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  // Helpers
+  const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState('');
+  function normalizeMealType(v: string) {
+    const map: Record<string, string> = { VVIP: 'VVIP', Vip: 'VIP', Ordinary: 'Regular' };
+    return map[v] || 'Regular';
+  }
+  async function resolveBranchId(branchLabel: string, token: string): Promise<string> {
+    // If user selected a name like KIGALI, try to find matching branch by name; otherwise assume it's already an ID
+    if (!branchLabel) return branchLabel;
+    try {
+      const resp = await fetch('https://restaurant-bn-api.onrender.com/api/branches', {
+        headers: { Authorization: token },
+      });
+      if (!resp.ok) return branchLabel;
+      const j = await resp.json();
+      const list = Array.isArray(j?.data) ? j.data : [];
+      const found = list.find((b: any) => String(b?.name).toUpperCase() === branchLabel.toUpperCase());
+      return found?.id ? String(found.id) : branchLabel;
+    } catch {
+      return branchLabel;
+    }
+  }
 
   return (
     <div className="flex flex-col p-4 border-b border-gray-200 gap-4">
@@ -163,6 +275,11 @@ export default function FiltersBar({
             <SheetDescription>Provide customer and subscription details, then submit.</SheetDescription>
           </SheetHeader>
           <form onSubmit={handleSubmit} className='mt-6 space-y-6'>
+            {serverError && (
+              <div className='bg-red-50 text-red-600 p-3 rounded-md text-sm'>
+                {serverError}
+              </div>
+            )}
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <div className='space-y-2'>
                 <label className='text-sm font-medium text-gray-700'>Name</label>
@@ -210,20 +327,22 @@ export default function FiltersBar({
               </div>
               <div className='space-y-2'>
                 <label className='text-sm font-medium text-gray-700'>Branch</label>
-                <select 
+                <select
                   className='w-full border rounded-md px-3 py-2'
                   value={formData.branch}
                   onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                  required
                 >
-                  <option value='KIGALI'>KIGALI</option>
-                  <option value='HUYE'>HUYE</option>
-                  <option value='MUSANZE'>MUSANZE</option>
-                  <option value='RUBAVU'>RUBAVU</option>
-                  <option value='NYARUGENGE'>NYARUGENGE</option>
-                  <option value='GASABO'>GASABO</option>
-                  <option value='KICUKIRO'>KICUKIRO</option>
-                  <option value='RUSIZI'>RUSIZI</option>
+                  <option value='' disabled>
+                    {branchesLoading ? 'Loading branches...' : 'Select a branch'}
+                  </option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name || b.id}</option>
+                  ))}
                 </select>
+                {branchesError && (
+                  <p className='text-xs text-red-600'>Failed to load branches: {branchesError}</p>
+                )}
               </div>
               <div className='space-y-2 md:col-span-1'>
                 <label className='text-sm font-medium text-gray-700'>Payment mode</label>
@@ -260,8 +379,8 @@ export default function FiltersBar({
               >
                 Cancel
               </Button>
-              <Button type="submit" className='bg-blue-600 text-white px-6'>
-                SUBMIT
+              <Button type="submit" className='bg-blue-600 text-white px-6' disabled={submitting}>
+                {submitting ? 'Submitting...' : 'SUBMIT'}
               </Button>
             </div>
           </form>
