@@ -1,6 +1,8 @@
 import {Button} from '~/components/ui/button'
 import { Search,Ticket,Wallet } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useAppDispatch, useAppSelector } from '~/store/hooks'
+import { fetchBranchesThunk } from '~/store/branchesSlice'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '~/components/ui/sheet'
 import { subscriptionData } from 'app/constants'
 import dayjs from 'dayjs'
@@ -23,6 +25,23 @@ const QuickAction = () => {
   const [ticketId, setTicketId] = useState<string>('');
   const [ticketQr, setTicketQr] = useState<string>('');
   const [ticketGenerated, setTicketGenerated] = useState<boolean>(false);
+
+  // Branches from Redux
+  const dispatch = useAppDispatch();
+  const { items: branches, loading: branchesLoading, error: branchesError, loaded: branchesLoaded } = useAppSelector((s) => s.branches);
+  const [registerBranch, setRegisterBranch] = useState<string>('');
+
+  useEffect(() => {
+    if (!branchesLoaded && !branchesLoading) {
+      dispatch(fetchBranchesThunk());
+    }
+  }, [branchesLoaded, branchesLoading, dispatch]);
+
+  useEffect(() => {
+    if (!registerBranch && branches.length > 0) {
+      setRegisterBranch(branches[0].id);
+    }
+  }, [branches, registerBranch]);
 
   // Auto-refresh QR every 30s while ticket sheet is open and generated
   useEffect(() => {
@@ -170,11 +189,22 @@ const QuickAction = () => {
             </div>
             <div className='space-y-2'>
               <label className='text-sm font-medium text-gray-700'>Branch</label>
-              <select className='w-full border rounded-md px-3 py-2'>
-                <option value='VVIP'>KIGALI</option>
-                <option value='Vip'>HUYE</option>
-                <option value='Ordinary'>NYAGATARE</option>
+              <select
+                className='w-full border rounded-md px-3 py-2'
+                value={registerBranch}
+                onChange={(e) => setRegisterBranch(e.target.value)}
+                required
+              >
+                <option value='' disabled>
+                  {branchesLoading ? 'Loading branches...' : 'Select a branch'}
+                </option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name || b.id}</option>
+                ))}
               </select>
+              {branchesError && (
+                <p className='text-xs text-red-600'>Failed to load branches: {branchesError}</p>
+              )}
             </div>
             <div className='space-y-2 md:col-span-1'>
               <label className='text-sm font-medium text-gray-700'>Payment mode</label>
