@@ -67,8 +67,9 @@ export default function UsersPage() {
   })
 
   useEffect(() => {
-    // Try to load users on mount; if unauthorized, table will rely on optimistic updates
+    // Prefetch users and branches on mount to reduce UI latency
     fetchUsers()
+    fetchBranches()
   }, [])
 
   const fetchUsers = async () => {
@@ -356,8 +357,8 @@ export default function UsersPage() {
       <UsersTable
         users={filteredUsers}
         isLoading={usersLoading}
-        onView={async (user) => { setSelectedUser(user); await fetchBranches(); await ensureBranchPresent(user.branch_id); setIsViewUserOpen(true) }}
-        onEdit={async (user) => { setSelectedUser(user); await fetchBranches(); await ensureBranchPresent(user.branch_id); setIsEditUserOpen(true) }}
+        onView={(user) => { setSelectedUser(user); setIsViewUserOpen(true); ensureBranchPresent(user.branch_id) }}
+        onEdit={(user) => { setSelectedUser(user); setIsEditUserOpen(true); ensureBranchPresent(user.branch_id) }}
         onDelete={async (user) => {
           const ok = confirm(`Delete user ${user.full_name}?`)
           if (!ok) return
