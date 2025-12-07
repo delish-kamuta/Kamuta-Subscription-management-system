@@ -10,6 +10,7 @@ type Props = {
   error: string
   successMessage: string
   isLoading: boolean
+  action:string
   formData: {
     full_name: string
     phone: string
@@ -25,7 +26,7 @@ type Props = {
   onSubmit: (e: React.FormEvent) => void
 }
 
-export function AddUserSheet({ open, onOpenChange, error, successMessage, isLoading, formData, setFormData, branches, staticBranches, roles, onSubmit }: Props) {
+export function AddUserSheet({ open, onOpenChange, error, successMessage, isLoading, formData, setFormData, branches,action, staticBranches, roles, onSubmit }: Props) {
   const branchOptions = branches.length > 0 ? branches : staticBranches
   const roleOptions = (roles && roles.length > 0)
     ? roles
@@ -41,7 +42,7 @@ export function AddUserSheet({ open, onOpenChange, error, successMessage, isLoad
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto bg-white p-6">
         <SheetHeader>
-          <SheetTitle>Add New User</SheetTitle>
+          <SheetTitle>{action}</SheetTitle>
           <SheetDescription>
             Fill in the details to create a new user account
           </SheetDescription>

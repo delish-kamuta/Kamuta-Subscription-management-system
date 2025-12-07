@@ -384,6 +384,7 @@ export default function UsersPage() {
         open={isAddUserOpen}
         onOpenChange={setIsAddUserOpen}
         error={error}
+        action = {"Add User"}
         successMessage={successMessage}
         isLoading={isLoading}
         formData={formData}
@@ -411,6 +412,7 @@ export default function UsersPage() {
           open={isViewUserOpen}
           onOpenChange={(v) => { setIsViewUserOpen(v); if (!v) setSelectedUser(null) }}
           error={""}
+          action ={"View User"}
           successMessage={""}
           isLoading={false}
           formData={{
@@ -435,6 +437,7 @@ export default function UsersPage() {
           open={isEditUserOpen}
           onOpenChange={(v) => { setIsEditUserOpen(v); if (!v) setSelectedUser(null) }}
           error={error}
+          action = {"Edit User"}
           successMessage={successMessage}
           isLoading={isLoading}
           formData={{
