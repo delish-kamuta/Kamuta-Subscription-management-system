@@ -1,7 +1,13 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getToken } from "~/lib/api";
 
-export interface BranchItem { id: string; name?: string }
+export interface BranchItem { 
+  id: string; 
+  name?: string;
+  regular_price?: number;
+  vip_price?: number;
+  vvip_price?: number;
+}
 interface BranchesState {
   items: BranchItem[];
   loaded: boolean;
@@ -36,7 +42,13 @@ export const fetchBranchesThunk = createAsyncThunk(
       }
       const data = await resp.json();
       const list = Array.isArray(data?.data) ? data.data : [];
-      return list.map((b: any) => ({ id: String(b.id), name: String(b.name || "") })) as BranchItem[];
+      return list.map((b: any) => ({ 
+        id: String(b.id), 
+        name: String(b.name || ""),
+        regular_price: Number(b.regular_price) || 0,
+        vip_price: Number(b.vip_price) || 0,
+        vvip_price: Number(b.vvip_price) || 0
+      })) as BranchItem[];
     } catch (e: any) {
       return rejectWithValue(e?.message || "Unable to fetch branches");
     }

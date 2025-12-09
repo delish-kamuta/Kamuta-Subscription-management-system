@@ -10,6 +10,7 @@ interface AuthState {
     email: string;
     role: UserRole | null;
     customerType?: CustomerType | null;
+    branch_id?: string | null;
   } | null;
 }
 
@@ -23,13 +24,13 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    login: (state, action: PayloadAction<{ id: string; name: string; email: string; role: UserRole; customerType?: CustomerType | null; token?: string | null }>) => {
+    login: (state, action: PayloadAction<{ id: string; name: string; email: string; role: UserRole; customerType?: CustomerType | null; branch_id?: string | null; token?: string | null }>) => {
       state.isAuthenticated = true;
       state.token = action.payload.token ?? state.token ?? null;
       const { token, ...user } = action.payload;
       state.user = user;
     },
-    signup: (state, action: PayloadAction<{ id: string; name: string; email: string; role: UserRole; customerType?: CustomerType | null; token?: string | null }>) => {
+    signup: (state, action: PayloadAction<{ id: string; name: string; email: string; role: UserRole; customerType?: CustomerType | null; branch_id?: string | null; token?: string | null }>) => {
       state.isAuthenticated = true;
       state.token = action.payload.token ?? state.token ?? null;
       const { token, ...user } = action.payload;

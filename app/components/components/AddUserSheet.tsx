@@ -1,6 +1,7 @@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "~/components/ui/sheet"
 import { Input } from "~/components/ui/input"
 import { Button } from "~/components/ui/button"
+import {useAppSelector } from "~/store/hooks"
 
 type BranchOption = { id: string; name: string }
 
@@ -28,11 +29,13 @@ type Props = {
 
 export function AddUserSheet({ open, onOpenChange, error, successMessage, isLoading, formData, setFormData, branches,action, staticBranches, roles, onSubmit }: Props) {
   const branchOptions = branches.length > 0 ? branches : staticBranches
+  const user = useAppSelector((state)=>state.auth.user)
+  console.log()
   const roleOptions = (roles && roles.length > 0)
     ? roles
     : [
         { name: 'student' },
-        { name: 'Worker' },
+        { name: 'worker' },
         { name: 'cashier' },
         { name: 'branch_manager' },
         { name: 'Admin' },

@@ -14,7 +14,7 @@ const initialState: RolesState = {
   // Seed with backend enum until an API exists
   roles: [
     { name: 'student' },
-    { name: 'Worker' },
+    { name: 'worker' },
     { name: 'cashier' },
     { name: 'branch_manager' },
     { name: 'Admin' },
