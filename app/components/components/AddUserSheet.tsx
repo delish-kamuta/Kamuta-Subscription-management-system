@@ -37,7 +37,7 @@ export function AddUserSheet({ open, onOpenChange, error, successMessage, isLoad
         { name: 'student' },
         { name: 'worker' },
         { name: 'cashier' },
-        { name: 'branch_manager' },
+        { name: 'scanner' },
         { name: 'Admin' },
       ]
 

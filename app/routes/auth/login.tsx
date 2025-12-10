@@ -37,7 +37,7 @@ export default function LoginPage() {
 
       const result = await response.json();
       
-      // Store token in localStorage if provided
+      // Store token & user in localStorage if provided
       const token = result.data?.accessToken || result.token || result.accessToken;
       if (token) {
         localStorage.setItem('authToken', token);
@@ -48,6 +48,9 @@ export default function LoginPage() {
       
       // Get user data from the correct path
       const userData = result.data?.user || result.user;
+      if (userData) {
+        try { localStorage.setItem('authUser', JSON.stringify(userData)); } catch {}
+      }
       
       // Normalize role from API (e.g., "Admin" -> "ADMIN")
       const apiRole = userData?.role;

@@ -32,6 +32,10 @@ export function AppSidebar() {
       
       // Dispatch logout action to clear Redux state
       dispatch(logoutAction())
+      try {
+        localStorage.removeItem('authToken')
+        localStorage.removeItem('authUser')
+      } catch {}
       
       console.log('User logged out')
       
