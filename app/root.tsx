@@ -11,6 +11,7 @@ import { store } from "./store/store";
 import { useEffect } from "react";
 import { useAppDispatch } from "./store/hooks";
 import { hydrate } from "./store/authSlice";
+import { mapApiRoleToUserRole, mapApiCustomerType } from "~/types/auth";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -63,8 +64,8 @@ export default function App() {
             id: user.id,
             name: user.full_name || user.name || '',
             email: user.email || user.phone || '',
-            role: (user.role ? String(user.role).toUpperCase() : null),
-            customerType: user.customerType || null,
+            role: mapApiRoleToUserRole(user.role),
+            customerType: mapApiCustomerType(user.customerType),
             branch_id: user.branch_id || null,
           } : null;
           dispatch(hydrate({ token: token || null, user: normalizedUser }));

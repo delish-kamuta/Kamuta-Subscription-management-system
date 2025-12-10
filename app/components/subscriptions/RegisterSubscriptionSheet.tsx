@@ -31,6 +31,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
 
   useEffect(() => {
     if (!branchesLoaded && !branchesLoading) {
@@ -122,7 +123,9 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         throw new Error(msg)
       }
 
-      await resp.json()
+      const result = await resp.json()
+      const genPwd = result?.data?.generated_password
+      setGeneratedPassword(genPwd ?? null)
       setSuccess('Subscription registered successfully!')
       // Reset form
       setFormData({
@@ -139,7 +142,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
       setTimeout(() => {
         setSuccess('')
         onOpenChange(false)
-      }, 2000)
+      }, 10000)
     } catch (err: any) {
       setError(err?.message || 'Request failed')
     } finally {
@@ -161,8 +164,28 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
             </div>
           )}
           {success && (
-            <div className='bg-green-50 text-green-600 p-3 rounded-md text-sm'>
-              {success}
+            <div className='bg-green-50 text-green-600 p-3 rounded-md text-sm space-y-2'>
+              <div>{success}</div>
+              {generatedPassword && (
+                <div className='flex items-center gap-2'>
+                  <span className='font-medium'>Temporary password:</span>
+                  <span className='px-2 py-1 bg-white border rounded text-gray-800'>{generatedPassword}</span>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(generatedPassword)
+                        setSuccess('Password copied to clipboard!')
+                      } catch {
+                        setError('Failed to copy password')
+                      }
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
+              )}
             </div>
           )}
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
