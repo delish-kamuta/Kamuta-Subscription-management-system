@@ -9,6 +9,7 @@ import FinancialStatsSection from "~/components/payments/FinancialStatsSection";
 import ChartsSection from "~/components/payments/ChartsSection";
 import PaymentModals from "~/components/payments/PaymentModals";
 import PaymentTable from "~/components/payments/PaymentTable";
+import { usePaymentsFromSubscriptions } from "~/hooks/usePaymentsFromSubscriptions";
 
 interface Payment {
   paymentId: string;
@@ -24,6 +25,7 @@ interface Payment {
 
 const Payments = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { items: apiPayments, loading, error } = usePaymentsFromSubscriptions();
   const [currentPage, setCurrentPage] = useState(1);
   const [branchFilter, setBranchFilter] = useState("All");
   const [cashierFilter, setCashierFilter] = useState("All");
@@ -49,14 +51,14 @@ const Payments = () => {
 
   const dailyRevenue = last7Days.reverse().map((dateStr) => ({
     date: dateStr,
-    amount: paymentsData
+    amount: (apiPayments.length ? apiPayments : paymentsData)
       .filter((p) => p.paymentDate === dateStr)
       .reduce((sum, p) => sum + p.amountPaid, 0),
   }));
 
-  const totalRevenue = paymentsData.reduce((sum, p) => sum + p.amountPaid, 0);
+  const totalRevenue = (apiPayments.length ? apiPayments : paymentsData).reduce((sum, p) => sum + p.amountPaid, 0);
 
-  const paymentMethodsData = paymentsData.reduce((acc, payment) => {
+  const paymentMethodsData = (apiPayments.length ? apiPayments : paymentsData).reduce((acc, payment) => {
     const method = payment.payment;
     if (!acc[method]) {
       acc[method] = { count: 0, amount: 0 };
@@ -72,11 +74,11 @@ const Payments = () => {
     percentage: (data.count / paymentsData.length) * 100,
   }));
 
-  const topPayments = [...paymentsData]
+  const topPayments = [...(apiPayments.length ? apiPayments : paymentsData)]
     .sort((a, b) => b.amountPaid - a.amountPaid)
     .slice(0, 5)
     .map((p) => ({
-      id: parseInt(p.paymentId.replace("PAY-", "")),
+      id: parseInt(String(p.paymentId).replace("PAY-", "")) || 0,
       customerName: p.clientName,
       regNumber: p.paymentId,
       amount: `$${p.amountPaid}`,
@@ -87,7 +89,21 @@ const Payments = () => {
       cashier: "N/A",
     }));
 
-  const filteredData = paymentsData.filter((item) => {
+  const sourceData = apiPayments.length
+    ? apiPayments.map((r) => ({
+        paymentId: r.regNumber,
+        clientName: r.customerName,
+        branch: r.branch,
+        subscriptionType: "",
+        amountPaid: Number(String(r.amount).replace(/[^0-9.]/g, "")) || 0,
+        totalMeals: 0,
+        paymentDate: r.date,
+        addedNotes: "",
+        payment: r.paymentMethod,
+      }))
+    : paymentsData;
+
+  const filteredData = sourceData.filter((item) => {
     const matchesSearch =
       item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.paymentId.includes(searchTerm);
@@ -148,7 +164,7 @@ const Payments = () => {
 
   // Convert filtered data to match PaymentTable component interface
   const tableData = filteredData.map((p) => ({
-    id: parseInt(p.paymentId.replace("PAY-", "")),
+    id: parseInt(String(p.paymentId).replace("PAY-", "")) || 0,
     customerName: p.clientName,
     regNumber: p.paymentId,
     amount: `$${p.amountPaid}`,
@@ -196,23 +212,31 @@ const Payments = () => {
           onExport={handleExport}
         />
 
+        {loading && (
+          <div className="px-4 md:px-6 py-4 text-sm text-gray-500">Loading payments…</div>
+        )}
+        {error && (
+          <div className="px-4 md:px-6 py-4 text-sm text-red-600">{error}</div>
+        )}
+        {!loading && !error && (
         <PaymentTable
           filteredPayments={tableData}
           currentPage={currentPage}
           itemsPerPage={itemsPerPage}
           onViewDetails={(payment) => {
-            const original = paymentsData.find((p) => p.paymentId === payment.regNumber);
+            const original = sourceData.find((p) => p.paymentId === payment.regNumber);
             if (original) handleViewDetails(original);
           }}
           onEdit={(payment) => {
-            const original = paymentsData.find((p) => p.paymentId === payment.regNumber);
+            const original = sourceData.find((p) => p.paymentId === payment.regNumber);
             if (original) handleEdit(original);
           }}
           onDelete={(payment) => {
-            const original = paymentsData.find((p) => p.paymentId === payment.regNumber);
+            const original = sourceData.find((p) => p.paymentId === payment.regNumber);
             if (original) handleDelete(original);
           }}
         />
+        )}
 
         {/* Pagination */}
         <div className="px-4 md:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">

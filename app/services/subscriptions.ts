@@ -79,7 +79,7 @@ export async function createStudentSubscription(token: string | null, payload: a
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify(payload),
   });
@@ -89,4 +89,54 @@ export async function createStudentSubscription(token: string | null, payload: a
     throw new Error(msg);
   }
   return res.json();
+}
+
+export interface PaymentRow {
+  id: number;
+  customerName: string;
+  regNumber: string;
+  amount: string;
+  paymentMethod: string;
+  date: string;
+  status: string;
+  branch: string;
+  cashier: string;
+}
+
+export async function listPaymentsFromSubscriptions(token: string | null): Promise<PaymentRow[]> {
+  // Fetch raw subscriptions to access payment_history
+  const res = await fetch(`${BASE_URL}/student-subscriptions`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `${token}` } : {}),
+    },
+  });
+  if (!res.ok) {
+    let msg = `Failed to fetch: ${res.status}`;
+    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
+    throw new Error(msg);
+  }
+  const json = await res.json();
+  const apiItems: ApiSubscription[] = json.data || json.items || json;
+  const rows: PaymentRow[] = [];
+  apiItems.forEach((api) => {
+    const regNumber = api.student?.reg_number || api.id || '';
+    const customerName = api.student?.user?.full_name || '';
+    const branchId = api.student?.user?.branch_id ? String(api.student.user.branch_id) : '';
+    const history = Array.isArray(api.payment_history) ? api.payment_history : [];
+    history.forEach((ph) => {
+      rows.push({
+        id: rows.length + 1,
+        customerName,
+        regNumber,
+        amount: String(ph.amount ?? api.amount_paid ?? ''),
+        paymentMethod: ph.payment_method || '',
+        date: ph.created_at || api.created_at || api.start_date || '',
+        status: 'Completed',
+        branch: branchId,
+        cashier: 'N/A',
+      });
+    });
+  });
+  return rows;
 }
