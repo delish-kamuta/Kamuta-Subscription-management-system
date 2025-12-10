@@ -79,7 +79,7 @@ export async function createStudentSubscription(token: string | null, payload: a
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token ? { Authorization: `${token}` } : {}),
     },
     body: JSON.stringify(payload),
   });

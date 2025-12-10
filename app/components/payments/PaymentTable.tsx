@@ -14,6 +14,7 @@ import {
 } from "~/components/ui/table";
 import { Button } from "~/components/ui/button";
 import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { useSelector } from "react-redux";
 
 interface Payment {
   id: number;
@@ -43,6 +44,15 @@ export default function PaymentTable({
   onEdit,
   onDelete,
 }: PaymentTableProps) {
+  const branches = useSelector((state: any) => state?.branches?.items || state?.branches?.branches || []);
+  const branchById: Record<string, string> = Array.isArray(branches)
+    ? branches.reduce((acc: Record<string, string>, b: any) => {
+        const id = String(b?.id ?? b?.branch_id ?? "");
+        const name = String(b?.name ?? b?.branch_name ?? "");
+        if (id) acc[id] = name || id;
+        return acc;
+      }, {})
+    : {};
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredPayments.slice(indexOfFirstItem, indexOfLastItem);
@@ -70,7 +80,7 @@ export default function PaymentTable({
             <TableCell className="text-muted-foreground">
               {new Date(payment.date).toLocaleDateString()}
             </TableCell>
-            <TableCell>{payment.branch}</TableCell>
+            <TableCell>{branchById[String(payment.branch)] || payment.branch}</TableCell>
             <TableCell>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
