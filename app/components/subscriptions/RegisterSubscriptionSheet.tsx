@@ -83,12 +83,11 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         return
       }
 
-      const payload = {
+      const payload: any = {
         full_name: formData.full_name.trim(),
         phone: formData.phone.trim(),
         role: formData.role,
         branch_id: formData.branch_id,
-        reg_number: formData.reg_number.trim(),
         subscription: {
           meal_type: formData.meal_type,
           total_meals: Number(formData.days)*2 || 30,
@@ -96,6 +95,13 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
           payment_method: formData.payment_method.toLowerCase()
         }
       }
+
+      // Only include reg_number for students
+      if (formData.role === 'student' && formData.reg_number.trim()) {
+        payload.reg_number = formData.reg_number.trim()
+      }
+
+      console.log('Sending payload:', JSON.stringify(payload, null, 2))
 
       const resp = await fetch('https://restaurant-bn-api.onrender.com/api/users', {
         method: 'POST',
@@ -107,10 +113,11 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
       })
 
       if (!resp.ok) {
-        let msg = 'Failed to register subscription'
+        let msg = `Failed to register subscription (${resp.status})`
         try {
           const j = await resp.json()
-          msg = j.message || j.error || msg
+          console.error('Server error response:', j)
+          msg = j.message || j.error || JSON.stringify(j) || msg
         } catch {}
         throw new Error(msg)
       }
