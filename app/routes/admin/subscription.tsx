@@ -12,8 +12,11 @@ import { exportToCsv } from "~\/lib\/utils";
 import { useSubscriptionFilters } from "~\/hooks\/useSubscriptionFilters";
 import SubscriptionTable from "~\/components\/subscriptions\/SubscriptionTable";
 import FiltersBar from "~\/components\/subscriptions\/FiltersBar"; // Importing FiltersBar component
+import RegisterSubscriptionSheet from "~\/components\/subscriptions\/RegisterSubscriptionSheet";
+import { useState } from "react";
 
 const Subscription = () => {
+  const [openRegister, setOpenRegister] = useState(false);
   const { user } = useAppSelector((state) => state.auth);
   const role = user?.role;
   const isAdminOrCashier = role === UserRole.ADMIN || role === UserRole.CASHIER;
