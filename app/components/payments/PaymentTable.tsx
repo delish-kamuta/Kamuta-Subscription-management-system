@@ -61,8 +61,8 @@ export default function PaymentTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {currentItems.map((payment) => (
-          <TableRow key={payment.id}>
+        {currentItems.map((payment, idx) => (
+          <TableRow key={`${payment.id}-${idx}`}>
             <TableCell className="font-medium">#{payment.id}</TableCell>
             <TableCell>{payment.customerName}</TableCell>
             <TableCell className="font-semibold text-green-600">{payment.amount}</TableCell>

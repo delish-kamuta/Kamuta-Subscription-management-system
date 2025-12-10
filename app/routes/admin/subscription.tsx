@@ -1,7 +1,7 @@
 import { Header } from "../../../components/Header";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import StatsCard from "../../../components/StatsCard";
-import { subscriptionStats, subscriptionData } from "app/constants";
+import { subscriptionStats } from "app/constants";
 import { Search, ChevronDown, Download } from "lucide-react"; // Importing icons
 // Local component state no longer needed after hook integration
 import { useAppSelector } from "~\/store\/hooks";
@@ -10,6 +10,7 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~\/lib\/utils";
 import { useSubscriptionFilters } from "~\/hooks\/useSubscriptionFilters";
+import { useStudentSubscriptions } from "~\/hooks\/useStudentSubscriptions";
 import SubscriptionTable from "~\/components\/subscriptions\/SubscriptionTable";
 import FiltersBar from "~\/components\/subscriptions\/FiltersBar"; // Importing FiltersBar component
 import RegisterSubscriptionSheet from "~\/components\/subscriptions\/RegisterSubscriptionSheet";
@@ -21,6 +22,7 @@ const Subscription = () => {
   const role = user?.role;
   const isAdminOrCashier = role === UserRole.ADMIN || role === UserRole.CASHIER;
   const isCashier = role === UserRole.CASHIER;
+  const { items: apiItems, loading, error } = useStudentSubscriptions();
   const {
     state: { searchTerm, subscriptionTypeFilter, customerTypeFilter, startDate, endDate, currentPage },
     setters: { setSearchTerm, setSubscriptionTypeFilter, setCustomerTypeFilter, setStartDate, setEndDate, setCurrentPage, clearDates },
@@ -28,7 +30,7 @@ const Subscription = () => {
     paginatedData,
     totalPages,
     exportRows,
-  } = useSubscriptionFilters({ data: subscriptionData });
+  } = useSubscriptionFilters({ data: apiItems });
 
   const handleExport = () => {
     const headers = [
@@ -92,8 +94,16 @@ const Subscription = () => {
           isCashier={isCashier}
           onExport={handleExport}
         />
-        {/* Table */}
-        <SubscriptionTable items={paginatedData} isCashier={isCashier} />
+        {/* Loading / Error / Table */}
+        {loading && (
+          <div className="px-4 md:px-6 py-4 text-sm text-gray-500">Loading subscriptions…</div>
+        )}
+        {error && (
+          <div className="px-4 md:px-6 py-4 text-sm text-red-600">{error}</div>
+        )}
+        {!loading && !error && (
+          <SubscriptionTable items={paginatedData} isCashier={isCashier} />
+        )}
 
         {/* Pagination */}
         <div className="px-4 md:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
