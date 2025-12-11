@@ -107,12 +107,30 @@ export async function listWorkerSubscriptions(token: string | null): Promise<Sub
   const json = await res.json();
   const workers: any[] = json.data || json.items || json || [];
 
-  const items: SubscriptionItem[] = [];
+  const items: any[] = [];
   workers.forEach((w: any) => {
     const clientName = w?.user?.full_name || w?.full_name || '';
     const phone = String(w?.user?.phone || w?.phone || '');
     const branchId = w?.user?.branch_id != null ? String(w.user.branch_id) : (w?.branch_id != null ? String(w.branch_id) : '');
     const baseId = String(w?.reg_number || w?.id || '');
+    const walletBalance = Number(
+      (w?.wallet && (w.wallet.balance ?? w.wallet.amount)) ??
+      w?.wallet_balance ?? w?.balance ?? 0
+    ) || 0;
+    const prepaidBalance = Number(
+      (w?.wallet && (w.wallet.prepaid ?? w.wallet.prepaid_balance ?? w.wallet.balance)) ??
+      w?.prepaid_balance ?? w?.prepaid ?? walletBalance
+    ) || 0;
+    const creditBalance = Number(
+      (w?.wallet && (w.wallet.credit ?? w.wallet.credit_balance)) ??
+      w?.credit_balance ?? w?.credit ?? 0
+    ) || 0;
+    const lastTopUp = String(
+      (w?.wallet && (w.wallet.lastTopUp ?? w.wallet.last_topup)) ??
+      w?.last_topup ?? w?.lastTopUp ?? w?.updated_at ?? ''
+    );
+    const mealsThisMonth = Number(w?.meals_this_month ?? w?.stats?.meals_this_month ?? 0) || 0;
+    const lastMeal = String(w?.last_meal_at ?? w?.stats?.last_meal_at ?? '');
     const subs = Array.isArray(w?.subscriptions) ? w.subscriptions : [];
     if (subs.length > 0) {
       subs.forEach((s: any) => {
@@ -129,6 +147,13 @@ export async function listWorkerSubscriptions(token: string | null): Promise<Sub
           totalMeals: Number(s?.total_meals ?? 0),
           mealsLeft: Number(s?.remaining_meals ?? s?.total_meals ?? 0),
           payment: paymentMethod,
+          // extra fields (not in SubscriptionItem type) for worker view
+          walletBalance,
+          prepaidBalance,
+          creditBalance,
+          mealsThisMonth,
+          lastMeal,
+          lastTopUp,
         });
       });
     } else {
@@ -142,10 +167,16 @@ export async function listWorkerSubscriptions(token: string | null): Promise<Sub
         totalMeals: 0,
         mealsLeft: 0,
         payment: '',
+        walletBalance,
+        prepaidBalance,
+        creditBalance,
+        mealsThisMonth,
+        lastMeal,
+        lastTopUp,
       });
     }
   });
-  return items;
+  return items as SubscriptionItem[];
 }
 
 export interface PaymentRow {

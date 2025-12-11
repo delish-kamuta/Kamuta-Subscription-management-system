@@ -85,13 +85,13 @@ const Subscription = () => {
         {/* Tabs */}
         <div className="px-4 md:px-6 pt-4 flex gap-2">
           <Button
-            variant={activeTab === 'students' ? 'default' : 'outline'}
+            variant={activeTab === 'students' ? 'outline' : 'default'}
             onClick={() => setActiveTab('students')}
           >
             Students
           </Button>
           <Button
-            variant={activeTab === 'workers' ? 'default' : 'outline'}
+            variant={activeTab === 'workers' ? 'outline' : 'default'}
             onClick={() => setActiveTab('workers')}
           >
             Workers
