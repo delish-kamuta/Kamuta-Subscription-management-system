@@ -11,7 +11,9 @@ import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~\/lib\/utils";
 import { useSubscriptionFilters } from "~\/hooks\/useSubscriptionFilters";
 import { useStudentSubscriptions } from "~\/hooks\/useStudentSubscriptions";
+import { useWorkerSubscriptions } from "~\/hooks\/useWorkerSubscriptions";
 import SubscriptionTable from "~\/components\/subscriptions\/SubscriptionTable";
+import WorkerSubscriptionTable from "~\/components\/subscriptions\/WorkerSubscriptionTable";
 import FiltersBar from "~\/components\/subscriptions\/FiltersBar"; // Importing FiltersBar component
 import RegisterSubscriptionSheet from "~\/components\/subscriptions\/RegisterSubscriptionSheet";
 import { useState } from "react";
@@ -22,7 +24,10 @@ const Subscription = () => {
   const role = user?.role;
   const isAdminOrCashier = role === UserRole.ADMIN || role === UserRole.CASHIER;
   const isCashier = role === UserRole.CASHIER;
-  const { items: apiItems, loading, error } = useStudentSubscriptions();
+  const { items: studentItems, loading: studentLoading, error: studentError } = useStudentSubscriptions();
+  const { items: workerItems, loading: workerLoading, error: workerError } = useWorkerSubscriptions();
+  const [activeTab, setActiveTab] = useState<'students' | 'workers'>("students");
+  const activeItems = activeTab === 'students' ? studentItems : workerItems;
   const {
     state: { searchTerm, subscriptionTypeFilter, customerTypeFilter, startDate, endDate, currentPage },
     setters: { setSearchTerm, setSubscriptionTypeFilter, setCustomerTypeFilter, setStartDate, setEndDate, setCurrentPage, clearDates },
@@ -30,7 +35,7 @@ const Subscription = () => {
     paginatedData,
     totalPages,
     exportRows,
-  } = useSubscriptionFilters({ data: apiItems });
+  } = useSubscriptionFilters({ data: activeItems });
 
   const handleExport = () => {
     const headers = [
@@ -77,6 +82,21 @@ const Subscription = () => {
 
       {/* Subscription Table Section */}
       <section className="bg-white rounded-lg shadow-sm ">
+        {/* Tabs */}
+        <div className="px-4 md:px-6 pt-4 flex gap-2">
+          <Button
+            variant={activeTab === 'students' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('students')}
+          >
+            Students
+          </Button>
+          <Button
+            variant={activeTab === 'workers' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('workers')}
+          >
+            Workers
+          </Button>
+        </div>
         {/* Search and Filters */}
         <FiltersBar
           searchTerm={searchTerm}
@@ -95,14 +115,18 @@ const Subscription = () => {
           onExport={handleExport}
         />
         {/* Loading / Error / Table */}
-        {loading && (
+        {(activeTab === 'students' ? studentLoading : workerLoading) && (
           <div className="px-4 md:px-6 py-4 text-sm text-gray-500">Loading subscriptions…</div>
         )}
-        {error && (
-          <div className="px-4 md:px-6 py-4 text-sm text-red-600">{error}</div>
+        {(activeTab === 'students' ? studentError : workerError) && (
+          <div className="px-4 md:px-6 py-4 text-sm text-red-600">{activeTab === 'students' ? studentError : workerError}</div>
         )}
-        {!loading && !error && (
-          <SubscriptionTable items={paginatedData} isCashier={isCashier} />
+        {!(activeTab === 'students' ? studentLoading : workerLoading) && !(activeTab === 'students' ? studentError : workerError) && (
+          activeTab === 'students' ? (
+            <SubscriptionTable items={paginatedData} isCashier={isCashier} />
+          ) : (
+            <WorkerSubscriptionTable items={paginatedData} />
+          )
         )}
 
         {/* Pagination */}

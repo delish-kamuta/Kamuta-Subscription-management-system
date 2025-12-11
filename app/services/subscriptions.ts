@@ -91,6 +91,63 @@ export async function createStudentSubscription(token: string | null, payload: a
   return res.json();
 }
 
+// WORKER SUBSCRIPTIONS
+export async function listWorkerSubscriptions(token: string | null): Promise<SubscriptionItem[]> {
+  const res = await fetch(`${BASE_URL}/workers`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `${token}` } : {}),
+    },
+  });
+  if (!res.ok) {
+    let msg = `Failed to fetch workers: ${res.status}`;
+    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
+    throw new Error(msg);
+  }
+  const json = await res.json();
+  const workers: any[] = json.data || json.items || json || [];
+
+  const items: SubscriptionItem[] = [];
+  workers.forEach((w: any) => {
+    const clientName = w?.user?.full_name || w?.full_name || '';
+    const phone = String(w?.user?.phone || w?.phone || '');
+    const branchId = w?.user?.branch_id != null ? String(w.user.branch_id) : (w?.branch_id != null ? String(w.branch_id) : '');
+    const baseId = String(w?.reg_number || w?.id || '');
+    const subs = Array.isArray(w?.subscriptions) ? w.subscriptions : [];
+    if (subs.length > 0) {
+      subs.forEach((s: any) => {
+        const paymentMethod = Array.isArray(s?.payment_history) && s.payment_history.length > 0
+          ? (s.payment_history[0]?.payment_method || '')
+          : '';
+        items.push({
+          id: phone || String(s?.id || baseId),
+          clientName,
+          subscriptionType: String(s?.meal_type || ''),
+          customerType: 'Worker',
+          branch: branchId,
+          dateStarted: String(s?.start_date || s?.created_at || w?.created_at || ''),
+          totalMeals: Number(s?.total_meals ?? 0),
+          mealsLeft: Number(s?.remaining_meals ?? s?.total_meals ?? 0),
+          payment: paymentMethod,
+        });
+      });
+    } else {
+      items.push({
+        id: phone || baseId,
+        clientName,
+        subscriptionType: '',
+        customerType: 'Worker',
+        branch: branchId,
+        dateStarted: String(w?.created_at || ''),
+        totalMeals: 0,
+        mealsLeft: 0,
+        payment: '',
+      });
+    }
+  });
+  return items;
+}
+
 export interface PaymentRow {
   id: number;
   customerName: string;

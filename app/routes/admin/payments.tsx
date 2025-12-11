@@ -2,7 +2,7 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { Header } from "../../../components/Header";
 import { paymentsData } from "app/constants";
 import { useState } from "react";
-import { exportToCsv } from "~/lib/utils";
+import { exportToCsv, formatCurrency } from "~/lib/utils";
 import { toDateKey, isWithinRange } from "~/lib/date";
 import PaymentFilters from "~/components/payments/PaymentFilters";
 import FinancialStatsSection from "~/components/payments/FinancialStatsSection";
@@ -49,46 +49,7 @@ const Payments = () => {
     });
   });
 
-  const dailyRevenue = last7Days.reverse().map((dateStr) => ({
-    date: dateStr,
-    amount: (apiPayments.length ? apiPayments : paymentsData)
-      .filter((p) => p.paymentDate === dateStr)
-      .reduce((sum, p) => sum + p.amountPaid, 0),
-  }));
-
-  const totalRevenue = (apiPayments.length ? apiPayments : paymentsData).reduce((sum, p) => sum + p.amountPaid, 0);
-
-  const paymentMethodsData = (apiPayments.length ? apiPayments : paymentsData).reduce((acc, payment) => {
-    const method = payment.payment;
-    if (!acc[method]) {
-      acc[method] = { count: 0, amount: 0 };
-    }
-    acc[method].count++;
-    acc[method].amount += payment.amountPaid;
-    return acc;
-  }, {} as Record<string, { count: number; amount: number }>);
-
-  const paymentMethods = Object.entries(paymentMethodsData).map(([method, data]) => ({
-    method,
-    count: data.count,
-    percentage: (data.count / paymentsData.length) * 100,
-  }));
-
-  const topPayments = [...(apiPayments.length ? apiPayments : paymentsData)]
-    .sort((a, b) => b.amountPaid - a.amountPaid)
-    .slice(0, 5)
-    .map((p) => ({
-      id: parseInt(String(p.paymentId).replace("PAY-", "")) || 0,
-      customerName: p.clientName,
-      regNumber: p.paymentId,
-      amount: `$${p.amountPaid}`,
-      paymentMethod: p.payment,
-      date: p.paymentDate,
-      status: "Completed",
-      branch: p.branch,
-      cashier: "N/A",
-    }));
-
+  // Normalize data source to a common shape for charts/table
   const sourceData = apiPayments.length
     ? apiPayments.map((r) => ({
         paymentId: r.regNumber,
@@ -102,6 +63,48 @@ const Payments = () => {
         payment: r.paymentMethod,
       }))
     : paymentsData;
+
+  const dailyRevenue = last7Days.reverse().map((dateStr) => ({
+    date: dateStr,
+    amount: sourceData
+      .filter((p) => p.paymentDate === dateStr)
+      .reduce((sum, p) => sum + p.amountPaid, 0),
+  }));
+
+  const totalRevenue = sourceData.reduce((sum, p) => sum + p.amountPaid, 0);
+
+  const paymentMethodsData = sourceData.reduce((acc, payment) => {
+    const method = payment.payment;
+    if (!acc[method]) {
+      acc[method] = { count: 0, amount: 0 };
+    }
+    acc[method].count++;
+    acc[method].amount += payment.amountPaid;
+    return acc;
+  }, {} as Record<string, { count: number; amount: number }>);
+
+  const paymentMethods = Object.entries(paymentMethodsData).map(([method, data]) => ({
+    method,
+    count: data.count,
+    percentage: (data.count / sourceData.length) * 100,
+  }));
+
+  const topPayments = [...sourceData]
+    .sort((a, b) => b.amountPaid - a.amountPaid)
+    .slice(0, 5)
+    .map((p) => ({
+      id: parseInt(String(p.paymentId).replace("PAY-", "")) || 0,
+      customerName: p.clientName,
+      regNumber: p.paymentId,
+      amount: formatCurrency(p.amountPaid),
+      paymentMethod: p.payment,
+      date: p.paymentDate,
+      status: "Completed",
+      branch: p.branch,
+      cashier: "N/A",
+    }));
+
+  // sourceData defined above
 
   const filteredData = sourceData.filter((item) => {
     const matchesSearch =
@@ -167,7 +170,7 @@ const Payments = () => {
     id: parseInt(String(p.paymentId).replace("PAY-", "")) || 0,
     customerName: p.clientName,
     regNumber: p.paymentId,
-    amount: `$${p.amountPaid}`,
+    amount: formatCurrency(p.amountPaid),
     paymentMethod: p.payment,
     date: p.paymentDate,
     status: "Completed",
