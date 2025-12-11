@@ -13,12 +13,12 @@ interface RolesState {
 const initialState: RolesState = {
   // Seed with backend enum until an API exists
   roles: [
-    { name: 'student' },
-    { name: 'worker' },
-    { name: 'cashier' },
-    { name: 'branch_manager' },
-    { name: 'Admin' },
-  ],
+        { name: 'student' },
+        { name: 'worker' },
+        { name: 'cashier' },
+        { name: 'scanner' },
+        { name: 'Admin' },
+      ],
   loaded: true,
 }
 

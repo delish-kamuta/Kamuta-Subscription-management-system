@@ -359,8 +359,6 @@ export default function UsersPage() {
         onView={(user) => { setSelectedUser(user); setIsViewUserOpen(true); ensureBranchPresent(user.branch_id) }}
         onEdit={(user) => { setSelectedUser(user); setIsEditUserOpen(true); ensureBranchPresent(user.branch_id) }}
         onDelete={async (user) => {
-          const ok = confirm(`Delete user ${user.full_name}?`)
-          if (!ok) return
           try {
             const tokenError = ensureValidTokenOrMessage()
             if (tokenError) { setError(tokenError); return }
