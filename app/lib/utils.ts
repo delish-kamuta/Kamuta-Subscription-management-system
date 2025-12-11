@@ -103,3 +103,15 @@ export function exportToCsv(
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+// Currency formatter: uses env `VITE_CURRENCY` if set, else defaults to RWF
+export function formatCurrency(amount: number, currency?: string, locale?: string): string {
+  const curr = currency || (import.meta?.env?.VITE_CURRENCY as string) || "RWF";
+  const loc = locale || navigator?.language || "en-US";
+  try {
+    return new Intl.NumberFormat(loc, { style: "currency", currency: curr }).format(amount);
+  } catch {
+    // Fallback: prefix with currency code if Intl fails
+    return `${curr} ${Number(amount || 0).toFixed(2)}`;
+  }
+}

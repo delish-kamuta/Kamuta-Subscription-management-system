@@ -6,6 +6,8 @@ import { fetchBranchesThunk } from '~/store/branchesSlice'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '~/components/ui/sheet'
 import { subscriptionData } from 'app/constants'
 import dayjs from 'dayjs'
+import RegisterSubscriptionSheet from '~/components/subscriptions/RegisterSubscriptionSheet'
+
 // QR code generated via public API to avoid extra deps
 
 const QuickAction = () => {
@@ -26,22 +28,15 @@ const QuickAction = () => {
   const [ticketQr, setTicketQr] = useState<string>('');
   const [ticketGenerated, setTicketGenerated] = useState<boolean>(false);
 
-  // Branches from Redux
+  // Branches from Redux (needed for ticket generation)
   const dispatch = useAppDispatch();
   const { items: branches, loading: branchesLoading, error: branchesError, loaded: branchesLoaded } = useAppSelector((s) => s.branches);
-  const [registerBranch, setRegisterBranch] = useState<string>('');
 
   useEffect(() => {
     if (!branchesLoaded && !branchesLoading) {
       dispatch(fetchBranchesThunk());
     }
   }, [branchesLoaded, branchesLoading, dispatch]);
-
-  useEffect(() => {
-    if (!registerBranch && branches.length > 0) {
-      setRegisterBranch(branches[0].id);
-    }
-  }, [branches, registerBranch]);
 
   // Auto-refresh QR every 30s while ticket sheet is open and generated
   useEffect(() => {
@@ -158,74 +153,9 @@ const QuickAction = () => {
       <Button size='icon-lg' onClick={() => setOpenFind(true)} className='md:w-[30%] lg:w-[30%] bg-blue-600 text-white h-[50px] w-full'> <Search/>Find Client</Button>
       <Button size='icon-lg' onClick={() => setOpenTicket(true)} className='md:w-[30%] lg:w-[30%] bg-blue-600 text-white h-[50px] w-full'> <Ticket/>Generate Ticket</Button>
     </div>
+
     {/* Register Subscription Sheet */}
-    <Sheet open={openRegister} onOpenChange={setOpenRegister}>
-      <SheetContent side='right' className='w-full sm:max-w-lg bg-white p-6 border-none h-screen max-h-screen overflow-y-auto'>
-        <SheetHeader>
-          <SheetTitle>Record New Subscription</SheetTitle>
-          <SheetDescription>Provide customer and subscription details, then submit.</SheetDescription>
-        </SheetHeader>
-        <form className='mt-6 space-y-6'>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <label className='text-sm font-medium text-gray-700'>Name</label>
-              <input className='w-full border rounded-md px-3 py-2' placeholder='Enter full name' />
-            </div>
-            <div className='space-y-2'>
-              <label className='text-sm font-medium text-gray-700'>Reg number</label>
-              <input className='w-full border rounded-md px-3 py-2' placeholder='e.g., RG-12345' />
-            </div>
-            <div className='space-y-2'>
-              <label className='text-sm font-medium text-gray-700'>Days</label>
-              <input type='number' min={1} className='w-full border rounded-md px-3 py-2' placeholder='e.g., 30' />
-            </div>
-            <div className='space-y-2'>
-              <label className='text-sm font-medium text-gray-700'>Subscription</label>
-              <select className='w-full border rounded-md px-3 py-2'>
-                <option value='VVIP'>VVIP</option>
-                <option value='Vip'>VIP</option>
-                <option value='Ordinary'>Ordinary</option>
-              </select>
-            </div>
-            <div className='space-y-2'>
-              <label className='text-sm font-medium text-gray-700'>Branch</label>
-              <select
-                className='w-full border rounded-md px-3 py-2'
-                value={registerBranch}
-                onChange={(e) => setRegisterBranch(e.target.value)}
-                required
-              >
-                <option value='' disabled>
-                  {branchesLoading ? 'Loading branches...' : 'Select a branch'}
-                </option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name || b.id}</option>
-                ))}
-              </select>
-              {branchesError && (
-                <p className='text-xs text-red-600'>Failed to load branches: {branchesError}</p>
-              )}
-            </div>
-            <div className='space-y-2 md:col-span-1'>
-              <label className='text-sm font-medium text-gray-700'>Payment mode</label>
-              <select className='w-full border rounded-md px-3 py-2'>
-                <option value=''>select payment method</option>
-                <option value='Cash'>Cash</option>
-                <option value='Card'>Card</option>
-                <option value='Mobile Money'>Mobile Money</option>
-              </select>
-            </div>
-            <div className='space-y-2 md:col-span-2'>
-              <label className='text-sm font-medium text-gray-700'>Amount to Pay</label>
-              <input type='number' min={1} className='w-full border rounded-md px-3 py-2' placeholder='e.g., 3000 Rwf' />
-            </div>
-          </div>
-          <div className='flex justify-end'>
-            <Button className='bg-blue-600 text-white px-6'>SUBMIT</Button>
-          </div>
-        </form>
-      </SheetContent>
-    </Sheet>
+    <RegisterSubscriptionSheet open={openRegister} onOpenChange={setOpenRegister} />
     {/* Find Client Sheet */}
     <Sheet open={openFind} onOpenChange={setOpenFind}>
       <SheetContent side='right' className='w-full sm:max-w-lg p-6 bg-white border-none h-screen max-h-screen overflow-y-auto'>

@@ -1,6 +1,7 @@
 import { AuthForm } from "../../../components/AuthForm"
 import { useNavigate } from "react-router"
-import { UserRole, CustomerType } from "~/types/auth"
+import { UserRole } from "~/types/auth"
+import { mapApiRoleToUserRole, mapApiCustomerType } from "~/types/auth"
 import { useAppDispatch } from "~/store/hooks"
 import { signup as signupAction } from "~/store/authSlice"
 
@@ -46,9 +47,9 @@ export default function SignupPage() {
       // Get user data from the correct path
       const userData = result.data?.user || result.user;
       
-      // Normalize role from API (e.g., "Admin" -> "ADMIN")
-      const apiRole = userData?.role;
-      const normalizedRole = apiRole ? apiRole.toUpperCase() as UserRole : UserRole.CLIENT;
+      // Normalize role/customer type from API
+      const normalizedRole = mapApiRoleToUserRole(userData?.role);
+      const normalizedCustomerType = mapApiCustomerType(userData?.customerType as any);
       
       // Dispatch user data to Redux
       dispatch(signupAction({
@@ -56,7 +57,7 @@ export default function SignupPage() {
         name: userData?.full_name,
         email: userData?.email || userData?.phone || data.phone,
         role: normalizedRole,
-        customerType: userData?.customerType || null,
+        customerType: normalizedCustomerType,
       }));
       
       console.log('User signed up successfully:', result);

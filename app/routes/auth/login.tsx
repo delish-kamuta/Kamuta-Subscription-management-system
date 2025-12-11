@@ -1,5 +1,6 @@
 import { AuthForm } from "../../../components/AuthForm"
-import { UserRole, CustomerType } from "~/types/auth"
+import { UserRole } from "~/types/auth"
+import { mapApiRoleToUserRole, mapApiCustomerType } from "~/types/auth"
 import { useNavigate } from "react-router"
 import { useAppDispatch } from "~/store/hooks"
 import { login as loginAction } from "~/store/authSlice"
@@ -37,7 +38,7 @@ export default function LoginPage() {
 
       const result = await response.json();
       
-      // Store token in localStorage if provided
+      // Store token & user in localStorage if provided
       const token = result.data?.accessToken || result.token || result.accessToken;
       if (token) {
         localStorage.setItem('authToken', token);
@@ -48,10 +49,13 @@ export default function LoginPage() {
       
       // Get user data from the correct path
       const userData = result.data?.user || result.user;
+      if (userData) {
+        try { localStorage.setItem('authUser', JSON.stringify(userData)); } catch {}
+      }
       
-      // Normalize role from API (e.g., "Admin" -> "ADMIN")
-      const apiRole = userData?.role;
-      const normalizedRole = apiRole ? apiRole.toUpperCase() as UserRole : UserRole.CLIENT;
+      // Normalize role/customer type from API
+      const normalizedRole = mapApiRoleToUserRole(userData?.role);
+      const normalizedCustomerType = mapApiCustomerType(userData?.customerType as any);
       
       // Dispatch user data to Redux
       dispatch(loginAction({
@@ -59,7 +63,7 @@ export default function LoginPage() {
         name: userData?.full_name,
         email: userData?.email || userData?.phone || data.phone,
         role: normalizedRole,
-        customerType: userData?.customerType || null,
+        customerType: normalizedCustomerType,
         token: token || null,
       }));
       

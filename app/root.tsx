@@ -8,6 +8,10 @@ import {
 } from "react-router";
 import { Provider } from "react-redux";
 import { store } from "./store/store";
+import { useEffect } from "react";
+import { useAppDispatch } from "./store/hooks";
+import { hydrate } from "./store/authSlice";
+import { mapApiRoleToUserRole, mapApiCustomerType } from "~/types/auth";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -24,7 +28,6 @@ export const links: Route.LinksFunction = () => [
     href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
 ];
-
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -44,8 +47,40 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  // Bootstrap auth from localStorage
+  const Bootstrap = () => {
+    const dispatch = useAppDispatch();
+    useEffect(() => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const rawUser = localStorage.getItem('authUser');
+        let user: any = null;
+        if (rawUser) {
+          try { user = JSON.parse(rawUser); } catch {}
+        }
+        if (token || user) {
+          // Normalize minimal user fields if available
+          const normalizedUser = user ? {
+            id: user.id,
+            name: user.full_name || user.name || '',
+            email: user.email || user.phone || '',
+            role: mapApiRoleToUserRole(user.role),
+            customerType: mapApiCustomerType(user.customerType),
+            branch_id: user.branch_id || null,
+          } : null;
+          dispatch(hydrate({ token: token || null, user: normalizedUser }));
+        } else {
+          dispatch(hydrate({ token: null, user: null }));
+        }
+      } catch {
+        dispatch(hydrate({ token: null, user: null }));
+      }
+    }, [dispatch]);
+    return null;
+  };
   return (
     <Provider store={store}>
+      <Bootstrap />
       <Outlet />
     </Provider>
   );

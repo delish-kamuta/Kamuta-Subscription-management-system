@@ -392,6 +392,19 @@ export function getSubscriptionColumns(isCashier: boolean): SubscriptionColumn[]
       header: "Date Started",
       headerClassName: "hidden md:table-cell whitespace-nowrap",
       cellClassName: "hidden md:table-cell text-sm",
+      render: (item) => {
+        const d = item.dateStarted ? new Date(item.dateStarted) : null;
+        const formatted = d
+          ? d.toLocaleString(undefined, {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+          : '';
+        return formatted || item.dateStarted;
+      },
     },
     {
       key: "branch",

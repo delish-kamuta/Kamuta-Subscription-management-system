@@ -2,6 +2,9 @@
   "name": "bus-tracker",
   "private": true,
   "type": "module",
+  "overrides": {
+    "p-map": "4.0.0"
+  },
   "scripts": {
     "build": "react-router build",
     "dev": "react-router dev",

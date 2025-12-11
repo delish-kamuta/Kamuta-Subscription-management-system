@@ -10,9 +10,15 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { isAuthenticated, user } = useAppSelector((state) => state.auth)
+  const { isAuthenticated, user, hydrated, token } = useAppSelector((state) => state.auth as any)
 
-  if (!isAuthenticated) {
+  // Wait for hydration before deciding
+  if (!hydrated) {
+    return <></>
+  }
+
+  // If not authenticated after hydration, redirect
+  if (!isAuthenticated || !token) {
     return <Navigate to="/auth/login" replace />
   }
 
