@@ -19,6 +19,7 @@ const Dashboard = () => {
   const userName = user?.name || "Guest";
   const userRole = user?.role;
   const isCashier = userRole === UserRole.CASHIER;
+  const isAdmin = userRole === UserRole.ADMIN;
 
   // Compute recent subscriptions (latest by dateStarted)
   const recentSubscriptions = [...subscriptionData]
@@ -26,7 +27,7 @@ const Dashboard = () => {
     .slice(0, 8);
 
   // Client (Student) Dashboard
-  if (userRole === UserRole.CLIENT) {
+  if (userRole === UserRole.STUDENT || userRole === UserRole.WORKER) {
     return(
       <Client userName={userName} />
     )
@@ -45,8 +46,7 @@ const Dashboard = () => {
 
       {/* Stats Cards Section */}
       <section className="flex flex-col gap-6">
-        {userRole === UserRole.CASHIER ?
-        <QuickAction/>:
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
           {dashboardStats.map((stat) => (
             <StatsCard
@@ -58,7 +58,9 @@ const Dashboard = () => {
             />
           ))}
         </div>
-}
+
+        {(isCashier || isAdmin)&&(<QuickAction/>)}
+
       </section>
       {isCashier ? (
         <section className="mt-6 bg-white rounded-lg shadow-sm">
