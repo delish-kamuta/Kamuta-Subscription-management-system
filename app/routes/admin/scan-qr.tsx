@@ -28,6 +28,7 @@ const ScanQR = () => {
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [recentScans, setRecentScans] = useState<ScanResult[]>([]);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerElementId = "qr-reader";
 
@@ -51,24 +52,29 @@ const ScanQR = () => {
         const dataParam = url.searchParams.get('data');
         if (dataParam) {
           try { payload = JSON.parse(decodeURIComponent(dataParam)); }
-          catch { /* fallthrough to try raw */ }
+          catch (e) { setScanError(`Failed parsing URL data param: ${String(e)}`); /* fallthrough to try raw */ }
         }
         // If still no payload, attempt to parse pathname or hash
         if (!payload) {
           const hashData = url.hash?.replace(/^#/, '') || '';
           if (hashData) {
-            try { payload = JSON.parse(decodeURIComponent(hashData)); } catch {}
+            try { payload = JSON.parse(decodeURIComponent(hashData)); } catch (e) { setScanError(`Failed parsing URL hash: ${String(e)}`) }
           }
         }
       }
       // If not a URL or parsing failed, try raw JSON
       if (!payload) {
-        payload = JSON.parse(text);
+        try { payload = JSON.parse(text); }
+        catch (e) {
+          setScanError(`JSON parse error: ${String(e)}; content: ${text.slice(0, 120)}...`)
+          throw e
+        }
       }
       const tokenValue: string | undefined = payload?.token;
       const meal = payload?.meal;
       if (!tokenValue) {
         setScanResult({ success: false, message: "QR missing token", timestamp: new Date().toLocaleString() });
+        setScanError('QR content did not include "token" field')
         return;
       }
       // Validate with backend
@@ -81,8 +87,11 @@ const ScanQR = () => {
         token: tokenValue,
         meal,
       });
+      setScanError(null)
       setRecentScans(prev => [{ success: ok, message: ok ? "Valid meal token" : "Invalid meal token", timestamp: new Date().toLocaleString(), token: tokenValue, meal }, ...prev.slice(0, 4)]);
     } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error)
+      setScanError(`Processing error: ${msg}`)
       setScanResult({ success: false, message: "Invalid QR content", timestamp: new Date().toLocaleString() });
     }
   };
@@ -114,8 +123,8 @@ const ScanQR = () => {
           handleStopScan();
         },
         (errorMessage) => {
-          // Scan error (can be ignored for continuous scanning)
-          // console.log("Scanning...", errorMessage);
+          // Show scan error to help debug camera/decoding issues
+          setScanError(String(errorMessage))
         }
       );
 
@@ -187,6 +196,9 @@ const ScanQR = () => {
                         Camera permission denied. Please enable camera access.
                       </p>
                     )}
+                    {scanError && (
+                      <p className="text-xs text-red-500 break-all">{scanError}</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -247,6 +259,11 @@ const ScanQR = () => {
                       )}
                     </div>
                   </div>
+                </div>
+              )}
+              {!scanResult && scanError && (
+                <div className="p-3 rounded-md border border-red-300 bg-red-50 text-red-700 text-xs">
+                  {scanError}
                 </div>
               )}
 
