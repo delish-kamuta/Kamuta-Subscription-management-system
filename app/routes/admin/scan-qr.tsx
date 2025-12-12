@@ -3,17 +3,23 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { Camera, CheckCircle2, XCircle, AlertCircle, ScanLine } from "lucide-react";
+import { Camera, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { useAppSelector } from "~/store/hooks";
 import { Html5Qrcode } from "html5-qrcode";
+import { validateMealToken } from "~/services/mealToken";
 
 interface ScanResult {
   success: boolean;
-  studentName?: string;
-  studentId?: string;
-  mealType?: string;
   message: string;
   timestamp?: string;
+  token?: string;
+  meal?: {
+    type?: string;
+    quantity?: number;
+    extras?: string;
+    extras_quantity?: number;
+    total_price?: number;
+  };
 }
 
 const ScanQR = () => {
@@ -34,37 +40,29 @@ const ScanQR = () => {
     };
   }, [isScanning]);
 
-  const processQRData = (decodedText: string) => {
-    // TODO: Replace with actual API call to verify student subscription
-    // For now, parsing mock QR data format: "STD12345|John Doe|Lunch"
+  const processQRData = async (decodedText: string) => {
     try {
-      const parts = decodedText.split('|');
-      
-      if (parts.length >= 2) {
-        const mockResult: ScanResult = {
-          success: true,
-          studentId: parts[0],
-          studentName: parts[1],
-          mealType: parts[2] || "Lunch",
-          message: "Meal verified successfully",
-          timestamp: new Date().toLocaleString()
-        };
-        
-        setScanResult(mockResult);
-        setRecentScans(prev => [mockResult, ...prev.slice(0, 4)]);
-      } else {
-        setScanResult({
-          success: false,
-          message: "Invalid QR code format",
-          timestamp: new Date().toLocaleString()
-        });
+      // Expected payload: { token, meal: { ... }, date, ts }
+      const payload = JSON.parse(decodedText);
+      const tokenValue: string | undefined = payload?.token;
+      const meal = payload?.meal;
+      if (!tokenValue) {
+        setScanResult({ success: false, message: "QR missing token", timestamp: new Date().toLocaleString() });
+        return;
       }
-    } catch (error) {
+      // Validate with backend
+      const res = await validateMealToken(tokenValue);
+      const ok = !!res?.success;
       setScanResult({
-        success: false,
-        message: "Error processing QR code",
-        timestamp: new Date().toLocaleString()
+        success: ok,
+        message: ok ? (res.message || "Meal token validated") : (res.message || "Validation failed"),
+        timestamp: new Date().toLocaleString(),
+        token: tokenValue,
+        meal,
       });
+      setRecentScans(prev => [{ success: ok, message: ok ? "Valid meal token" : "Invalid meal token", timestamp: new Date().toLocaleString(), token: tokenValue, meal }, ...prev.slice(0, 4)]);
+    } catch (error) {
+      setScanResult({ success: false, message: "Invalid QR content", timestamp: new Date().toLocaleString() });
     }
   };
 
@@ -212,9 +210,15 @@ const ScanQR = () => {
                       </h3>
                       {scanResult.success && (
                         <div className="mt-2 space-y-1 text-sm text-green-800">
-                          <p><strong>Student:</strong> {scanResult.studentName}</p>
-                          <p><strong>ID:</strong> {scanResult.studentId}</p>
-                          <p><strong>Meal:</strong> {scanResult.mealType}</p>
+                          <p><strong>Token:</strong> {scanResult.token}</p>
+                          {scanResult.meal && (
+                            <div className="mt-2 space-y-0.5">
+                              <p><strong>Meal:</strong> {scanResult.meal.type}</p>
+                              <p><strong>Qty:</strong> {scanResult.meal.quantity}</p>
+                              <p><strong>Extras:</strong> {scanResult.meal.extras} {scanResult.meal.extras && scanResult.meal.extras !== 'None' && scanResult.meal.extras_quantity ? `x${scanResult.meal.extras_quantity}` : ''}</p>
+                              <p><strong>Total:</strong> {scanResult.meal.total_price}</p>
+                            </div>
+                          )}
                           <p className="text-xs text-green-600 mt-2">
                             {scanResult.timestamp}
                           </p>
@@ -260,12 +264,16 @@ const ScanQR = () => {
                             <XCircle className="w-4 h-4 text-red-600" />
                           )}
                           <span className="font-medium text-sm">
-                            {scan.studentName}
+                            {scan.token}
                           </span>
                         </div>
                         <div className="text-xs text-gray-600 space-y-0.5">
-                          <p>ID: {scan.studentId}</p>
-                          <p>Meal: {scan.mealType}</p>
+                          {scan.meal && (
+                            <>
+                              <p>Meal: {scan.meal.type}</p>
+                              <p>Qty: {scan.meal.quantity}</p>
+                            </>
+                          )}
                           <p className="text-gray-400">{scan.timestamp}</p>
                         </div>
                       </div>
