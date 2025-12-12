@@ -34,7 +34,9 @@ export async function generateMealToken(payload: GenerateMealTokenPayload): Prom
   })
   let msg = 'Failed to generate meal token'
   if (!resp.ok) {
-    try { const j = await resp.json(); msg = j.message || msg } catch {}
+    try { const j = await resp.json(); msg = j.message || msg } catch {
+      try { const t = await resp.text(); if (t) msg = `${msg}: ${t}` } catch {}
+    }
     throw new Error(`${msg} (status ${resp.status})`)
   }
   return resp.json()
@@ -43,6 +45,8 @@ export async function generateMealToken(payload: GenerateMealTokenPayload): Prom
 export interface ValidateMealTokenResponse {
   success: boolean
   message?: string
+  status?: number
+  errorText?: string
   data?: {
     token: string
     valid: boolean
@@ -70,10 +74,17 @@ export async function validateMealToken(tokenValue: string): Promise<ValidateMea
     },
     body: JSON.stringify({ token: tokenValue }),
   })
-  let msg = 'Failed to validate meal token'
   if (!resp.ok) {
-    try { const j = await resp.json(); msg = j.message || msg } catch {}
-    throw new Error(`${msg} (status ${resp.status})`)
+    let msg = 'Failed to validate meal token'
+    let errorText: string | undefined
+    try {
+      const j = await resp.json()
+      msg = j.message || msg
+    } catch {
+      try { const t = await resp.text(); if (t) { errorText = t; msg = `${msg}: ${t}` } } catch {}
+    }
+    return { success: false, message: msg, status: resp.status, errorText }
   }
-  return resp.json()
+  const data = await resp.json()
+  return data
 }
