@@ -35,7 +35,7 @@ export async function generateMealToken(payload: GenerateMealTokenPayload): Prom
   let msg = 'Failed to generate meal token'
   if (!resp.ok) {
     try { const j = await resp.json(); msg = j.message || msg } catch {}
-    throw new Error(msg)
+    throw new Error(`${msg} (status ${resp.status})`)
   }
   return resp.json()
 }
@@ -73,7 +73,7 @@ export async function validateMealToken(tokenValue: string): Promise<ValidateMea
   let msg = 'Failed to validate meal token'
   if (!resp.ok) {
     try { const j = await resp.json(); msg = j.message || msg } catch {}
-    throw new Error(msg)
+    throw new Error(`${msg} (status ${resp.status})`)
   }
   return resp.json()
 }
