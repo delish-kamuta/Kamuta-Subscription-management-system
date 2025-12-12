@@ -43,7 +43,28 @@ const ScanQR = () => {
   const processQRData = async (decodedText: string) => {
     try {
       // Expected payload: { token, meal: { ... }, date, ts }
-      const payload = JSON.parse(decodedText);
+      let text = decodedText?.trim();
+      let payload: any;
+      // Some generators encode as URL with ?data=... JSON
+      if (text.startsWith('http')) {
+        const url = new URL(text);
+        const dataParam = url.searchParams.get('data');
+        if (dataParam) {
+          try { payload = JSON.parse(decodeURIComponent(dataParam)); }
+          catch { /* fallthrough to try raw */ }
+        }
+        // If still no payload, attempt to parse pathname or hash
+        if (!payload) {
+          const hashData = url.hash?.replace(/^#/, '') || '';
+          if (hashData) {
+            try { payload = JSON.parse(decodeURIComponent(hashData)); } catch {}
+          }
+        }
+      }
+      // If not a URL or parsing failed, try raw JSON
+      if (!payload) {
+        payload = JSON.parse(text);
+      }
       const tokenValue: string | undefined = payload?.token;
       const meal = payload?.meal;
       if (!tokenValue) {
