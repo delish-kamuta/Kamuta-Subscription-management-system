@@ -1,6 +1,5 @@
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { Header } from "../../../components/Header";
-import { paymentsData } from "app/constants";
 import { useState } from "react";
 import { exportToCsv, formatCurrency } from "~/lib/utils";
 import { toDateKey, isWithinRange } from "~/lib/date";
@@ -62,7 +61,7 @@ const Payments = () => {
         addedNotes: "",
         payment: r.paymentMethod,
       }))
-    : paymentsData;
+    : [];
 
   const dailyRevenue = last7Days.reverse().map((dateStr) => ({
     date: dateStr,
@@ -189,7 +188,7 @@ const Payments = () => {
       />
 
       {/* Financial Summary */}
-      <FinancialStatsSection paymentsData={paymentsData} />
+      <FinancialStatsSection paymentsData={sourceData} />
 
       {/* Charts Section */}
       <ChartsSection

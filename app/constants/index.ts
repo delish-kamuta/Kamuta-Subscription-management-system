@@ -131,8 +131,8 @@ export const dashboardStats = [
     lastDayCount: 1200,
   },
   {
-    id: "totalTrips",
-    title: "Total Trips",
+    id: "totalCredit",
+    title: "Total Credit",
     value: 3210,
     currentDay: 2940, // 2% decrease
     lastDayCount: 3000,
