@@ -5,7 +5,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Camera, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { useAppSelector } from "~/store/hooks";
-import { Html5Qrcode } from "html5-qrcode";
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { validateMealToken } from "~/services/mealToken";
 
 interface ScanResult {
@@ -82,10 +82,12 @@ const ScanQR = () => {
       const ok = !!res?.success;
       setScanResult({
         success: ok,
-        message: ok ? (res.message || "Meal token validated") : (res.message || "Validation failed"),
+        message: ok ? (res.message || "Meal token validated") : (
+          res.message || (res.status ? `Validation failed (status ${res.status})` : "Validation failed")
+        ),
         timestamp: new Date().toLocaleString(),
         token: tokenValue,
-        meal,
+        meal: ok ? (res.data?.meal || meal) : meal,
       });
       setScanError(null)
       setRecentScans(prev => [{ success: ok, message: ok ? "Valid meal token" : "Invalid meal token", timestamp: new Date().toLocaleString(), token: tokenValue, meal }, ...prev.slice(0, 4)]);
@@ -108,10 +110,17 @@ const ScanQR = () => {
       scannerRef.current = html5QrCode;
 
       const config = { 
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0
-      };
+        fps: 15,
+        qrbox: { width: 320, height: 320 },
+        aspectRatio: 1.0,
+        // Restrict decoder to QR codes only for reliability
+        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+        // Try to improve low-light scans if device supports torch
+        // experimental options are ignored silently if unsupported
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true,
+        }
+      } as any;
 
       await html5QrCode.start(
         { facingMode: "environment" }, // Use back camera
@@ -124,7 +133,7 @@ const ScanQR = () => {
         },
         (errorMessage) => {
           // Show scan error to help debug camera/decoding issues
-          setScanError(String(errorMessage))
+          setScanError(`Decoder error: ${String(errorMessage)}`)
         }
       );
 
@@ -253,6 +262,17 @@ const ScanQR = () => {
                             </div>
                           )}
                           <p className="text-xs text-green-600 mt-2">
+                            {scanResult.timestamp}
+                          </p>
+                        </div>
+                      )}
+                      {!scanResult.success && (
+                        <div className="mt-2 space-y-1 text-sm text-red-800">
+                          <p><strong>Token:</strong> {scanResult.token}</p>
+                          {scanError && (
+                            <p><strong>Error:</strong> {scanError}</p>
+                          )}
+                          <p className="text-xs text-red-600 mt-2">
                             {scanResult.timestamp}
                           </p>
                         </div>
