@@ -88,7 +88,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         full_name: formData.full_name.trim(),
         phone: formData.phone.trim(),
         role: formData.role,
-        branch_id: formData.branch_id,
+        branch_id: currentUser?.role === 'ADMIN'? formData.branch_id : userBranchId,
         subscription: {
           meal_type: formData.meal_type,
           total_meals: Number(formData.days)*2 || 30,
@@ -288,7 +288,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
               >
                 <option value=''>Select payment method</option>
                 <option value='cash'>Cash</option>
-                <option value='mobile_money'>Mobile Money</option>
+                <option value='momo'>Mobile Money</option>
               </select>
             </div>
             <div className='space-y-2 md:col-span-2'>
