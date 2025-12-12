@@ -9,6 +9,7 @@ import Client from "components/client";
 import { useAppSelector } from "~/store/hooks";
 import { UserRole } from "~/types/auth";
 import QuickAction from "../../../components/Quick-action"
+import ResetPasswordButton from "../../../components/ResetPasswordButton"
 import SubscriptionTable from "~\/components\/subscriptions\/SubscriptionTable";
 import { toDateKey } from "~\/lib\/date";
 

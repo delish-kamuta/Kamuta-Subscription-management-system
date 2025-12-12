@@ -1,5 +1,6 @@
 import { Header } from "components/Header";
 import { SidebarTrigger } from "~/components/ui/sidebar";
+import ResetPasswordButton from "./ResetPasswordButton";
 import StatsCard from "components/StatsCard"
 import { useMemo, useState } from 'react'
 import { mealsLogsData } from 'app/constants'
