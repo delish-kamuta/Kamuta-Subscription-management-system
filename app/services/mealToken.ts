@@ -80,6 +80,7 @@ export async function validateMealToken(tokenValue: string): Promise<ValidateMea
     try {
       const j = await resp.json()
       msg = j.message || msg
+      return { success: false, message: msg, status: resp.status, data: j.data }
     } catch {
       try { const t = await resp.text(); if (t) { errorText = t; msg = `${msg}: ${t}` } } catch {}
     }
