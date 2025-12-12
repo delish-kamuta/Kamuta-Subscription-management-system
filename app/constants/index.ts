@@ -6,21 +6,21 @@ export const sidebarItems = [
     icon: LayoutDashboard,
     label: "Overview",
     href: "/dashboard",
-    roles: ["client","student", "cashier", "admin"], // Available to all roles
+    roles: ["student", "worker", "cashier", "admin"], // Available to supported roles
   },
   {
     id: 2,
     icon: QrCode,
     label: "My QR Code",
     href: "/my-qr-code",
-    roles: ["client","student"], // Only for clients (students)
+    roles: ["student","worker"], // Only for students
   },
   {
     id: 3,
     icon: ScanLine,
     label: "Scan QR Code",
     href: "/scan-qr",
-    roles: ["scanner", "admin"], // Only for waitstaff and admin
+    roles: ["scanner", "admin"], // Allow scanner, admin
   },
   {
     id: 4,
@@ -131,8 +131,8 @@ export const dashboardStats = [
     lastDayCount: 1200,
   },
   {
-    id: "totalTrips",
-    title: "Total Trips",
+    id: "totalCredit",
+    title: "Total Credit",
     value: 3210,
     currentDay: 2940, // 2% decrease
     lastDayCount: 3000,

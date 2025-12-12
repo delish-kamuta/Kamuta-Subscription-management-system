@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
 import { Skeleton } from "~/components/ui/skeleton"
 
@@ -23,6 +24,33 @@ type Props = {
 }
 
 export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete }: Props) {
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingUser, setPendingUser] = useState<UserRow | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const requestDelete = (user: UserRow) => {
+    setPendingUser(user)
+    setConfirmOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!pendingUser) return
+    try {
+      setIsDeleting(true)
+      await Promise.resolve(onDelete?.(pendingUser))
+      setConfirmOpen(false)
+      setPendingUser(null)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleCancel = () => {
+    if (isDeleting) return
+    setConfirmOpen(false)
+    setPendingUser(null)
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       <Table>
@@ -77,13 +105,13 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete 
                     <button
                       type="button"
                       className="px-2 py-1 text-xs rounded-md border border-slate-200 hover:bg-slate-50"
-                      onClick={()=> {onEdit?.(user)}}
+                      onClick={() => onEdit?.(user)}
                       aria-label={`Edit ${user.full_name}`}
                     >Edit</button>
                     <button
                       type="button"
                       className="px-2 py-1 text-xs rounded-md border border-red-200 text-red-600 hover:bg-red-50"
-                      onClick={() => onDelete?.(user)}
+                      onClick={() => requestDelete(user)}
                       aria-label={`Delete ${user.full_name}`}
                     >Delete</button>
                   </div>
@@ -93,6 +121,37 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete 
           )}
         </TableBody>
       </Table>
+
+      {confirmOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center"
+        >
+          <div className="absolute inset-0 bg-black/50" onClick={handleCancel} />
+          <div className="relative z-10 w-full max-w-sm rounded-lg bg-white p-5 shadow-lg">
+            <h3 className="text-base font-semibold text-gray-900">Delete user</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              {`Are you sure you want to delete${pendingUser ? ` "${pendingUser.full_name}"` : ""}? This action cannot be undone.`}
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                className="px-3 py-1.5 text-sm rounded-md border border-slate-200 hover:bg-slate-50"
+                onClick={handleCancel}
+                disabled={isDeleting}
+              >Cancel</button>
+              <button
+                type="button"
+                className="px-3 py-1.5 text-sm rounded-md border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                aria-busy={isDeleting}
+              >{isDeleting ? "Deleting..." : "Delete"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

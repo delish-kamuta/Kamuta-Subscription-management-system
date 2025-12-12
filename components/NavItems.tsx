@@ -8,15 +8,16 @@ import { UserRole, CustomerType } from '~/types/auth';
 const NavItems = () => {
   // Filter sidebar items based on user role
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
-  // Default to CLIENT for guests (regular client without login)
-  const userRole = user?.role || UserRole.CLIENT;
+  // Default to STUDENT for guests
+  const userRole = user?.role || UserRole.STUDENT;
   
   // Map UserRole enum to sidebar role strings
   const roleMap: Record<UserRole, string> = {
     [UserRole.CASHIER]: "cashier",
     [UserRole.WAITSTAFF]: "scanner",
     [UserRole.ADMIN]: "admin",
-    [UserRole.CLIENT]: "client"
+    [UserRole.STUDENT]: "student",
+    [UserRole.WORKER]: "worker",
   };
   
   const mappedRole = roleMap[userRole];
@@ -27,7 +28,8 @@ const NavItems = () => {
       // Hide "My QR Code" for guests and regular clients
       if (item.label === "My QR Code") {
         if (!isAuthenticated) return false;
-        return user?.customerType === CustomerType.STUDENT || user?.customerType === CustomerType.CAMPUS_WORKER;
+        // return user?.customerType === CustomerType.STUDENT || user?.customerType === CustomerType.CAMPUS_WORKER;
+        return true;
       }
       return true;
     });

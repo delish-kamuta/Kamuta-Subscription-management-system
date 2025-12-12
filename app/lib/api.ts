@@ -4,12 +4,12 @@ export function getToken(): string | null {
   // Prefer Redux token
   const state = store.getState()
   const reduxToken = state?.auth?.token || ''
-  const reduxClean = (reduxToken || '').replace(/^Bearer\s+/i, '').trim()
+  const reduxClean = (reduxToken || '').trim()
   if (reduxClean) return reduxClean
 
   // Fallback to localStorage
   const raw = localStorage.getItem('authToken') || ''
-  const token = raw.replace(/^Bearer\s+/i, '').trim()
+  const token = raw.trim()
   return token || null
 }
 

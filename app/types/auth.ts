@@ -2,7 +2,8 @@ export enum UserRole {
   ADMIN = "ADMIN",
   CASHIER = "CASHIER",
   WAITSTAFF = "WAITSTAFF",
-  CLIENT  = "CLIENT"
+  STUDENT = "STUDENT",
+  WORKER = "WORKER",
 }
 
 export enum CustomerType {
@@ -26,13 +27,14 @@ export function mapApiRoleToUserRole(role?: string | null): UserRole {
     case 'staff':
       return UserRole.WAITSTAFF;
     case 'student':
+    case 'client': // map legacy 'client' to student
+      return UserRole.STUDENT;
     case 'worker':
     case 'campus_worker':
     case 'campus-worker':
-    case 'client':
-      return UserRole.CLIENT;
+      return UserRole.WORKER;
     default:
-      return UserRole.CLIENT;
+      return UserRole.STUDENT;
   }
 }
 
