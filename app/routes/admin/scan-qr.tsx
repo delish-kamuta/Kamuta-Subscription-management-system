@@ -89,7 +89,16 @@ const ScanQR = () => {
         token: tokenValue,
         meal: ok ? (res.data?.meal || meal) : meal,
       });
-      setScanError(null)
+      if (!ok) {
+        const parts: string[] = []
+        if (res.status) parts.push(`status ${res.status}`)
+        if (res.data?.valid === false) parts.push('valid: false')
+        if (res.data?.consumed === true) parts.push('consumed: true')
+        if (res.data?.validated_at) parts.push(`validated_at: ${res.data.validated_at}`)
+        setScanError([res.message, parts.length ? `(${parts.join(', ')})` : ''].filter(Boolean).join(' '))
+      } else {
+        setScanError(null)
+      }
       setRecentScans(prev => [{ success: ok, message: ok ? "Valid meal token" : "Invalid meal token", timestamp: new Date().toLocaleString(), token: tokenValue, meal }, ...prev.slice(0, 4)]);
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error)
@@ -200,6 +209,12 @@ const ScanQR = () => {
                     <Camera className="w-16 h-16 mx-auto opacity-50" />
                     <p>Camera ready to scan</p>
                     <p className="text-xs">Press the button below to start scanning</p>
+                    {user && (
+                      <p className="text-xs text-gray-300">
+                        Logged in as: <span className="font-medium">{user.role || 'unknown'}</span>
+                        {user.branch_id ? ` · Branch: ${user.branch_id}` : ''}
+                      </p>
+                    )}
                     {hasPermission === false && (
                       <p className="text-xs text-red-400">
                         Camera permission denied. Please enable camera access.
@@ -272,8 +287,18 @@ const ScanQR = () => {
                           {scanError && (
                             <p><strong>Error:</strong> {scanError}</p>
                           )}
+                          {scanResult.meal && (
+                            <div className="mt-2 space-y-0.5">
+                              <p><strong>Meal:</strong> {scanResult.meal.type}</p>
+                              <p><strong>Qty:</strong> {scanResult.meal.quantity}</p>
+                            </div>
+                          )}
                           <p className="text-xs text-red-600 mt-2">
                             {scanResult.timestamp}
+                          </p>
+                          {/* Suggestion for common authorization issue */}
+                          <p className="text-xs text-red-700 mt-1">
+                            If unauthorized, ensure you are logged in as cashier/admin and validating tokens generated under your branch/account.
                           </p>
                         </div>
                       )}
