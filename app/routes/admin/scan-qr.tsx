@@ -263,7 +263,6 @@ const ScanQR = () => {
                       </h3>
                       {scanResult.success && (
                         <div className="mt-2 space-y-1 text-sm text-green-800">
-                          <p><strong>Token:</strong> {scanResult.token}</p>
                           {scanResult.meal && (
                             <div className="mt-2 space-y-0.5">
                               <p><strong>Meal:</strong> {scanResult.meal.type}</p>
