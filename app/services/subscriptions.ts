@@ -39,6 +39,7 @@ export interface ApiSubscription {
 function mapApiToSubscriptionItem(item: ApiSubscription): SubscriptionItem {
   const clientName = item.student?.user?.full_name || "";
   const regNumber = item.student?.reg_number || item.id || "";
+  const userId = item.student?.user_id || item.student?.user?.id || "";
   const phone = item.student?.user?.phone || "";
   const paymentMethod = (item.payment_history && item.payment_history.length > 0)
     ? (item.payment_history[0]?.payment_method || "")
@@ -46,6 +47,7 @@ function mapApiToSubscriptionItem(item: ApiSubscription): SubscriptionItem {
   const branchName = item.student?.user?.branch_id ? String(item.student.user.branch_id) : "";
   return {
     id: regNumber,
+    userId: userId || undefined,
     tel: phone,
     clientName,
     subscriptionType: item.meal_type || "",
@@ -115,6 +117,7 @@ export async function listWorkerSubscriptions(token: string | null): Promise<Sub
     const phone = String(w?.user?.phone || w?.phone || '');
     const branchId = w?.user?.branch_id != null ? String(w.user.branch_id) : (w?.branch_id != null ? String(w.branch_id) : '');
     const baseId = String(w?.reg_number || w?.id || '');
+    const userId = String(w?.user?.id || w?.user_id || '');
     const walletBalance = Number(
       (w?.wallet && (w.wallet.balance ?? w.wallet.amount)) ??
       w?.wallet_balance ?? w?.balance ?? 0
@@ -141,6 +144,7 @@ export async function listWorkerSubscriptions(token: string | null): Promise<Sub
           : '';
         items.push({
           id:String(s?.id || baseId),
+          userId: userId || undefined,
           tel: phone,
           clientName,
           subscriptionType: String(s?.meal_type || ''),
@@ -162,6 +166,7 @@ export async function listWorkerSubscriptions(token: string | null): Promise<Sub
     } else {
       items.push({
         id: baseId,
+        userId: userId || undefined,
         tel: phone,
         clientName,
         subscriptionType: '',

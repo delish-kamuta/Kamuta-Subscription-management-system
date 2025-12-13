@@ -10,34 +10,41 @@ import {
 } from "~/components/ui/sheet";
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import React, { useState, useEffect } from "react";
+import { generateQrOtpForUser } from "~/services/qr";
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [isOpen, setIsOpen] = useState(false);
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [editForm, setEditForm] = useState<SubscriptionItem>(item);
-  const [qrUrl, setQrUrl] = useState<string>('');
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState('');
+  const [qrData, setQrData] = useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
 
-  // Generate QR code when QR sheet opens
+  // Generate QR-OTP when the sheet opens
   useEffect(() => {
-    if (!qrOpen) return;
-
-    const refreshQr = () => {
-      const qrData = JSON.stringify({
-        id: item.id,
-        name: item.clientName,
-        type: item.customerType,
-        mealsLeft: item.mealsLeft,
-        ts: Date.now()
-      });
-      const url = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrData)}&cacheBust=${Date.now()}`;
-      setQrUrl(url);
+    let mounted = true;
+    const run = async () => {
+      if (!qrOpen) return;
+      try {
+        setQrLoading(true); setQrError(''); setQrData(null);
+        const uid = (item as any).userId || String(item.id);
+        // Log the student user_id being passed to the QR-OTP request body
+        console.log('Generating QR-OTP for student user_id:', uid);
+        const resp = await generateQrOtpForUser(uid);
+        if (!mounted) return;
+        if (!resp.success) { setQrError(resp.message || 'Failed to generate QR-OTP'); return; }
+        setQrData(resp.data || null);
+      } catch (e) {
+        if (!mounted) return;
+        setQrError(e instanceof Error ? e.message : 'QR-OTP error');
+      } finally {
+        if (mounted) setQrLoading(false);
+      }
     };
-
-    refreshQr();
-    const interval = setInterval(refreshQr, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
-  }, [qrOpen, item]);
+    run();
+    return () => { mounted = false; };
+  }, [qrOpen, item.id]);
 
   const handleDelete = () => {
     if (confirm(`Are you sure you want to delete subscription for ${item.clientName}?`)) {
@@ -98,7 +105,7 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
                 role="menuitem"
               >
                 <QrCode className="mr-3 h-4 w-4" />
-                Generate QR
+                Generate QR Code
               </button>
 
               <button
@@ -278,8 +285,8 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
       <Sheet open={qrOpen} onOpenChange={setQrOpen}>
         <SheetContent className="overflow-y-auto bg-white p-6">
           <SheetHeader>
-            <SheetTitle>Client QR Code</SheetTitle>
-            <SheetDescription>QR code for {item.clientName}</SheetDescription>
+            <SheetTitle>QR-OTP</SheetTitle>
+            <SheetDescription>Temporary QR for {item.clientName}</SheetDescription>
           </SheetHeader>
           <div className="mt-6 space-y-6">
             {/* Client Info */}
@@ -302,43 +309,48 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
               </div>
             </div>
 
-            {/* QR Code Display */}
-            <div className="flex flex-col items-center justify-center bg-white border-2 border-gray-200 rounded-lg p-6">
-              {qrUrl ? (
-                <img 
-                  src={qrUrl} 
-                  alt={`QR Code for ${item.clientName}`}
-                  className="w-64 h-64"
-                />
-              ) : (
-                <div className="w-64 h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
-                  <span className="text-gray-400">Loading QR...</span>
+            {/* QR-OTP Details */}
+            {qrLoading && (
+              <div className="w-full bg-gray-100 animate-pulse rounded-lg p-6 text-center text-gray-500">Generating QR-OTP…</div>
+            )}
+            {qrError && (
+              <div className="w-full rounded-lg p-3 bg-red-50 text-red-700 text-sm">{qrError}</div>
+            )}
+            {qrData && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between bg-white border rounded p-4">
+                  <div>
+                    <p className="text-sm"><span className="text-gray-500">User:</span> {qrData.user_name}</p>
+                    <p className="text-sm"><span className="text-gray-500">Expires:</span> {qrData.expires_in_seconds}s</p>
+                  </div>
+                  <div className="font-mono text-xs break-all p-2 bg-gray-50 border rounded">
+                    {qrData.qr_code}
+                  </div>
                 </div>
-              )}
-              <p className="text-xs text-gray-500 mt-4 text-center">
-                QR code refreshes automatically every 30 seconds
-              </p>
-            </div>
+                <p className="text-xs text-gray-500">Use this code to generate a scannable QR or print it. It expires automatically.</p>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex gap-2">
               <Button 
-                onClick={() => {
-                  // Refresh QR immediately
-                  const qrData = JSON.stringify({
-                    id: item.id,
-                    name: item.clientName,
-                    type: item.customerType,
-                    mealsLeft: item.mealsLeft,
-                    ts: Date.now()
-                  });
-                  const url = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrData)}&cacheBust=${Date.now()}`;
-                  setQrUrl(url);
+                onClick={async () => {
+                  try {
+                    setQrLoading(true); setQrError('');
+                    const uid = (item as any).userId || String(item.id);
+                    const resp = await generateQrOtpForUser(uid);
+                    if (!resp.success) { setQrError(resp.message || 'Failed to generate QR-OTP'); return }
+                    setQrData(resp.data || null)
+                  } catch (e) {
+                    setQrError(e instanceof Error ? e.message : 'QR-OTP error')
+                  } finally {
+                    setQrLoading(false)
+                  }
                 }}
                 variant="outline"
                 className="flex-1"
               >
-                Refresh QR
+                Regenerate
               </Button>
               <Button 
                 onClick={() => setQrOpen(false)}
@@ -441,7 +453,8 @@ export function getSubscriptionColumns(isCashier: boolean): SubscriptionColumn[]
     {
       key: "action",
       header: "Action",
-      hideForCashier: true,
+      // Visible for both Admin and Cashier
+      hideForCashier: false,
       render: (item) => <ActionDropdown item={item} />,
     },
   ];

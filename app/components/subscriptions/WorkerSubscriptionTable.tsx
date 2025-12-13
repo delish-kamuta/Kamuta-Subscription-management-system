@@ -7,12 +7,14 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Button } from "~/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "~/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import React from "react";
 import { MoreHorizontal } from "lucide-react";
 import { formatCurrency } from "~/lib/utils";
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
@@ -24,6 +26,10 @@ interface WorkerSubscriptionTableProps {
 
 export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTableProps) {
   const navigate = useNavigate();
+  const [qrOpenId, setQrOpenId] = React.useState<string | null>(null);
+  const [qrLoading, setQrLoading] = React.useState(false);
+  const [qrError, setQrError] = React.useState('');
+  const [qrData, setQrData] = React.useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
   return (
     <div className="overflow-x-auto text-gray-500">
       <Table>
@@ -77,6 +83,23 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                       <DropdownMenuItem onClick={() => navigate(`/wallet?userId=${encodeURIComponent(String(item.id))}`)}>
                         Open Wallet
                       </DropdownMenuItem>
+                        <DropdownMenuItem onClick={async () => {
+                          try {
+                            setQrOpenId(String(item.id));
+                            setQrLoading(true); setQrError(''); setQrData(null);
+                            const { generateQrOtpForUser } = await import('~/services/qr');
+                            const uid = (item as any).userId || String(item.id);
+                            const resp = await generateQrOtpForUser(uid);
+                            if (!resp.success) { setQrError(resp.message || 'Failed to generate QR-OTP'); return }
+                            setQrData(resp.data || null);
+                          } catch (e) {
+                            setQrError(e instanceof Error ? e.message : 'QR-OTP error');
+                          } finally {
+                            setQrLoading(false);
+                          }
+                        }}>
+                          Generate QR Code
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -85,6 +108,70 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
           })}
         </TableBody>
       </Table>
+        {items.map((item) => (
+          <Sheet key={`qr-${item.id}`} open={qrOpenId === String(item.id)} onOpenChange={(o) => !o && setQrOpenId(null)}>
+            <SheetContent className="overflow-y-auto bg-white p-6">
+              <SheetHeader>
+                <SheetTitle>QR-OTP</SheetTitle>
+                <SheetDescription>Temporary QR for {item.clientName}</SheetDescription>
+              </SheetHeader>
+              <div className="mt-6 space-y-6">
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Registration Number:</span>
+                    <span className="text-sm font-mono font-medium">{item.id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Client Name:</span>
+                    <span className="text-sm font-medium">{item.clientName}</span>
+                  </div>
+                </div>
+                {qrLoading && (
+                  <div className="w-full bg-gray-100 animate-pulse rounded-lg p-6 text-center text-gray-500">Generating QR-OTP…</div>
+                )}
+                {qrError && (
+                  <div className="w-full rounded-lg p-3 bg-red-50 text-red-700 text-sm">{qrError}</div>
+                )}
+                {qrData && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between bg-white border rounded p-4">
+                      <div>
+                        <p className="text-sm"><span className="text-gray-500">User:</span> {qrData.user_name}</p>
+                        <p className="text-sm"><span className="text-gray-500">Expires:</span> {qrData.expires_in_seconds}s</p>
+                      </div>
+                      <div className="font-mono text-xs break-all p-2 bg-gray-50 border rounded">
+                        {qrData.qr_code}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={async () => {
+                      try {
+                        setQrLoading(true); setQrError('');
+                        const { generateQrOtpForUser } = await import('~/services/qr');
+                        const uid = (item as any).userId || String(item.id);
+                        const resp = await generateQrOtpForUser(uid);
+                        if (!resp.success) { setQrError(resp.message || 'Failed to generate QR-OTP'); return }
+                        setQrData(resp.data || null)
+                      } catch (e) {
+                        setQrError(e instanceof Error ? e.message : 'QR-OTP error')
+                      } finally {
+                        setQrLoading(false)
+                      }
+                    }}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Regenerate
+                  </Button>
+                  <Button onClick={() => setQrOpenId(null)} className="flex-1">Close</Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        ))}
     </div>
   );
 }
