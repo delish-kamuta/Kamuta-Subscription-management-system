@@ -40,3 +40,30 @@ export async function generateSelfQrOtp(): Promise<GenerateQrOtpResponse> {
   }
   return data as GenerateQrOtpResponse
 }
+
+export interface ScanQrOtpResponse {
+  success: boolean
+  data?: {
+    user_name: string
+    payment_result: {
+      remaining_meals: number
+    }
+  }
+  message?: string
+}
+
+export async function scanQrOtp(qrCode: string): Promise<ScanQrOtpResponse> {
+  const tokenError = ensureValidTokenOrMessage()
+  if (tokenError) return { success: false, message: tokenError }
+  const res = await authFetch("https://restaurant-bn-api.onrender.com/api/qr-otp/scan", {
+    method: "POST",
+    body: JSON.stringify({ qr_code: qrCode }),
+  })
+  let data: any = null
+  try { data = await res.json() } catch {}
+  if (!res.ok) {
+    const msg = data?.message || data?.error || `QR scan failed: ${res.status}`
+    return { success: false, message: msg }
+  }
+  return data as ScanQrOtpResponse
+}
