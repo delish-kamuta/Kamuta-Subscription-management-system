@@ -3,7 +3,7 @@ import { SidebarTrigger } from "~/components/ui/sidebar"
 import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { useAppSelector } from "~/store/hooks"
-import { getWorkerWallet } from "~/services/wallet"
+import { getWorkerWallet, addWorkerWalletPayment } from "~/services/wallet"
 import { UserRole } from "~/types/auth"
 // Using a basic table to avoid dependency on missing UI table component
 
@@ -14,6 +14,10 @@ export default function WalletPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [data, setData] = useState<{ prepaid_amount: number; remaining_amount: number; credit_limit: number; credit_used: number; transactions: any[] } | null>(null)
+  const [amount, setAmount] = useState<string>('')
+  const [method, setMethod] = useState<string>('cash')
+  const [note, setNote] = useState<string>('')
+  const [saving, setSaving] = useState<boolean>(false)
 
   useEffect(() => {
     const role = user?.role
@@ -49,6 +53,52 @@ export default function WalletPage() {
       />
 
       <section className="bg-white p-6 rounded-lg shadow mt-6">
+        {(user?.role === UserRole.ADMIN || (UserRole as any)?.CASHIER === user?.role) && (
+          <div className="mb-6">
+            <h3 className="text-base font-semibold mb-2">Add Wallet Payment</h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div>
+                <label className="text-xs text-gray-500">Amount</label>
+                <input type="number" className="mt-1 w-full border rounded p-2" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 5000" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Method</label>
+                <select className="mt-1 w-full border rounded p-2" value={method} onChange={(e) => setMethod(e.target.value)}>
+                  <option value="cash">Cash</option>
+                  <option value="momo">Mobile Money</option>
+                  <option value="card">Card</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-xs text-gray-500">Note</label>
+                <input className="mt-1 w-full border rounded p-2" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note" />
+              </div>
+            </div>
+            <div className="mt-3">
+              <button
+                className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50"
+                disabled={saving || !amount || Number(amount) <= 0}
+                onClick={async () => {
+                  const targetId = selectedUserId || String(user?.id || '')
+                  if (!targetId) return
+                  try {
+                    setSaving(true)
+                    const resp = await addWorkerWalletPayment(targetId, { amount: Number(amount), payment_method: method, note })
+                    if (!resp.success) { setError(resp.message || 'Failed to add payment'); return }
+                    // refresh wallet
+                    const w = await getWorkerWallet(targetId)
+                    if (w.success) setData(w.data || null)
+                    setAmount(''); setNote('')
+                  } catch (e) {
+                    setError(e instanceof Error ? e.message : 'Payment error')
+                  } finally {
+                    setSaving(false)
+                  }
+                }}
+              >{saving ? 'Saving…' : 'Add Payment'}</button>
+            </div>
+          </div>
+        )}
         {loading ? (
           <p className="text-sm text-gray-500">Loading wallet…</p>
         ) : error ? (
