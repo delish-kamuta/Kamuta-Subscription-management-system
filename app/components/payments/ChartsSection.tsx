@@ -44,7 +44,7 @@ export default function ChartsSection({ dailyRevenue, paymentMethods, totalReven
             <div key={index}>
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-gray-600">{day.date}</span>
-                <span className="font-medium">${day.amount.toFixed(2)}</span>
+                <span className="font-medium">RWf {day.amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-2">
                 <div

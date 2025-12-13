@@ -41,12 +41,15 @@ const Payments = () => {
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - i);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  });
+    return {
+      display: date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+      key: date.toISOString().split('T')[0], // YYYY-MM-DD format for matching
+    };
+  }).reverse();
 
   // Normalize data source to a common shape for charts/table
   const sourceData = apiPayments.length
@@ -58,15 +61,16 @@ const Payments = () => {
         amountPaid: Number(String(r.amount).replace(/[^0-9.]/g, "")) || 0,
         totalMeals: 0,
         paymentDate: r.date,
+        paymentDateKey: r.date ? new Date(r.date).toISOString().split('T')[0] : '', // Normalize to YYYY-MM-DD
         addedNotes: "",
         payment: r.paymentMethod,
       }))
     : [];
 
-  const dailyRevenue = last7Days.reverse().map((dateStr) => ({
-    date: dateStr,
+  const dailyRevenue = last7Days.map((day) => ({
+    date: day.display,
     amount: sourceData
-      .filter((p) => p.paymentDate === dateStr)
+      .filter((p) => p.paymentDateKey === day.key)
       .reduce((sum, p) => sum + p.amountPaid, 0),
   }));
 
