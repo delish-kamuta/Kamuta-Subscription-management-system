@@ -25,3 +25,18 @@ export async function generateQrOtpForUser(userId: string): Promise<GenerateQrOt
   }
   return data as GenerateQrOtpResponse
 }
+
+export async function generateSelfQrOtp(): Promise<GenerateQrOtpResponse> {
+  const tokenError = ensureValidTokenOrMessage()
+  if (tokenError) return { success: false, message: tokenError }
+  const res = await authFetch("https://restaurant-bn-api.onrender.com/api/qr-otp/generate-self", {
+    method: "POST",
+  })
+  let data: any = null
+  try { data = await res.json() } catch {}
+  if (!res.ok) {
+    const msg = data?.message || data?.error || `QR self generation failed: ${res.status}`
+    return { success: false, message: msg }
+  }
+  return data as GenerateQrOtpResponse
+}

@@ -30,6 +30,7 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
   const [qrLoading, setQrLoading] = React.useState(false);
   const [qrError, setQrError] = React.useState('');
   const [qrData, setQrData] = React.useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
+  const [qrImage, setQrImage] = React.useState<string>('');
   return (
     <div className="overflow-x-auto text-gray-500">
       <Table>
@@ -92,6 +93,11 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                             const resp = await generateQrOtpForUser(uid);
                             if (!resp.success) { setQrError(resp.message || 'Failed to generate QR-OTP'); return }
                             setQrData(resp.data || null);
+                            try {
+                              const QRCode = (await import('qrcode')).default;
+                              const url = await QRCode.toDataURL(resp.data?.qr_code || '', { width: 256, margin: 1 });
+                              setQrImage(url);
+                            } catch { setQrImage(''); }
                           } catch (e) {
                             setQrError(e instanceof Error ? e.message : 'QR-OTP error');
                           } finally {
@@ -139,9 +145,13 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                         <p className="text-sm"><span className="text-gray-500">User:</span> {qrData.user_name}</p>
                         <p className="text-sm"><span className="text-gray-500">Expires:</span> {qrData.expires_in_seconds}s</p>
                       </div>
-                      <div className="font-mono text-xs break-all p-2 bg-gray-50 border rounded">
-                        {qrData.qr_code}
-                      </div>
+                      {qrImage ? (
+                        <img src={qrImage} alt="QR-OTP" className="w-40 h-40" />
+                      ) : (
+                        <div className="font-mono text-xs break-all p-2 bg-gray-50 border rounded">
+                          {qrData.qr_code}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -155,6 +165,11 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                         const resp = await generateQrOtpForUser(uid);
                         if (!resp.success) { setQrError(resp.message || 'Failed to generate QR-OTP'); return }
                         setQrData(resp.data || null)
+                        try {
+                          const QRCode = (await import('qrcode')).default;
+                          const url = await QRCode.toDataURL(resp.data?.qr_code || '', { width: 256, margin: 1 });
+                          setQrImage(url);
+                        } catch { setQrImage(''); }
                       } catch (e) {
                         setQrError(e instanceof Error ? e.message : 'QR-OTP error')
                       } finally {

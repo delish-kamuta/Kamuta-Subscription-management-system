@@ -20,6 +20,7 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState('');
   const [qrData, setQrData] = useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
+  const [qrImage, setQrImage] = useState<string>('');
 
   // Generate QR-OTP when the sheet opens
   useEffect(() => {
@@ -29,12 +30,16 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
       try {
         setQrLoading(true); setQrError(''); setQrData(null);
         const uid = (item as any).userId || String(item.id);
-        // Log the student user_id being passed to the QR-OTP request body
-        console.log('Generating QR-OTP for student user_id:', uid);
         const resp = await generateQrOtpForUser(uid);
         if (!mounted) return;
         if (!resp.success) { setQrError(resp.message || 'Failed to generate QR-OTP'); return; }
         setQrData(resp.data || null);
+        // generate QR image
+        try {
+          const QRCode = (await import('qrcode')).default;
+          const url = await QRCode.toDataURL(resp.data?.qr_code || '', { width: 256, margin: 1 });
+          setQrImage(url);
+        } catch { setQrImage(''); }
       } catch (e) {
         if (!mounted) return;
         setQrError(e instanceof Error ? e.message : 'QR-OTP error');
@@ -318,14 +323,18 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
             )}
             {qrData && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between bg-white border rounded p-4">
+                <div className="flex flex-col items-center justify-between bg-white border rounded p-4">
                   <div>
                     <p className="text-sm"><span className="text-gray-500">User:</span> {qrData.user_name}</p>
                     <p className="text-sm"><span className="text-gray-500">Expires:</span> {qrData.expires_in_seconds}s</p>
                   </div>
-                  <div className="font-mono text-xs break-all p-2 bg-gray-50 border rounded">
-                    {qrData.qr_code}
-                  </div>
+                  {qrImage ? (
+                    <img src={qrImage} alt="QR-OTP" className="w-40 h-40" />
+                  ) : (
+                    <div className="font-mono text-xs break-all p-2 bg-gray-50 border rounded">
+                      {qrData.qr_code}
+                    </div>
+                  )}
                 </div>
                 <p className="text-xs text-gray-500">Use this code to generate a scannable QR or print it. It expires automatically.</p>
               </div>
@@ -341,6 +350,11 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
                     const resp = await generateQrOtpForUser(uid);
                     if (!resp.success) { setQrError(resp.message || 'Failed to generate QR-OTP'); return }
                     setQrData(resp.data || null)
+                    try {
+                      const QRCode = (await import('qrcode')).default;
+                      const url = await QRCode.toDataURL(resp.data?.qr_code || '', { width: 256, margin: 1 });
+                      setQrImage(url);
+                    } catch { setQrImage(''); }
                   } catch (e) {
                     setQrError(e instanceof Error ? e.message : 'QR-OTP error')
                   } finally {
