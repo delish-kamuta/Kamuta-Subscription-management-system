@@ -4,6 +4,8 @@ import { toDateKey, isWithinRange } from "~/lib/date";
 // Shape of a subscription item (partial - extend if needed)
 export interface SubscriptionItem {
   id: string;
+  // Optional backend user ID (UUID) for QR-OTP generation
+  userId?: string;
   tel: string;
   clientName: string;
   subscriptionType: string;
