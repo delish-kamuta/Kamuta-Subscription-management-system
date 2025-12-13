@@ -301,7 +301,8 @@ const QuickAction = () => {
                   const res = await generateMealToken(payload)
                   const token = res?.data?.token || ''
                   const exp = res?.data?.expires_at || ''
-                  setTicketId(token || `T-${Math.floor(10000 + Math.random() * 89999)}`)
+                  // Always display the real API token; avoid random fallback
+                  setTicketId(token)
                   setExpiresAt(exp)
                   const dateStr = dayjs().format('D MMM YYYY')
                   // Embed API token + form data in QR payload
@@ -336,7 +337,7 @@ const QuickAction = () => {
               <div id='ticket-content' className='ticket'>
                 <div className='text-center font-semibold tracking-wide'>MEAL TICKET</div>
                 <div className='grid grid-cols-2 gap-1 mt-2 text-xs'>
-                  <div><span className='font-semibold'>Token:</span> {ticketId}</div>
+                  <div><span className='font-semibold'>API Token:</span> {ticketId || '—'}</div>
                   <div><span className='font-semibold'>Date:</span> {dayjs().format('D MMM YYYY, HH:mm')}</div>
                   {expiresAt && (<div><span className='font-semibold'>Expires:</span> {dayjs(expiresAt).format('D MMM YYYY, HH:mm')}</div>)}
                   <div><span className='font-semibold'>Meal:</span> {mealType}</div>
@@ -344,6 +345,12 @@ const QuickAction = () => {
                   <div><span className='font-semibold'>Extras:</span> {extras} {extras !== 'None' && extrasQty > 0 ? `x${extrasQty}` : ''}</div>
                   <div><span className='font-semibold'>Total:</span> {totalPrice}</div>
                 </div>
+                {/* Debug: show exact JSON payload encoded in QR for verification */}
+                {ticketQr && (
+                  <div className='mt-2 text-[10px] text-gray-600 break-all'>
+                    <span className='font-semibold'>QR payload token:</span> {ticketId || '—'}
+                  </div>
+                )}
                 <div className='my-3 border-t border-dashed border-gray-200' />
                 <div className='qr flex items-center justify-center'>
                   {ticketQr ? (

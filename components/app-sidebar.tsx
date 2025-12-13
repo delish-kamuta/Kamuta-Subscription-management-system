@@ -77,16 +77,22 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex px-6 gap-2 items-center  w-full group-data-[collapsible=icon]:px-0">
-          <img
-            src="/assets/images/david.webp"
-            className="size-10 rounded-full group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8"
-            alt="logo"
-          />
-          <div className="ml-2 group-data-[collapsible=icon]:hidden">
-            <p className="text-sm font-medium">{user?.name || "Guest"}</p>
-            <p className="text-xs text-muted-foreground">{user?.role || "No role"}</p>
-          </div>
+        <div className="flex px-6 gap-2 items-center w-full group-data-[collapsible=icon]:px-0">
+          <button
+            onClick={() => navigate('/profile')}
+            className="flex items-center gap-2 flex-1 text-left cursor-pointer"
+            title="View profile"
+          >
+            <img
+              src="/assets/images/david.webp"
+              className="size-10 rounded-full group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:h-8"
+              alt="profile"
+            />
+            <div className="ml-2 group-data-[collapsible=icon]:hidden">
+              <p className="text-sm font-medium">{user?.name || "Guest"}</p>
+              <p className="text-xs text-muted-foreground">{user?.role || "No role"}</p>
+            </div>
+          </button>
           <button
             onClick={handleLogout}
             className="cursor-pointer"

@@ -29,6 +29,7 @@ const ScanQR = () => {
   const [recentScans, setRecentScans] = useState<ScanResult[]>([]);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
+  const [rawContent, setRawContent] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerElementId = "qr-reader";
 
@@ -45,6 +46,7 @@ const ScanQR = () => {
     try {
       // Expected payload: { token, meal: { ... }, date, ts }
       let text = decodedText?.trim();
+      setRawContent(text || null)
       let payload: any;
       // Some generators encode as URL with ?data=... JSON
       if (text.startsWith('http')) {
@@ -209,12 +211,6 @@ const ScanQR = () => {
                     <Camera className="w-16 h-16 mx-auto opacity-50" />
                     <p>Camera ready to scan</p>
                     <p className="text-xs">Press the button below to start scanning</p>
-                    {user && (
-                      <p className="text-xs text-gray-300">
-                        Logged in as: <span className="font-medium">{user.role || 'unknown'}</span>
-                        {user.branch_id ? ` · Branch: ${user.branch_id}` : ''}
-                      </p>
-                    )}
                     {hasPermission === false && (
                       <p className="text-xs text-red-400">
                         Camera permission denied. Please enable camera access.
@@ -267,7 +263,6 @@ const ScanQR = () => {
                       </h3>
                       {scanResult.success && (
                         <div className="mt-2 space-y-1 text-sm text-green-800">
-                          <p><strong>Token:</strong> {scanResult.token}</p>
                           {scanResult.meal && (
                             <div className="mt-2 space-y-0.5">
                               <p><strong>Meal:</strong> {scanResult.meal.type}</p>
@@ -286,6 +281,12 @@ const ScanQR = () => {
                           <p><strong>Token:</strong> {scanResult.token}</p>
                           {scanError && (
                             <p><strong>Error:</strong> {scanError}</p>
+                          )}
+                          {rawContent && (
+                            <div className="mt-2">
+                              <p className="text-xs text-red-700"><strong>Raw QR content:</strong></p>
+                              <pre className="text-[10px] whitespace-pre-wrap break-all bg-red-100/50 p-2 rounded">{rawContent}</pre>
+                            </div>
                           )}
                           {scanResult.meal && (
                             <div className="mt-2 space-y-0.5">

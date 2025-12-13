@@ -4,6 +4,7 @@ import { toDateKey, isWithinRange } from "~/lib/date";
 // Shape of a subscription item (partial - extend if needed)
 export interface SubscriptionItem {
   id: string;
+  tel: string;
   clientName: string;
   subscriptionType: string;
   customerType: string;
@@ -58,7 +59,7 @@ export function useSubscriptionFilters({ data, pageSize = 8 }: UseSubscriptionFi
   // Derived filtered dataset
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      const matchesSearch = item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || item.id.includes(searchTerm);
+      const matchesSearch = item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || item.tel.includes(searchTerm);
       const matchesCustomerType = customerTypeFilter === "All" || item.customerType === customerTypeFilter;
       const matchesSubscriptionType = subscriptionTypeFilter === "All" || item.subscriptionType === subscriptionTypeFilter;
       const itemKey = toDateKey(item.dateStarted);
@@ -88,7 +89,7 @@ export function useSubscriptionFilters({ data, pageSize = 8 }: UseSubscriptionFi
 
   const exportRows = (includeBranch: boolean) => {
     return filteredData.map(item => [
-      item.id,
+      item.tel,
       item.clientName,
       item.subscriptionType,
       item.customerType,
