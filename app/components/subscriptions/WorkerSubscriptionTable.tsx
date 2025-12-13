@@ -16,12 +16,14 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import { formatCurrency } from "~/lib/utils";
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
+import { useNavigate } from "react-router-dom";
 
 interface WorkerSubscriptionTableProps {
   items: SubscriptionItem[];
 }
 
 export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTableProps) {
+  const navigate = useNavigate();
   return (
     <div className="overflow-x-auto text-gray-500">
       <Table>
@@ -56,8 +58,8 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
             const mealsThisMonth = Number((item as any).mealsThisMonth ?? 0);
 
             return (
-              <TableRow key={`${item.id}-${item.subscriptionType || ''}`}>
-                <TableCell className="font-mono text-xs">{item.id}</TableCell>
+              <TableRow key={`${item.tel}-${item.subscriptionType || ''}`}>
+                <TableCell className="font-mono text-xs">{item.tel}</TableCell>
                 <TableCell className="font-medium text-black">{item.clientName}</TableCell>
                 <TableCell className="hidden md:table-cell text-sm">{item.branch}</TableCell>
                 <TableCell className="font-semibold">{formatCurrency(wallet)}</TableCell>
@@ -72,7 +74,9 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40 bg-white border border-black/10">
-                      <DropdownMenuItem>Open Wallet</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate(`/wallet?userId=${encodeURIComponent(String(item.id))}`)}>
+                        Open Wallet
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

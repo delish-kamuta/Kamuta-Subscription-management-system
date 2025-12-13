@@ -2,7 +2,7 @@ import { Header } from "components/Header";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import ResetPasswordButton from "./ResetPasswordButton";
 import StatsCard from "components/StatsCard"
-import { useMemo, useState } from 'react'
+import { useMemo, useEffect, useState } from 'react'
 import { mealsLogsData } from 'app/constants'
 import dayjs from 'dayjs'
 import {
@@ -13,13 +13,19 @@ import {
   TableHead,
   TableRow,
 } from '~/components/ui/table'
+import { useAppSelector } from '~/store/hooks'
+import { getWorkerWallet } from '~/services/wallet'
 
 interface props {
     userName: string
 }
 const Client = ({userName}:props) => {
+  const { user } = useAppSelector((s) => s.auth)
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  const [walletLoading, setWalletLoading] = useState(false)
+  const [walletError, setWalletError] = useState('')
+  const [wallet, setWallet] = useState<{ prepaid_amount: number; remaining_amount: number; credit_limit: number; credit_used: number; transactions: any[] } | null>(null)
 
   const logs = useMemo(() => {
     const base = mealsLogsData.filter((m) => m.clientName === userName);
@@ -33,6 +39,29 @@ const Client = ({userName}:props) => {
       return true;
     }).sort((a,b) => +new Date(b.dateTime) - +new Date(a.dateTime));
   }, [userName, startDate, endDate]);
+
+  // Fetch wallet for workers
+  useEffect(() => {
+    const role = user?.role?.toLowerCase?.()
+    if (role !== 'worker' || !user?.id) return
+    let mounted = true
+    const run = async () => {
+      try {
+        setWalletLoading(true); setWalletError('')
+        const resp = await getWorkerWallet(String(user.id))
+        if (!mounted) return
+        if (!resp.success) { setWalletError(resp.message || 'Failed to fetch wallet'); return }
+        setWallet(resp.data || null)
+      } catch (e) {
+        if (!mounted) return
+        setWalletError(e instanceof Error ? e.message : 'Wallet error')
+      } finally {
+        if (mounted) setWalletLoading(false)
+      }
+    }
+    run()
+    return () => { mounted = false }
+  }, [user?.id, user?.role])
   return (
       <main className='dashboard wrapper'>
         <Header
@@ -43,7 +72,7 @@ const Client = ({userName}:props) => {
           }
         />
 
-        {/* Student subscription info */}
+        {/* Student/Worker subscription info */}
         <section className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-semibold mb-4">My Subscription</h2>
           <div className="space-y-2">
@@ -53,6 +82,68 @@ const Client = ({userName}:props) => {
             <p><span className="font-medium">Payment Status:</span> Paid</p>
           </div>
         </section>
+
+        {/* Worker Wallet Section */}
+        {user?.role?.toLowerCase?.() === 'worker' && (
+          <section className="bg-white p-6 rounded-lg shadow mt-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Wallet</h2>
+            </div>
+            {walletLoading ? (
+              <p className="text-sm text-gray-500 mt-2">Loading wallet…</p>
+            ) : walletError ? (
+              <p className="text-sm text-red-600 mt-2">{walletError}</p>
+            ) : wallet ? (
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 border rounded">
+                  <p className="text-xs text-gray-500">Prepaid Amount</p>
+                  <p className="text-lg font-semibold">{wallet.prepaid_amount}</p>
+                </div>
+                <div className="p-4 border rounded">
+                  <p className="text-xs text-gray-500">Remaining Amount</p>
+                  <p className="text-lg font-semibold">{wallet.remaining_amount}</p>
+                </div>
+                <div className="p-4 border rounded">
+                  <p className="text-xs text-gray-500">Credit Limit</p>
+                  <p className="text-lg font-semibold">{wallet.credit_limit}</p>
+                </div>
+                <div className="p-4 border rounded">
+                  <p className="text-xs text-gray-500">Credit Used</p>
+                  <p className="text-lg font-semibold">{wallet.credit_used}</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 mt-2">No wallet data</p>
+            )}
+
+            {/* Transactions */}
+            {wallet?.transactions && wallet.transactions.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-2">Recent Transactions</h3>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead>Date</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead className="hidden md:table-cell">Reference</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {wallet.transactions.slice(0, 10).map((t: any, idx: number) => (
+                      <TableRow key={idx}>
+                        <TableCell className="font-mono text-xs">{t.date || t.created_at || '-'}</TableCell>
+                        <TableCell>{t.type || '-'}</TableCell>
+                        <TableCell>{t.amount ?? t.value ?? '-'}</TableCell>
+                        <TableCell className="hidden md:table-cell">{t.reference || t.id || '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </section>
+        )}
         {/* Meals Log */}
         <section className="bg-white p-6 rounded-lg shadow mt-6">
           <div className="flex gap-1 md:items-center flex-col md:flex-row justify-between mb-4">

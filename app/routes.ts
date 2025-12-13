@@ -10,6 +10,7 @@ export default [
   // Protected layout: requires login and appropriate roles
   layout("routes/admin/admin-layout.tsx", [
     route("dashboard", "routes/admin/dashboard.tsx"),
+    route("wallet", "routes/admin/wallet.tsx"),
     route("profile", "routes/admin/profile.tsx"),
     route("my-qr-code", "routes/admin/my-qr-code.tsx"),
     route("scan-qr", "routes/admin/scan-qr.tsx"),

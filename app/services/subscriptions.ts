@@ -39,12 +39,14 @@ export interface ApiSubscription {
 function mapApiToSubscriptionItem(item: ApiSubscription): SubscriptionItem {
   const clientName = item.student?.user?.full_name || "";
   const regNumber = item.student?.reg_number || item.id || "";
+  const phone = item.student?.user?.phone || "";
   const paymentMethod = (item.payment_history && item.payment_history.length > 0)
     ? (item.payment_history[0]?.payment_method || "")
     : "";
   const branchName = item.student?.user?.branch_id ? String(item.student.user.branch_id) : "";
   return {
     id: regNumber,
+    tel: phone,
     clientName,
     subscriptionType: item.meal_type || "",
     // Customer Type: the endpoint represents student subscriptions, so default to Student
@@ -138,7 +140,8 @@ export async function listWorkerSubscriptions(token: string | null): Promise<Sub
           ? (s.payment_history[0]?.payment_method || '')
           : '';
         items.push({
-          id: phone || String(s?.id || baseId),
+          id:String(s?.id || baseId),
+          tel: phone,
           clientName,
           subscriptionType: String(s?.meal_type || ''),
           customerType: 'Worker',
@@ -158,7 +161,8 @@ export async function listWorkerSubscriptions(token: string | null): Promise<Sub
       });
     } else {
       items.push({
-        id: phone || baseId,
+        id: baseId,
+        tel: phone,
         clientName,
         subscriptionType: '',
         customerType: 'Worker',
