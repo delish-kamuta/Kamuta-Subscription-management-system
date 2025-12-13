@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '~/store/hooks'
 import { fetchBranchesThunk } from '~/store/branchesSlice'
+import { upsertSubscription } from '~/store/subscriptionsSlice'
+import { addUserOptimistic } from '~/store/usersSlice'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '~/components/ui/sheet'
 import { Button } from '~/components/ui/button'
 
@@ -127,6 +129,36 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
       const genPwd = result?.data?.generated_password
       setGeneratedPassword(genPwd ?? null)
       setSuccess('Subscription registered successfully!')
+
+      // Optimistically add new subscription and user to Redux store
+      const created = result?.data || result
+      if (created) {
+        const newSubscription = {
+          id: created.student?.reg_number || created.reg_number || String(Date.now()),
+          userId: String(created.id || created.user_id || ''),
+          tel: formData.phone,
+          clientName: formData.full_name,
+          subscriptionType: formData.meal_type,
+          customerType: formData.role === 'student' ? 'Student' : 'Worker',
+          branch: currentUser?.role === 'ADMIN' ? formData.branch_id : (userBranchId || undefined),
+          dateStarted: new Date().toISOString(),
+          totalMeals: Number(formData.days) * 2 || 30,
+          mealsLeft: Number(formData.days) * 2 || 30,
+          payment: formData.payment_method,
+        }
+        dispatch(upsertSubscription(newSubscription))
+
+        dispatch(addUserOptimistic({
+          id: String(created.id || created.user_id || newSubscription.id),
+          full_name: formData.full_name,
+          phone: formData.phone,
+          role: formData.role,
+          branch_id: currentUser?.role === 'ADMIN' ? formData.branch_id : (userBranchId || ''),
+          created_at: new Date().toISOString(),
+          student: formData.role === 'student' ? { reg_number: formData.reg_number } : undefined,
+        }))
+      }
+
       // Reset form
       setFormData({
         full_name: '',
@@ -312,9 +344,9 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
             >
               Cancel
             </Button>
-            <Button 
-              type='submit' 
-              className='bg-blue-600 text-white px-6' 
+            <Button
+              type='submit'
+              className='bg-blue-600 text-white px-6'
               disabled={submitting}
             >
               {submitting ? 'Submitting...' : 'SUBMIT'}
