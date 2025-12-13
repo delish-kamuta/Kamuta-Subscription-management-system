@@ -5,6 +5,11 @@ import ResetPasswordButton from "../../../components/ResetPasswordButton"
 
 export default function ProfilePage() {
   const { user } = useAppSelector((s) => s.auth)
+  const branches = useAppSelector((s: any) => s.branches?.items || s.branches?.list || [])
+  const branchName = (user as any)?.branch?.name
+    || (user as any)?.branch_name
+    || (branches.find((b: any) => String(b?.id) === String((user as any)?.branch_id))?.name)
+    || (user as any)?.branch_id
 
   return (
     <main className="dashboard wrapper">
@@ -35,7 +40,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <p className="text-gray-500">Branch</p>
-            <p className="font-medium">{(user as any)?.branch_id || '—'}</p>
+            <p className="font-medium">{branchName || '—'}</p>
           </div>
         </div>
         <div className="mt-6">
