@@ -21,9 +21,10 @@ type Props = {
   onView?: (user: UserRow) => void
   onEdit?: (user: UserRow) => void
   onDelete?: (user: UserRow) => void
+  onAdminResetPassword?: (user: UserRow) => void
 }
 
-export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete }: Props) {
+export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete, onAdminResetPassword }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [pendingUser, setPendingUser] = useState<UserRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -108,6 +109,12 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete 
                       onClick={() => onEdit?.(user)}
                       aria-label={`Edit ${user.full_name}`}
                     >Edit</button>
+                    <button
+                      type="button"
+                      className="px-2 py-1 text-xs rounded-md border border-purple-200 text-purple-700 hover:bg-purple-50"
+                      onClick={() => onAdminResetPassword?.(user)}
+                      aria-label={`Admin reset password for ${user.full_name}`}
+                    >Reset Password</button>
                     <button
                       type="button"
                       className="px-2 py-1 text-xs rounded-md border border-red-200 text-red-600 hover:bg-red-50"

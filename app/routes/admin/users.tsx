@@ -50,6 +50,8 @@ export default function UsersPage() {
   const [error, setError] = useState("")
   const [successMessage, setSuccessMessage] = useState("")
   const [branches, setBranches] = useState<BranchOption[]>([])
+  const [showNewPwdModal, setShowNewPwdModal] = useState(false)
+  const [newPwdValue, setNewPwdValue] = useState<string>("")
 
   // Form state
   const [formData, setFormData] = useState({
@@ -358,6 +360,36 @@ export default function UsersPage() {
         isLoading={usersLoading}
         onView={(user) => { setSelectedUser(user); setIsViewUserOpen(true); ensureBranchPresent(user.branch_id) }}
         onEdit={(user) => { setSelectedUser(user); setIsEditUserOpen(true); ensureBranchPresent(user.branch_id) }}
+        onAdminResetPassword={async (user) => {
+          try {
+            setError("")
+            const tokenError = ensureValidTokenOrMessage()
+            if (tokenError) { setError(tokenError); return }
+            const resp = await authFetch('https://restaurant-bn-api.onrender.com/api/users/admin-reset-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_id: user.id }),
+            })
+            if (!resp.ok) {
+              let msg = 'Failed to admin reset password'
+              try { const j = await resp.json(); msg = j.message || msg } catch {
+                try { const t = await resp.text(); if (t) msg = `${msg} — ${t}` } catch {}
+              }
+              setError(msg)
+              return
+            }
+            const data = await resp.json()
+            const newPwd = data?.data?.new_password
+            setSuccessMessage(data?.message || 'Admin password reset successful')
+            if (newPwd) {
+              setNewPwdValue(String(newPwd))
+              setShowNewPwdModal(true)
+            }
+            setTimeout(() => setSuccessMessage(''), 2500)
+          } catch (e) {
+            setError(e instanceof Error ? e.message : 'Admin reset failed')
+          }
+        }}
         onDelete={async (user) => {
           try {
             const tokenError = ensureValidTokenOrMessage()
@@ -499,6 +531,40 @@ export default function UsersPage() {
             }
           }}
         />
+      )}
+
+      {/* New Password Modal */}
+      {showNewPwdModal && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowNewPwdModal(false)} />
+          <div className="relative z-10 w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+            <h3 className="text-base font-semibold text-gray-900">New Password Generated</h3>
+            <p className="mt-2 text-sm text-gray-600">Share this temporary password with the user and advise them to change it after login.</p>
+            <div className="mt-4 flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={newPwdValue}
+                className="flex-1 border rounded-md px-3 py-2 font-mono text-sm"
+              />
+              <button
+                type="button"
+                className="px-3 py-2 text-sm rounded-md border border-slate-200 hover:bg-slate-50"
+                onClick={() => {
+                  navigator.clipboard?.writeText?.(newPwdValue)
+                }}
+                title="Copy password"
+              >Copy</button>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                className="px-3 py-1.5 text-sm rounded-md border border-slate-200 hover:bg-slate-50"
+                onClick={() => setShowNewPwdModal(false)}
+              >Close</button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   )
