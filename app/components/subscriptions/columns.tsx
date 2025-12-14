@@ -10,6 +10,7 @@ import {
 } from "~/components/ui/sheet";
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import React, { useState, useEffect } from "react";
+import { useAppSelector } from "~/store/hooks";
 import { generateQrOtpForUser } from "~/services/qr";
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,6 +22,12 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [qrError, setQrError] = useState('');
   const [qrData, setQrData] = useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
   const [qrImage, setQrImage] = useState<string>('');
+  const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
+  const customerTypeOptions = [
+    'Student',
+    'Campus Worker',
+    'Regular',
+  ];
 
   // Generate QR-OTP when the sheet opens
   useEffect(() => {
@@ -226,9 +233,9 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
                 onChange={(e) => setEditForm({ ...editForm, customerType: e.target.value })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               >
-                <option>Student</option>
-                <option>Staff</option>
-                <option>Guest</option>
+                {customerTypeOptions.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -238,14 +245,13 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
                 onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               >
-                <option>KIGALI</option>
-                <option>HUYE</option>
-                <option>MUSANZE</option>
-                <option>RUBAVU</option>
-                <option>NYARUGENGE</option>
-                <option>GASABO</option>
-                <option>KICUKIRO</option>
-                <option>RUSIZI</option>
+                {Array.isArray(branches) && branches.length > 0 ? (
+                  branches.map((b: any) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))
+                ) : (
+                  <option value="">Select branch</option>
+                )}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -389,7 +395,7 @@ export interface SubscriptionColumn {
   render?: (item: SubscriptionItem) => React.ReactNode;
 }
 
-export function getSubscriptionColumns(isCashier: boolean): SubscriptionColumn[] {
+export function getSubscriptionColumns(isCashier: boolean, resolveBranchName?: (v: string | undefined) => string): SubscriptionColumn[] {
   const cols: SubscriptionColumn[] = [
     {
       key: "id",
@@ -438,6 +444,10 @@ export function getSubscriptionColumns(isCashier: boolean): SubscriptionColumn[]
       headerClassName: "hidden xl:table-cell whitespace-nowrap",
       cellClassName: "hidden xl:table-cell text-sm",
       hideForCashier: true,
+      render: (item) => {
+        const val = item.branch;
+        return (resolveBranchName ? resolveBranchName(val) : val) || '';
+      },
     },
     {
       key: "totalMeals",
