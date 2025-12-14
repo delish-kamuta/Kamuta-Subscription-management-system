@@ -8,7 +8,9 @@ import FinancialStatsSection from "~/components/payments/FinancialStatsSection";
 import ChartsSection from "~/components/payments/ChartsSection";
 import PaymentModals from "~/components/payments/PaymentModals";
 import PaymentTable from "~/components/payments/PaymentTable";
-import { usePaymentsFromSubscriptions } from "~/hooks/usePaymentsFromSubscriptions";
+import { useAppDispatch, useAppSelector } from "~/store/hooks";
+import { fetchPaymentsThunk } from "~/store/paymentsSlice";
+import { useEffect } from "react";
 
 interface Payment {
   paymentId: string;
@@ -24,7 +26,18 @@ interface Payment {
 
 const Payments = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const { items: apiPayments, loading, error } = usePaymentsFromSubscriptions();
+  const dispatch = useAppDispatch();
+  const paymentsState = useAppSelector((s) => (s as any).payments);
+  const branchesState = useAppSelector((s) => (s as any).branches);
+  const apiPayments = (paymentsState?.items ?? []) as any[];
+  const loading = Boolean(paymentsState?.loading);
+  const error = paymentsState?.error as string | null;
+
+  useEffect(() => {
+    if (!paymentsState?.loaded && !paymentsState?.loading) {
+      dispatch(fetchPaymentsThunk());
+    }
+  }, [dispatch, paymentsState?.loaded, paymentsState?.loading]);
   const [currentPage, setCurrentPage] = useState(1);
   const [branchFilter, setBranchFilter] = useState("All");
   const [cashierFilter, setCashierFilter] = useState("All");
