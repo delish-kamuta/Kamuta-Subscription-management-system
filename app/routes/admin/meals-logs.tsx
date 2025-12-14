@@ -181,13 +181,17 @@ const MealsLogs = () => {
             {/* Branch Filter (Admin only) */}
             {userRole === UserRole.ADMIN && (
               <div>
-                <label className="text-xs text-gray-500 block mb-1">Branch ID</label>
-                <Input
-                  placeholder="Filter by branch..."
+                <label className="text-xs text-gray-500 block mb-1">Branch</label>
+                <select
                   value={branchFilter}
                   onChange={(e) => setBranchFilter(e.target.value)}
-                  className="text-sm border-gray-300"
-                />
+                  className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+                >
+                  <option value="">All</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={String(b.id)}>{b.name || b.id}</option>
+                  ))}
+                </select>
               </div>
             )}
 
