@@ -3,7 +3,7 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import ResetPasswordButton from "./ResetPasswordButton";
 import StatsCard from "components/StatsCard"
 import { useMemo, useEffect, useState } from 'react'
-import { mealsLogsData } from 'app/constants'
+// import { mealsLogsData } from 'app/constants'
 import dayjs from 'dayjs'
 import {
   Table,
@@ -13,32 +13,130 @@ import {
   TableHead,
   TableRow,
 } from '~/components/ui/table'
-import { useAppSelector } from '~/store/hooks'
+import { useAppSelector, useAppDispatch } from '~/store/hooks'
+import { fetchUsersThunk } from '~/store/usersSlice'
+import { fetchBranchesThunk } from '~/store/branchesSlice'
+import { listMealLogs, type MealLogItem } from '~/services/mealLogs'
+import { listStudentSubscriptions } from '~/services/subscriptions'
 import { getWorkerWallet } from '~/services/wallet'
 
 interface props {
     userName: string
 }
 const Client = ({userName}:props) => {
+  const dispatch = useAppDispatch()
   const { user } = useAppSelector((s) => s.auth)
+  const token = useAppSelector((s) => s.auth.token)
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [walletLoading, setWalletLoading] = useState(false)
   const [walletError, setWalletError] = useState('')
   const [wallet, setWallet] = useState<{ prepaid_amount: number; remaining_amount: number; credit_limit: number; credit_used: number; transactions: any[] } | null>(null)
 
+  const [myLogs, setMyLogs] = useState<MealLogItem[]>([])
+  const [logsLoading, setLogsLoading] = useState(false)
+  const [logsError, setLogsError] = useState<string>('')
+
+  // Student subscription state
+  const [subsLoading, setSubsLoading] = useState(false)
+  const [subsError, setSubsError] = useState('')
+  const [mySubscription, setMySubscription] = useState<{
+    subscriptionType: string
+    totalMeals: number
+    mealsLeft: number
+    payment: string
+    dateStarted?: string
+  } | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    const run = async () => {
+      if (!user?.id) return
+      try {
+        setLogsLoading(true); setLogsError('')
+        const res = await listMealLogs({ client_user_id: String(user.id) })
+        if (!mounted) return
+        if (!res.success) { setLogsError(res.message || 'Failed to fetch meal logs'); setMyLogs([]); return }
+        setMyLogs(res.data || [])
+      } catch (e: any) {
+        if (!mounted) return
+        setLogsError(e?.message || 'Failed to fetch meal logs')
+      } finally {
+        if (mounted) setLogsLoading(false)
+      }
+    }
+    run()
+    return () => { mounted = false }
+  }, [user?.id])
+
+  // Fetch student subscription for student users
+  useEffect(() => {
+    const role = user?.role?.toLowerCase?.()
+    if (role !== 'student') { setMySubscription(null); return }
+    let mounted = true
+    const run = async () => {
+      try {
+        setSubsLoading(true); setSubsError('')
+        const items = await listStudentSubscriptions(token ?? null)
+        if (!mounted) return
+        const mine = items.find(i => String(i.userId || '').trim() === String(user?.id || '').trim())
+        if (!mine) { setMySubscription(null); return }
+        setMySubscription({
+          subscriptionType: mine.subscriptionType,
+          totalMeals: mine.totalMeals,
+          mealsLeft: mine.mealsLeft,
+          payment: mine.payment,
+          dateStarted: mine.dateStarted,
+        })
+      } catch (e: any) {
+        if (!mounted) return
+        setSubsError(e?.message || 'Failed to fetch subscription')
+        setMySubscription(null)
+      } finally {
+        if (mounted) setSubsLoading(false)
+      }
+    }
+    run()
+    return () => { mounted = false }
+  }, [user?.id, user?.role])
+
   const logs = useMemo(() => {
-    const base = mealsLogsData.filter((m) => m.clientName === userName);
-    if (!startDate && !endDate) return base.sort((a,b) => +new Date(b.dateTime) - +new Date(a.dateTime));
-    const start = startDate ? dayjs(startDate).startOf('day') : null;
-    const end = endDate ? dayjs(endDate).endOf('day') : null;
+    const base = [...myLogs]
+    if (!startDate && !endDate) return base.sort((a,b) => +new Date(b.created_at) - +new Date(a.created_at))
+    const start = startDate ? dayjs(startDate).startOf('day') : null
+    const end = endDate ? dayjs(endDate).endOf('day') : null
     return base.filter((m) => {
-      const dt = dayjs(m.dateTime, ['MMM D, YYYY h:mm A','YYYY-MM-DDTHH:mm:ssZ','YYYY-MM-DD']);
-      if (start && dt.isBefore(start)) return false;
-      if (end && dt.isAfter(end)) return false;
-      return true;
-    }).sort((a,b) => +new Date(b.dateTime) - +new Date(a.dateTime));
-  }, [userName, startDate, endDate]);
+      const dt = dayjs(m.created_at)
+      if (start && dt.isBefore(start)) return false
+      if (end && dt.isAfter(end)) return false
+      return true
+    }).sort((a,b) => +new Date(b.created_at) - +new Date(a.created_at))
+  }, [myLogs, startDate, endDate])
+
+  // Resolvers for names from Redux caches
+  const users = useAppSelector((s) => s.users?.items || []) as Array<any>
+  const branches = useAppSelector((s) => s.branches?.items || []) as Array<any>
+  const resolveUserName = (id?: string) => {
+    if (!id) return ''
+    const found = users.find((u: any) => String(u.id) === String(id) || String(u.user_id) === String(id))
+    return found?.full_name || found?.name || ''
+  }
+  const resolveBranchName = (id?: string) => {
+    if (!id) return ''
+    const found = branches.find((b: any) => String(b.id) === String(id))
+    return found?.name || found?.branch_name || ''
+  }
+
+  // Prefetch users and branches caches if empty to resolve names
+  useEffect(() => {
+    if (users.length === 0) {
+      dispatch(fetchUsersThunk())
+    }
+    if (branches.length === 0) {
+      dispatch(fetchBranchesThunk())
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Fetch wallet for workers
   useEffect(() => {
@@ -72,16 +170,29 @@ const Client = ({userName}:props) => {
           }
         />
 
-        {/* Student/Worker subscription info */}
-        <section className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold mb-4">My Subscription</h2>
-          <div className="space-y-2">
-            <p><span className="font-medium">Type:</span> VIP</p>
-            <p><span className="font-medium">Total Meals:</span> 30</p>
-            <p><span className="font-medium">Remaining:</span> 15</p>
-            <p><span className="font-medium">Payment Status:</span> Paid</p>
-          </div>
-        </section>
+        {/* Student subscription info (students only) */}
+        {user?.role?.toLowerCase?.() === 'student' && (
+          <section className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4">My Subscription</h2>
+            {subsLoading ? (
+              <p className="text-sm text-gray-500">Loading subscription…</p>
+            ) : subsError ? (
+              <p className="text-sm text-red-600">{subsError}</p>
+            ) : mySubscription ? (
+              <div className="space-y-2">
+                <p><span className="font-medium">Type:</span> {mySubscription.subscriptionType || '-'}</p>
+                <p><span className="font-medium">Total Meals:</span> {mySubscription.totalMeals}</p>
+                <p><span className="font-medium">Remaining:</span> {mySubscription.mealsLeft}</p>
+                <p><span className="font-medium">Payment Method:</span> {mySubscription.payment || '-'}</p>
+                {mySubscription.dateStarted && (
+                  <p><span className="font-medium">Started:</span> {dayjs(mySubscription.dateStarted).format('D MMM YYYY')}</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No active subscription found.</p>
+            )}
+          </section>
+        )}
 
         {/* Worker Wallet Section */}
         {user?.role?.toLowerCase?.() === 'worker' && (
@@ -161,12 +272,17 @@ const Client = ({userName}:props) => {
             </div>
           </div>
 
+          {logsLoading ? (
+            <p className="text-sm text-gray-500">Loading meal logs…</p>
+          ) : logsError ? (
+            <p className="text-sm text-red-600">{logsError}</p>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
                 <TableHead>Date</TableHead>
-                <TableHead>Meal Used</TableHead>
-                <TableHead>Meals Left</TableHead>
+                <TableHead>Client Type</TableHead>
+                <TableHead>Meal Type</TableHead>
                 <TableHead className="hidden md:table-cell">Scanned By</TableHead>
                 <TableHead className="hidden lg:table-cell">Branch</TableHead>
               </TableRow>
@@ -177,18 +293,19 @@ const Client = ({userName}:props) => {
                   <TableCell colSpan={5} className="py-4 text-sm text-gray-500">No meals logged for this period.</TableCell>
                 </TableRow>
               ) : (
-                logs.map((r, idx) => (
-                  <TableRow key={`${r.clientId}-${idx}`}>
-                    <TableCell className="font-mono text-xs">{dayjs(r.dateTime, ['MMM D, YYYY h:mm A','YYYY-MM-DDTHH:mm:ssZ']).format('D MMM YYYY, h:mm A')}</TableCell>
-                    <TableCell className="font-semibold">{r.mealUsed}</TableCell>
-                    <TableCell className="font-semibold">{r.mealsLeft}</TableCell>
-                    <TableCell className="hidden md:table-cell">{r.scannedBy}</TableCell>
-                    <TableCell className="hidden lg:table-cell">{r.branch}</TableCell>
+                logs.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-mono text-xs">{dayjs(r.created_at).format('D MMM YYYY, h:mm A')}</TableCell>
+                    <TableCell className="font-semibold">{r.client_type}</TableCell>
+                    <TableCell className="font-semibold">{r.meal_type}</TableCell>
+                    <TableCell className="hidden md:table-cell">{resolveUserName(r.scanned_by) || r.scanned_by || ''}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{resolveBranchName(String(r.branch_id)) || String(r.branch_id || '')}</TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
+          )}
         </section>
       </main>
     );

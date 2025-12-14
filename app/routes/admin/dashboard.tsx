@@ -6,6 +6,8 @@ import { ChartPieSimple } from "../../../components/pie-chart";
 import { ChartBarMultiple} from "../../../components/BarChart";
 import { useEffect, useState } from "react";
 import Client from "components/client";
+import { listMealLogs, type MealLogItem } from "~/services/mealLogs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { useAppSelector } from "~/store/hooks";
 import { UserRole } from "~/types/auth";
 import QuickAction from "../../../components/Quick-action"
@@ -27,11 +29,35 @@ const Dashboard = () => {
     .sort((a, b) => (toDateKey(b.dateStarted) ?? 0) - (toDateKey(a.dateStarted) ?? 0))
     .slice(0, 8);
 
-  // Client (Student) Dashboard
+  // Client (Student/Worker) Dashboard with real data + recent meal logs
+  const [myLogs, setMyLogs] = useState<MealLogItem[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logsError, setLogsError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (userRole === UserRole.STUDENT || userRole === UserRole.WORKER) {
+      setLogsLoading(true);
+      setLogsError(null);
+      const clientId = String(user?.id || "");
+      listMealLogs({ client_user_id: clientId })
+        .then((res) => {
+          if (!res.success) { setLogsError(res.message || "Failed to load meal logs"); setMyLogs([]); return; }
+          setMyLogs(res.data || []);
+        })
+        .catch((e) => setLogsError(String(e?.message || e)))
+        .finally(() => setLogsLoading(false));
+    }
+  }, [userRole, user]);
+
   if (userRole === UserRole.STUDENT || userRole === UserRole.WORKER) {
-    return(
-      <Client userName={userName} />
-    )
+    return (
+      <main className='dashboard wrapper'>
+        {/* Client view handles its own welcome header; avoid duplicate */}
+        <section className="flex flex-col gap-6">
+          <Client userName={userName} />
+        </section>
+      </main>
+    );
   }
 
   // Admin/Staff Dashboard

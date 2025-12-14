@@ -8,6 +8,7 @@ import {
 } from "~/components/ui/table";
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import { getSubscriptionColumns } from "~/components/subscriptions/columns";
+import { useAppSelector } from "~/store/hooks";
 
 interface SubscriptionTableProps {
   items: SubscriptionItem[];
@@ -15,7 +16,13 @@ interface SubscriptionTableProps {
 }
 
 export function SubscriptionTable({ items, isCashier }: SubscriptionTableProps) {
-  const columns = getSubscriptionColumns(isCashier);
+  const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
+  const resolveBranchName = (v: string | undefined) => {
+    if (!v) return '';
+    const match = Array.isArray(branches) ? (branches as any[]).find((b: any) => b.id === v || b.name === v) : null;
+    return match?.name || v;
+  };
+  const columns = getSubscriptionColumns(isCashier, resolveBranchName);
   return (
     <div className="overflow-x-auto text-gray-500">
       <Table>

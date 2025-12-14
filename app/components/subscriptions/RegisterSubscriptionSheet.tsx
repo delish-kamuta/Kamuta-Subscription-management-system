@@ -133,6 +133,9 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
       // Optimistically add new subscription and user to Redux store
       const created = result?.data || result
       if (created) {
+        const selectedBranchId = (currentUser?.role === 'ADMIN' ? formData.branch_id : (userBranchId || '')) || ''
+        const selectedBranch = Array.isArray(branches) ? branches.find((b) => b.id === selectedBranchId) : null
+        const branchName = selectedBranch?.name || selectedBranchId
         const newSubscription = {
           id: created.student?.reg_number || created.reg_number || String(Date.now()),
           userId: String(created.id || created.user_id || ''),
@@ -140,7 +143,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
           clientName: formData.full_name,
           subscriptionType: formData.meal_type,
           customerType: formData.role === 'student' ? 'Student' : 'Worker',
-          branch: currentUser?.role === 'ADMIN' ? formData.branch_id : (userBranchId || undefined),
+          branch: branchName,
           dateStarted: new Date().toISOString(),
           totalMeals: Number(formData.days) * 2 || 30,
           mealsLeft: Number(formData.days) * 2 || 30,
@@ -153,7 +156,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
           full_name: formData.full_name,
           phone: formData.phone,
           role: formData.role,
-          branch_id: currentUser?.role === 'ADMIN' ? formData.branch_id : (userBranchId || ''),
+          branch_id: selectedBranchId,
           created_at: new Date().toISOString(),
           student: formData.role === 'student' ? { reg_number: formData.reg_number } : undefined,
         }))

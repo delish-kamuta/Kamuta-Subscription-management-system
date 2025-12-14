@@ -4,6 +4,8 @@ import rolesReducer from './rolesSlice';
 import usersReducer from './usersSlice';
 import branchesReducer from './branchesSlice';
 import subscriptionsReducer from './subscriptionsSlice';
+import mealLogsReducer from './mealLogsSlice';
+import paymentsReducer from './paymentsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +14,8 @@ export const store = configureStore({
     users: usersReducer,
     branches: branchesReducer,
     subscriptions: subscriptionsReducer,
+    mealLogs: mealLogsReducer,
+    payments: paymentsReducer,
   },
 });
 

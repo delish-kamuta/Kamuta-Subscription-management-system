@@ -1,8 +1,7 @@
 import { Header } from "../../../components/Header";
 import { SidebarTrigger } from "~/components/ui/sidebar";
-import { mealsLogsData } from "app/constants";
-import { Search, Calendar, MoreHorizontal, Download, Eye, Edit, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Search, Calendar, Download } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { UserRole } from "~/types/auth";
 import {
   Table,
@@ -23,40 +22,99 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~\/lib\/utils";
 import { toDateKey, isWithinRange } from "~\/lib\/date";
-import { useAppSelector } from "~/store/hooks";
+import { useAppSelector, useAppDispatch } from "~/store/hooks";
+import { fetchUsersThunk } from "~/store/usersSlice";
+import { fetchBranchesThunk } from "~/store/branchesSlice";
+import { fetchMealLogsThunk } from "~/store/mealLogsSlice";
+import { type MealLogsQuery } from "~/services/mealLogs";
 
 const MealsLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [branchFilter, setBranchFilter] = useState<string>("All");
-  const [scannedByFilter, setScannedByFilter] = useState<string>("All");
+  const [branchFilter, setBranchFilter] = useState<string>("");
+  const [clientTypeFilter, setClientTypeFilter] = useState<string>("");
+  const [mealTypeFilter, setMealTypeFilter] = useState<string>("");
+  const [sourceFilter, setSourceFilter] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
-  const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [editForm, setEditForm] = useState<any>(null);
   const itemsPerPage = 8;
+  const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const mealLogsState = useAppSelector((state) => state.mealLogs);
+  const mealLogs = mealLogsState.items;
+  const mealLogsLoading = mealLogsState.loading;
+  const mealLogsLoaded = mealLogsState.loaded;
+  const branches = useAppSelector((state) => state.branches.items);
+  const branchesLoaded = useAppSelector((state) => state.branches.loaded);
+  const users = useAppSelector((state) => state.users.items);
+  const usersLoaded = useAppSelector((state) => state.users.loaded);
+
+  const resolveBranchName = useMemo(() => {
+    const map = new Map<string, string>();
+    branches.forEach(b => map.set(String(b.id), String(b.name || '')));
+    return (id?: string | number | null) => {
+      const key = id != null ? String(id) : '';
+      return map.get(key) || '';
+    };
+  }, [branches]);
+
+  const resolveUserName = useMemo(() => {
+    const map = new Map<string, string>();
+    users.forEach(u => map.set(String(u.id), String(u.full_name || '')));
+    return (id?: string | number | null) => {
+      const key = id != null ? String(id) : '';
+      return map.get(key) || '';
+    };
+  }, [users]);
     
     const userName = user?.name || "Guest";
     const userRole = user?.role || UserRole.CASHIER;
     const isCashier = userRole === UserRole.CASHIER;
 
-  // Use shared date utils for consistent range filtering
+  // Build role-aware query from filters
+  const query: MealLogsQuery = useMemo(() => {
+    const base: MealLogsQuery = {
+      client_type: clientTypeFilter || undefined,
+      meal_type: mealTypeFilter || undefined,
+      deduction_source: sourceFilter || undefined,
+    };
+    if (userRole === UserRole.ADMIN) {
+      if (branchFilter) base.branch_id = branchFilter;
+    } else if (userRole === UserRole.CASHIER) {
+      if (user?.branch_id) base.branch_id = String(user.branch_id);
+    } else if (userRole === UserRole.WAITSTAFF) {
+      base.scanned_by = String(user?.id || "");
+    } else {
+      base.client_user_id = String(user?.id || "");
+    }
+    return base;
+  }, [clientTypeFilter, mealTypeFilter, sourceFilter, branchFilter, userRole, user]);
 
-  const filteredData = mealsLogsData.filter((item) => {
-    const matchesSearch = item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || item.clientId.includes(searchTerm);
-    const matchesBranch = branchFilter === "All" || item.branch === branchFilter;
-    const matchesScannedBy = scannedByFilter === "All" || item.scannedBy === scannedByFilter;
-    const itemKey = toDateKey(item.dateTime);
+  useEffect(() => {
+    // Preload data on mount if not loaded
+    if (!mealLogsLoaded && !mealLogsLoading) {
+      dispatch(fetchMealLogsThunk(query));
+    }
+    if (!usersLoaded) dispatch(fetchUsersThunk());
+    if (!branchesLoaded) dispatch(fetchBranchesThunk());
+  }, [dispatch, mealLogsLoaded, mealLogsLoading, usersLoaded, branchesLoaded]);
+
+  const filteredData = mealLogs.filter((item) => {
+    // Apply local filters to cached data
+    const matchesSearch = [item.id, item.client_user_id].some((v) => String(v || '').toLowerCase().includes(searchTerm.toLowerCase()));
+    const itemKey = toDateKey(item.created_at);
     const fromKey = toDateKey(startDate);
     const toKey = toDateKey(endDate);
     const withinRange = isWithinRange(itemKey, fromKey, toKey);
-    return matchesSearch && matchesBranch && matchesScannedBy && withinRange;
+    
+    // Apply filter criteria locally
+    const matchesClientType = !clientTypeFilter || item.client_type === clientTypeFilter;
+    const matchesMealType = !mealTypeFilter || item.meal_type === mealTypeFilter;
+    const matchesSource = !sourceFilter || item.deduction_source === sourceFilter;
+    const matchesBranch = !branchFilter || item.branch_id === branchFilter;
+    
+    return matchesSearch && withinRange && matchesClientType && matchesMealType && matchesSource && matchesBranch;
   });
-
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = filteredData.slice(
@@ -68,28 +126,25 @@ const MealsLogs = () => {
     const headers = [
       "Client ID",
       "Client Name",
-      "Meal Used",
-      "Meals Left",
+      "Client Type",
+      "Meal Type",
+      "Source",
       "Date",
       "Time",
       "Scanned By",
       "Branch",
     ];
-    const rows = filteredData.map((item) => {
-      const dateSegs = item.dateTime.split(" ");
-      const dateStr = `${dateSegs[0]} ${dateSegs[1]} ${dateSegs[2]}`;
-      const timeStr = `${dateSegs[3]} ${dateSegs[4] ?? ""}`.trim();
-      return [
-        item.clientId,
-        item.clientName,
-        item.mealUsed,
-        item.mealsLeft,
-        dateStr,
-        timeStr,
-        item.scannedBy,
-        item.branch,
-      ];
-    });
+    const rows = filteredData.map((item) => [
+      item.client_user_id || '',
+      resolveUserName((item as any).client_user_id),
+      item.client_type,
+      item.meal_type,
+      item.deduction_source,
+      new Date(item.created_at).toLocaleDateString(),
+      new Date(item.created_at).toLocaleTimeString(),
+      resolveUserName(item.scanned_by) || item.scanned_by || '',
+      resolveBranchName(item.branch_id) || item.branch_id || '',
+    ]);
     exportToCsv(headers, rows, "meals_logs");
   };
 
@@ -107,347 +162,218 @@ const MealsLogs = () => {
       <section className="mt-6 bg-white rounded-lg shadow-sm">
         {/* Search and Filters */}
         <div className="p-4 md:p-6 border-b border-gray-200">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div className="w-full md:flex-1 md:max-w-md relative">
+          {/* Search Bar */}
+          <div className="mb-4">
+            <div className="w-full relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 type="text"
-                placeholder="Search by name or ID"
+                placeholder="Search by Log ID or Client User ID"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 border-gray-300"
               />
             </div>
-            <div className="flex flex-wrap gap-2 md:gap-3 w-full md:w-auto">
-              <div className="relative">
-                {!isCashier&&(
-                  <select
+          </div>
+
+          {/* Filters Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            {/* Branch Filter (Admin only) */}
+            {userRole === UserRole.ADMIN && (
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Branch</label>
+                <select
                   value={branchFilter}
                   onChange={(e) => setBranchFilter(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+                  className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
                 >
-                  <option value="All">Branch: All</option>
-                  <option value="KIGALI">KIGALI</option>
-                  <option value="HUYE">HUYE</option>
-                  <option value="MUSANZE">MUSANZE</option>
-                  <option value="RUBAVU">RUBAVU</option>
-                  <option value="NYARUGENGE">NYARUGENGE</option>
-                  <option value="GASABO">GASABO</option>
-                  <option value="KICUKIRO">KICUKIRO</option>
-                  <option value="RUSIZI">RUSIZI</option>
-                </select>
-                )}
-              </div>
-              <div className="relative">
-                <select
-                  value={scannedByFilter}
-                  onChange={(e) => setScannedByFilter(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
-                >
-                  <option value="All">Scanned By: All</option>
-                  <option value="James Anderson">James Anderson</option>
-                  <option value="Michael Johnson">Michael Johnson</option>
-                  <option value="David Brown">David Brown</option>
+                  <option value="">All</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={String(b.id)}>{b.name || b.id}</option>
+                  ))}
                 </select>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1">
-                  <Calendar className="w-4 h-4" />
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="text-sm outline-none"
-                  />
-                  <span className="text-gray-400">to</span>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="text-sm outline-none"
-                  />
-                </div>
-                {(startDate || endDate) && (
-                  <Button
-                    variant="ghost"
-                    className="text-sm"
-                    onClick={() => { setStartDate(""); setEndDate(""); }}
-                  >
-                    Clear
-                  </Button>
-                )}
-              </div>
-              <Button variant="outline" className="text-sm border-gray-300" onClick={handleExport}>
-                <Download className="w-4 h-4 mr-2" /> Export
-              </Button>
+            )}
+
+            {/* Client Type Filter */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Client Type</label>
+              <select
+                value={clientTypeFilter}
+                onChange={(e) => setClientTypeFilter(e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+              >
+                <option value="">All</option>
+                <option value="student">Student</option>
+                <option value="worker">Worker</option>
+                <option value="irregular_client">Irregular Client</option>
+              </select>
             </div>
+
+            {/* Meal Type Filter */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Meal Type</label>
+              <select
+                value={mealTypeFilter}
+                onChange={(e) => setMealTypeFilter(e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+              >
+                <option value="">All</option>
+                <option value="Regular">Regular</option>
+                <option value="VIP">VIP</option>
+                <option value="VVIP">VVIP</option>
+              </select>
+            </div>
+
+            {/* Source Filter */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Source</label>
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+              >
+                <option value="">All</option>
+                <option value="subscription">Subscription</option>
+                <option value="prepaid">Prepaid</option>
+                <option value="credit">Credit</option>
+                <option value="paid_ticket">Paid Ticket</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Date Range and Actions */}
+          <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
+            {/* Date Range */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-2 bg-white">
+                <Calendar className="w-4 h-4 text-gray-400" />
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="text-sm outline-none w-32"
+                />
+                <span className="text-gray-400 text-sm">to</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="text-sm outline-none w-32"
+                />
+              </div>
+              {(startDate || endDate) && (
+                <Button
+                  variant="ghost"
+                  className="text-sm"
+                  onClick={() => { setStartDate(""); setEndDate(""); }}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+
+            {/* Export Button */}
+            <Button variant="outline" className="text-sm border-gray-300" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" /> Export
+            </Button>
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto text-gray-500">
+        {/* Loading and Error States */}
+        {mealLogsLoading && (
+          <div className="p-6 text-center text-gray-500">
+            Loading meal logs...
+          </div>
+        )}
+        {mealLogsState.error && (
+          <div className="p-6 text-center text-red-500 bg-red-50">
+            Error: {mealLogsState.error}
+          </div>
+        )}
+
+        {!mealLogsLoading && !mealLogsState.error && (
+          <>
+            {/* Logs Table */}
+            <div className="mt-4 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="whitespace-nowrap">Client ID</TableHead>
                 <TableHead className="whitespace-nowrap">Client Name</TableHead>
-                <TableHead className="whitespace-nowrap">Meal Used</TableHead>
-                <TableHead className="whitespace-nowrap">Meals Left</TableHead>
+                <TableHead className="whitespace-nowrap">Client Type</TableHead>
+                <TableHead className="whitespace-nowrap">Meal Type</TableHead>
+                <TableHead className="whitespace-nowrap">Source</TableHead>
                 <TableHead className="whitespace-nowrap hidden lg:table-cell">Date & Time</TableHead>
                 <TableHead className="whitespace-nowrap hidden md:table-cell">Scanned By</TableHead>
-                {!isCashier&&(
+                {!isCashier && (
                   <TableHead className="whitespace-nowrap hidden xl:table-cell">Branch</TableHead>
-                )}
-                {!isCashier&&(
-                  <TableHead className="whitespace-nowrap">Action</TableHead>
                 )}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-mono text-xs">{item.clientId}</TableCell>
-                  <TableCell className="font-medium text-black">{item.clientName}</TableCell>
-                  <TableCell className="font-semibold">{item.mealUsed}</TableCell>
-                  <TableCell className="font-semibold">{item.mealsLeft}</TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <div className="flex flex-col">
-                      <span className="text-sm">
-                        {item.dateTime.split(" ")[0]}{" "}
-                        {item.dateTime.split(" ")[1]}{" "}
-                        {item.dateTime.split(" ")[2]}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {item.dateTime.split(" ")[3]}{" "}
-                        {item.dateTime.split(" ")[4]}
-                      </span>
-                    </div>
+              {filteredData
+                .slice((currentPage - 1) * itemsPerPage, (currentPage - 1) * itemsPerPage + itemsPerPage)
+                .map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="text-sm font-medium">{resolveUserName((item as any).client_user_id)}</TableCell>
+                    <TableCell className="text-sm">{item.client_type}</TableCell>
+                    <TableCell className="text-sm">{item.meal_type}</TableCell>
+                    <TableCell className="text-sm">{item.deduction_source}</TableCell>
+                    <TableCell className="whitespace-nowrap hidden lg:table-cell text-sm">{new Date(item.created_at).toLocaleString()}</TableCell>
+                    <TableCell className="whitespace-nowrap hidden md:table-cell text-sm">{resolveUserName(item.scanned_by) || (item.scanned_by ? String(item.scanned_by) : "")}</TableCell>
+                    {!isCashier && (
+                      <TableCell className="whitespace-nowrap hidden xl:table-cell text-sm">{resolveBranchName(item.branch_id)}</TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              {!mealLogsLoading && filteredData.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-sm text-gray-500">
+                    No logs found
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{item.scannedBy}</TableCell>
-                  {!isCashier&&(
-                    <TableCell className="hidden xl:table-cell">{item.branch}</TableCell>
-                  )}
-                  {!isCashier&&(
-                    <TableCell>
-                      <div className="relative">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => setOpenDropdown(openDropdown === index ? null : index)}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                        {openDropdown === index && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-10"
-                              onClick={() => setOpenDropdown(null)}
-                            />
-                            <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-20">
-                              <button
-                                className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2"
-                                onClick={() => {
-                                  setSelectedItem(item);
-                                  setViewDetailsOpen(true);
-                                  setOpenDropdown(null);
-                                }}
-                              >
-                                <Eye className="h-4 w-4 text-blue-600" />
-                                View Details
-                              </button>
-                              <button
-                                className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2"
-                                onClick={() => {
-                                  setEditForm(item);
-                                  setEditOpen(true);
-                                  setOpenDropdown(null);
-                                }}
-                              >
-                                <Edit className="h-4 w-4 text-gray-600" />
-                                Edit
-                              </button>
-                              <button
-                                className="w-full px-4 py-2 text-sm text-left hover:bg-gray-100 flex items-center gap-2 text-red-600"
-                                onClick={() => {
-                                  setOpenDropdown(null);
-                                  if (confirm(`Are you sure you want to delete meal log for ${item.clientName}?`)) {
-                                    console.log('Deleting meal log:', item.clientId);
-                                    alert(`Meal log for ${item.clientName} has been deleted`);
-                                    // TODO: Dispatch Redux action to delete meal log
-                                  }
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Delete
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  )}
                 </TableRow>
-              ))}
+              )}
             </TableBody>
-          </Table>
-        </div>
+            </Table>
+            </div>
 
-        {/* Pagination */}
-        <div className="px-4 md:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <Button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            variant="outline"
-          >
-            ← Previous
-          </Button>
-          <div className="flex gap-2 flex-wrap justify-center">
-            {Array.from(
-              { length: Math.min(6, totalPages) },
-              (_, i) => i + 1
-            ).map((page) => (
+            {/* Pagination */}
+            <div className="px-4 md:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                variant={currentPage === page ? "default" : "outline"}
-                className="w-8 h-8 p-0"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                variant="outline"
               >
-                {page}
+                ← Previous
               </Button>
-            ))}
-          </div>
-          <Button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            variant="outline"
-          >
-            Next →
-          </Button>
-        </div>
+              <div className="flex gap-2 flex-wrap justify-center">
+                {Array.from(
+                  { length: Math.min(6, totalPages) },
+                  (_, i) => i + 1
+                ).map((page) => (
+                  <Button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    variant={currentPage === page ? "default" : "outline"}
+                    className="w-8 h-8 p-0"
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                variant="outline"
+              >
+                Next →
+              </Button>
+            </div>
+          </>
+        )}
       </section>
 
-      {/* View Details Sheet */}
-      <Sheet open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>
-        <SheetContent className="overflow-y-auto bg-white p-6">
-          <SheetHeader>
-            <SheetTitle>Meal Log Details</SheetTitle>
-            <SheetDescription>Complete information about this meal log entry</SheetDescription>
-          </SheetHeader>
-          {selectedItem && (
-            <div className="mt-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Client ID</label>
-                  <p className="text-base font-mono">{selectedItem.clientId}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Client Name</label>
-                  <p className="text-base font-medium">{selectedItem.clientName}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Meal Used</label>
-                  <p className="text-base font-semibold">{selectedItem.mealUsed}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Meals Left</label>
-                  <p className="text-base font-semibold text-green-600">{selectedItem.mealsLeft}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Date & Time</label>
-                  <p className="text-base">{selectedItem.dateTime}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Scanned By</label>
-                  <p className="text-base">{selectedItem.scannedBy}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Branch</label>
-                  <p className="text-base">{selectedItem.branch}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* Edit Sheet */}
-      <Sheet open={editOpen} onOpenChange={setEditOpen}>
-        <SheetContent className="overflow-y-auto bg-white p-6">
-          <SheetHeader>
-            <SheetTitle>Edit Meal Log</SheetTitle>
-            <SheetDescription>Update meal log information</SheetDescription>
-          </SheetHeader>
-          {editForm && (
-            <div className="mt-6 space-y-4">
-              <div>
-                <label className="text-sm font-medium">Client Name</label>
-                <Input
-                  value={editForm.clientName}
-                  onChange={(e) => setEditForm({ ...editForm, clientName: e.target.value })}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Meal Used</label>
-                  <Input
-                    type="number"
-                    value={editForm.mealUsed}
-                    onChange={(e) => setEditForm({ ...editForm, mealUsed: parseInt(e.target.value) })}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Meals Left</label>
-                  <Input
-                    type="number"
-                    value={editForm.mealsLeft}
-                    onChange={(e) => setEditForm({ ...editForm, mealsLeft: parseInt(e.target.value) })}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Scanned By</label>
-                <Input
-                  value={editForm.scannedBy}
-                  onChange={(e) => setEditForm({ ...editForm, scannedBy: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Branch</label>
-                <select
-                  value={editForm.branch}
-                  onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                >
-                  <option>KIGALI</option>
-                  <option>HUYE</option>
-                  <option>MUSANZE</option>
-                  <option>RUBAVU</option>
-                  <option>NYARUGENGE</option>
-                  <option>GASABO</option>
-                  <option>KICUKIRO</option>
-                  <option>RUSIZI</option>
-                </select>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button
-                  onClick={() => {
-                    console.log('Updating meal log:', editForm);
-                    alert(`Meal log for ${editForm.clientName} has been updated`);
-                    setEditOpen(false);
-                  }}
-                  className="flex-1"
-                >
-                  Save Changes
-                </Button>
-                <Button onClick={() => setEditOpen(false)} variant="outline" className="flex-1">
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      {/* View/Edit sheets removed (legacy UI causing compile errors) */}
     </main>
   );
 };

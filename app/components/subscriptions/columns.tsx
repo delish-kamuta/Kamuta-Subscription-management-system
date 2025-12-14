@@ -10,6 +10,7 @@ import {
 } from "~/components/ui/sheet";
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import React, { useState, useEffect } from "react";
+import { useAppSelector } from "~/store/hooks";
 import { generateQrOtpForUser } from "~/services/qr";
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,7 +22,7 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [qrError, setQrError] = useState('');
   const [qrData, setQrData] = useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
   const [qrImage, setQrImage] = useState<string>('');
-
+  const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
   // Generate QR-OTP when the sheet opens
   useEffect(() => {
     let mounted = true;
@@ -163,10 +164,6 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
                 <p className="text-base">{item.subscriptionType}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">Customer Type</label>
-                <p className="text-base">{item.customerType}</p>
-              </div>
-              <div>
                 <label className="text-sm font-medium text-gray-500">Date Started</label>
                 <p className="text-base">{item.dateStarted}</p>
               </div>
@@ -220,32 +217,19 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium">Customer Type</label>
-              <select
-                value={editForm.customerType}
-                onChange={(e) => setEditForm({ ...editForm, customerType: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option>Student</option>
-                <option>Staff</option>
-                <option>Guest</option>
-              </select>
-            </div>
-            <div>
               <label className="text-sm font-medium">Branch</label>
               <select
                 value={editForm.branch}
                 onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               >
-                <option>KIGALI</option>
-                <option>HUYE</option>
-                <option>MUSANZE</option>
-                <option>RUBAVU</option>
-                <option>NYARUGENGE</option>
-                <option>GASABO</option>
-                <option>KICUKIRO</option>
-                <option>RUSIZI</option>
+                {Array.isArray(branches) && branches.length > 0 ? (
+                  branches.map((b: any) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))
+                ) : (
+                  <option value="">Select branch</option>
+                )}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -303,10 +287,6 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Client Name:</span>
                 <span className="text-sm font-medium">{item.clientName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Customer Type:</span>
-                <span className="text-sm">{item.customerType}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Meals Left:</span>
@@ -389,7 +369,7 @@ export interface SubscriptionColumn {
   render?: (item: SubscriptionItem) => React.ReactNode;
 }
 
-export function getSubscriptionColumns(isCashier: boolean): SubscriptionColumn[] {
+export function getSubscriptionColumns(isCashier: boolean, resolveBranchName?: (v: string | undefined) => string): SubscriptionColumn[] {
   const cols: SubscriptionColumn[] = [
     {
       key: "id",
@@ -406,12 +386,6 @@ export function getSubscriptionColumns(isCashier: boolean): SubscriptionColumn[]
       header: "Subscription Type",
       headerClassName: "hidden lg:table-cell whitespace-nowrap",
       cellClassName: "hidden lg:table-cell",
-    },
-    {
-      key: "customerType",
-      header: "Customer Type",
-      headerClassName: "hidden md:table-cell whitespace-nowrap",
-      cellClassName: "hidden md:table-cell",
     },
     {
       key: "dateStarted",
@@ -438,6 +412,10 @@ export function getSubscriptionColumns(isCashier: boolean): SubscriptionColumn[]
       headerClassName: "hidden xl:table-cell whitespace-nowrap",
       cellClassName: "hidden xl:table-cell text-sm",
       hideForCashier: true,
+      render: (item) => {
+        const val = item.branch;
+        return (resolveBranchName ? resolveBranchName(val) : val) || '';
+      },
     },
     {
       key: "totalMeals",
