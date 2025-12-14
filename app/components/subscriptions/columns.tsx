@@ -23,12 +23,6 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [qrData, setQrData] = useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
   const [qrImage, setQrImage] = useState<string>('');
   const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
-  const customerTypeOptions = [
-    'Student',
-    'Campus Worker',
-    'Regular',
-  ];
-
   // Generate QR-OTP when the sheet opens
   useEffect(() => {
     let mounted = true;
@@ -170,10 +164,6 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
                 <p className="text-base">{item.subscriptionType}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">Customer Type</label>
-                <p className="text-base">{item.customerType}</p>
-              </div>
-              <div>
                 <label className="text-sm font-medium text-gray-500">Date Started</label>
                 <p className="text-base">{item.dateStarted}</p>
               </div>
@@ -224,18 +214,6 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
                 <option>Daily (Lunch + Dinner)</option>
                 <option>Weekly (Lunch)</option>
                 <option>Monthly (Lunch)</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Customer Type</label>
-              <select
-                value={editForm.customerType}
-                onChange={(e) => setEditForm({ ...editForm, customerType: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                {customerTypeOptions.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
               </select>
             </div>
             <div>
@@ -309,10 +287,6 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Client Name:</span>
                 <span className="text-sm font-medium">{item.clientName}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Customer Type:</span>
-                <span className="text-sm">{item.customerType}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600">Meals Left:</span>
@@ -412,12 +386,6 @@ export function getSubscriptionColumns(isCashier: boolean, resolveBranchName?: (
       header: "Subscription Type",
       headerClassName: "hidden lg:table-cell whitespace-nowrap",
       cellClassName: "hidden lg:table-cell",
-    },
-    {
-      key: "customerType",
-      header: "Customer Type",
-      headerClassName: "hidden md:table-cell whitespace-nowrap",
-      cellClassName: "hidden md:table-cell",
     },
     {
       key: "dateStarted",

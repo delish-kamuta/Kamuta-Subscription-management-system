@@ -22,11 +22,11 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~\/lib\/utils";
 import { toDateKey, isWithinRange } from "~\/lib\/date";
-import { useAppSelector } from "~/store/hooks";
-import { useAppDispatch } from "~/store/hooks";
+import { useAppSelector, useAppDispatch } from "~/store/hooks";
 import { fetchUsersThunk } from "~/store/usersSlice";
 import { fetchBranchesThunk } from "~/store/branchesSlice";
-import { listMealLogs, type MealLogItem, type MealLogsQuery } from "~/services/mealLogs";
+import { fetchMealLogsThunk } from "~/store/mealLogsSlice";
+import { type MealLogsQuery } from "~/services/mealLogs";
 
 const MealsLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,12 +37,13 @@ const MealsLogs = () => {
   const [sourceFilter, setSourceFilter] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const [items, setItems] = useState<MealLogItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const itemsPerPage = 8;
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const mealLogsState = useAppSelector((state) => state.mealLogs);
+  const mealLogs = mealLogsState.items;
+  const mealLogsLoading = mealLogsState.loading;
+  const mealLogsLoaded = mealLogsState.loaded;
   const branches = useAppSelector((state) => state.branches.items);
   const branchesLoaded = useAppSelector((state) => state.branches.loaded);
   const users = useAppSelector((state) => state.users.items);
@@ -90,31 +91,29 @@ const MealsLogs = () => {
   }, [clientTypeFilter, mealTypeFilter, sourceFilter, branchFilter, userRole, user]);
 
   useEffect(() => {
-    // Ensure names are resolvable by preloading users and branches
+    // Preload data on mount if not loaded
+    if (!mealLogsLoaded && !mealLogsLoading) {
+      dispatch(fetchMealLogsThunk(query));
+    }
     if (!usersLoaded) dispatch(fetchUsersThunk());
     if (!branchesLoaded) dispatch(fetchBranchesThunk());
+  }, [dispatch, mealLogsLoaded, mealLogsLoading, usersLoaded, branchesLoaded]);
 
-    let mounted = true;
-    setLoading(true);
-    setError(null);
-    listMealLogs(query)
-      .then((res) => {
-        if (!mounted) return;
-        if (!res.success) { setError(res.message || 'Failed to fetch meal logs'); setItems([]); return; }
-        setItems(res.data || []);
-      })
-      .catch((e) => { if (mounted) setError(String(e.message || e)); })
-      .finally(() => { if (mounted) setLoading(false); });
-    return () => { mounted = false; };
-  }, [query]);
-
-  const filteredData = items.filter((item) => {
+  const filteredData = mealLogs.filter((item) => {
+    // Apply local filters to cached data
     const matchesSearch = [item.id, item.client_user_id].some((v) => String(v || '').toLowerCase().includes(searchTerm.toLowerCase()));
     const itemKey = toDateKey(item.created_at);
     const fromKey = toDateKey(startDate);
     const toKey = toDateKey(endDate);
     const withinRange = isWithinRange(itemKey, fromKey, toKey);
-    return matchesSearch && withinRange;
+    
+    // Apply filter criteria locally
+    const matchesClientType = !clientTypeFilter || item.client_type === clientTypeFilter;
+    const matchesMealType = !mealTypeFilter || item.meal_type === mealTypeFilter;
+    const matchesSource = !sourceFilter || item.deduction_source === sourceFilter;
+    const matchesBranch = !branchFilter || item.branch_id === branchFilter;
+    
+    return matchesSearch && withinRange && matchesClientType && matchesMealType && matchesSource && matchesBranch;
   });
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -127,8 +126,9 @@ const MealsLogs = () => {
     const headers = [
       "Client ID",
       "Client Name",
-      "Meal Used",
-      "Meals Left",
+      "Client Type",
+      "Meal Type",
+      "Source",
       "Date",
       "Time",
       "Scanned By",
@@ -136,13 +136,14 @@ const MealsLogs = () => {
     ];
     const rows = filteredData.map((item) => [
       item.client_user_id || '',
+      resolveUserName((item as any).client_user_id),
       item.client_type,
       item.meal_type,
       item.deduction_source,
       new Date(item.created_at).toLocaleDateString(),
       new Date(item.created_at).toLocaleTimeString(),
-      item.scanned_by || '',
-      item.branch_id || '',
+      resolveUserName(item.scanned_by) || item.scanned_by || '',
+      resolveBranchName(item.branch_id) || item.branch_id || '',
     ]);
     exportToCsv(headers, rows, "meals_logs");
   };
@@ -161,8 +162,9 @@ const MealsLogs = () => {
       <section className="mt-6 bg-white rounded-lg shadow-sm">
         {/* Search and Filters */}
         <div className="p-4 md:p-6 border-b border-gray-200">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div className="w-full md:flex-1 md:max-w-md relative">
+          {/* Search Bar */}
+          <div className="mb-4">
+            <div className="w-full relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 type="text"
@@ -172,90 +174,124 @@ const MealsLogs = () => {
                 className="w-full pl-10 border-gray-300"
               />
             </div>
-            <div className="flex flex-wrap gap-2 md:gap-3 w-full md:w-auto">
-              <div className="relative">
-                {userRole === UserRole.ADMIN && (
-                  <Input
-                    placeholder="Branch ID"
-                    value={branchFilter}
-                    onChange={(e) => setBranchFilter(e.target.value)}
-                    className="text-sm border-gray-300"
-                  />
-                )}
+          </div>
+
+          {/* Filters Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            {/* Branch Filter (Admin only) */}
+            {userRole === UserRole.ADMIN && (
+              <div>
+                <label className="text-xs text-gray-500 block mb-1">Branch ID</label>
+                <Input
+                  placeholder="Filter by branch..."
+                  value={branchFilter}
+                  onChange={(e) => setBranchFilter(e.target.value)}
+                  className="text-sm border-gray-300"
+                />
               </div>
-              <div className="relative">
-                <select
-                  value={clientTypeFilter}
-                  onChange={(e) => setClientTypeFilter(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
-                >
-                  <option value="">Client Type: All</option>
-                  <option value="student">Student</option>
-                  <option value="worker">Worker</option>
-                  <option value="irregular_client">Irregular Client</option>
-                </select>
-              </div>
-              <div className="relative">
-                <select
-                  value={mealTypeFilter}
-                  onChange={(e) => setMealTypeFilter(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
-                >
-                  <option value="">Meal Type: All</option>
-                  <option value="Regular">Regular</option>
-                  <option value="VIP">VIP</option>
-                  <option value="VVIP">VVIP</option>
-                </select>
-              </div>
-              <div className="relative">
-                <select
-                  value={sourceFilter}
-                  onChange={(e) => setSourceFilter(e.target.value)}
-                  className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
-                >
-                  <option value="">Source: All</option>
-                  <option value="subscription">Subscription</option>
-                  <option value="prepaid">Prepaid</option>
-                  <option value="credit">Credit</option>
-                  <option value="paid_ticket">Paid Ticket</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1">
-                  <Calendar className="w-4 h-4" />
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="text-sm outline-none"
-                  />
-                  <span className="text-gray-400">to</span>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="text-sm outline-none"
-                  />
-                </div>
-                {(startDate || endDate) && (
-                  <Button
-                    variant="ghost"
-                    className="text-sm"
-                    onClick={() => { setStartDate(""); setEndDate(""); }}
-                  >
-                    Clear
-                  </Button>
-                )}
-              </div>
-              <Button variant="outline" className="text-sm border-gray-300" onClick={handleExport}>
-                <Download className="w-4 h-4 mr-2" /> Export
-              </Button>
+            )}
+
+            {/* Client Type Filter */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Client Type</label>
+              <select
+                value={clientTypeFilter}
+                onChange={(e) => setClientTypeFilter(e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+              >
+                <option value="">All</option>
+                <option value="student">Student</option>
+                <option value="worker">Worker</option>
+                <option value="irregular_client">Irregular Client</option>
+              </select>
             </div>
+
+            {/* Meal Type Filter */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Meal Type</label>
+              <select
+                value={mealTypeFilter}
+                onChange={(e) => setMealTypeFilter(e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+              >
+                <option value="">All</option>
+                <option value="Regular">Regular</option>
+                <option value="VIP">VIP</option>
+                <option value="VVIP">VVIP</option>
+              </select>
+            </div>
+
+            {/* Source Filter */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Source</label>
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+              >
+                <option value="">All</option>
+                <option value="subscription">Subscription</option>
+                <option value="prepaid">Prepaid</option>
+                <option value="credit">Credit</option>
+                <option value="paid_ticket">Paid Ticket</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Date Range and Actions */}
+          <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
+            {/* Date Range */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-2 bg-white">
+                <Calendar className="w-4 h-4 text-gray-400" />
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="text-sm outline-none w-32"
+                />
+                <span className="text-gray-400 text-sm">to</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="text-sm outline-none w-32"
+                />
+              </div>
+              {(startDate || endDate) && (
+                <Button
+                  variant="ghost"
+                  className="text-sm"
+                  onClick={() => { setStartDate(""); setEndDate(""); }}
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
+
+            {/* Export Button */}
+            <Button variant="outline" className="text-sm border-gray-300" onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" /> Export
+            </Button>
           </div>
         </div>
 
-        {/* Logs Table */}
-        <div className="mt-4 overflow-x-auto">
+        {/* Loading and Error States */}
+        {mealLogsLoading && (
+          <div className="p-6 text-center text-gray-500">
+            Loading meal logs...
+          </div>
+        )}
+        {mealLogsState.error && (
+          <div className="p-6 text-center text-red-500 bg-red-50">
+            Error: {mealLogsState.error}
+          </div>
+        )}
+
+        {!mealLogsLoading && !mealLogsState.error && (
+          <>
+            {/* Logs Table */}
+            <div className="mt-4 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -286,7 +322,7 @@ const MealsLogs = () => {
                     )}
                   </TableRow>
                 ))}
-              {!loading && filteredData.length === 0 && (
+              {!mealLogsLoading && filteredData.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-sm text-gray-500">
                     No logs found
@@ -294,41 +330,43 @@ const MealsLogs = () => {
                 </TableRow>
               )}
             </TableBody>
-          </Table>
-        </div>
+            </Table>
+            </div>
 
-        {/* Pagination */}
-        <div className="px-4 md:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <Button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            variant="outline"
-          >
-            ← Previous
-          </Button>
-          <div className="flex gap-2 flex-wrap justify-center">
-            {Array.from(
-              { length: Math.min(6, totalPages) },
-              (_, i) => i + 1
-            ).map((page) => (
+            {/* Pagination */}
+            <div className="px-4 md:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
               <Button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                variant={currentPage === page ? "default" : "outline"}
-                className="w-8 h-8 p-0"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                variant="outline"
               >
-                {page}
+                ← Previous
               </Button>
-            ))}
-          </div>
-          <Button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            variant="outline"
-          >
-            Next →
-          </Button>
-        </div>
+              <div className="flex gap-2 flex-wrap justify-center">
+                {Array.from(
+                  { length: Math.min(6, totalPages) },
+                  (_, i) => i + 1
+                ).map((page) => (
+                  <Button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    variant={currentPage === page ? "default" : "outline"}
+                    className="w-8 h-8 p-0"
+                  >
+                    {page}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                variant="outline"
+              >
+                Next →
+              </Button>
+            </div>
+          </>
+        )}
       </section>
 
       {/* View/Edit sheets removed (legacy UI causing compile errors) */}
