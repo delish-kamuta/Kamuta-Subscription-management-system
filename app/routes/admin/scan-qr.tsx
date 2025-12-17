@@ -7,6 +7,7 @@ import { Camera, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 import { useAppSelector } from "~/store/hooks";
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { scanQrOtp } from "~/services/qr";
+import { scanIrregularTicket } from "~/services/irregularTickets";
 
 interface ScanResult {
   success: boolean;
@@ -46,9 +47,29 @@ const ScanQR = () => {
         return;
       }
 
-      // Validate with backend
+      // Try irregular ticket scan first
+      const ir = await scanIrregularTicket(qrCode);
+      if (ir.success) {
+        setScanResult({
+          success: true,
+          message: `Walk-in ticket processed for ${ir.data?.payer_name || 'Walk-in'}`,
+          timestamp: new Date().toLocaleString(),
+          userName: ir.data?.payer_name,
+          remainingMeals: undefined,
+        });
+        setScanError(null);
+        setRecentScans(prev => [{
+          success: true,
+          message: 'Walk-in ticket processed',
+          timestamp: new Date().toLocaleString(),
+          userName: ir.data?.payer_name,
+          remainingMeals: undefined,
+        }, ...prev.slice(0, 4)]);
+        return;
+      }
+
+      // Fallback: subscription QR-OTP scan
       const res = await scanQrOtp(qrCode);
-      
       setScanResult({
         success: res.success,
         message: res.success 
@@ -58,13 +79,6 @@ const ScanQR = () => {
         userName: res.data?.user_name,
         remainingMeals: res.data?.payment_result?.remaining_meals,
       });
-      
-      if (!res.success) {
-        setScanError(res.message || 'Failed to process QR-OTP');
-      } else {
-        setScanError(null);
-      }
-      
       setRecentScans(prev => [{
         success: res.success,
         message: res.success ? "Payment processed" : "Payment failed",
@@ -72,6 +86,7 @@ const ScanQR = () => {
         userName: res.data?.user_name,
         remainingMeals: res.data?.payment_result?.remaining_meals,
       }, ...prev.slice(0, 4)]);
+      setScanError(res.success ? null : (res.message || 'Failed to process QR-OTP'));
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
       setScanError(`Processing error: ${msg}`);
