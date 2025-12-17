@@ -1,4 +1,4 @@
-import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode, ScanLine, Users } from "lucide-react"
+import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode, ScanLine, Users, MessageSquare } from "lucide-react"
 
 export const sidebarItems = [
   {
@@ -49,6 +49,13 @@ export const sidebarItems = [
     label: "Users",
     href: "/users",
     roles: ["admin"], // Only for admin
+  },
+  {
+    id: 8,
+    icon: MessageSquare,
+    label: "Feedback",
+    href: "/feedback",
+    roles: ["admin"],
   },
 ];
 

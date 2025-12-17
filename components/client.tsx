@@ -1,5 +1,7 @@
 import { Header } from "components/Header";
 import { SidebarTrigger } from "~/components/ui/sidebar";
+import { Button } from "~/components/ui/button";
+import FeedbackSheet from "components/FeedbackSheet";
 import ResetPasswordButton from "./ResetPasswordButton";
 import StatsCard from "components/StatsCard"
 import { useMemo, useEffect, useState } from 'react'
@@ -27,6 +29,7 @@ const Client = ({userName}:props) => {
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((s) => s.auth)
   const token = useAppSelector((s) => s.auth.token)
+  const [openFeedback, setOpenFeedback] = useState(false)
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [walletLoading, setWalletLoading] = useState(false)
@@ -307,6 +310,16 @@ const Client = ({userName}:props) => {
           </Table>
           )}
         </section>
+
+        {/* Fixed Feedback Launcher */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <Button className="bg-blue-600 text-white rounded-full shadow-lg" onClick={() => setOpenFeedback(true)}>
+            Give Feedback
+          </Button>
+        </div>
+
+        {/* Feedback Sheet */}
+        <FeedbackSheet open={openFeedback} onOpenChange={setOpenFeedback} />
       </main>
     );
 }
