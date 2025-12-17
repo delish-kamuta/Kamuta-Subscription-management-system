@@ -149,3 +149,39 @@ export async function getFeedbackById(id: string | number): Promise<GetFeedbackB
     return { success: false, message: e?.message || "Network error" };
   }
 }
+
+// Update feedback status (admin/cashier)
+export type FeedbackStatus = "pending" | "reviewed" | "resolved" | "dismissed" | string;
+
+export interface UpdateFeedbackStatusResponse {
+  success: boolean;
+  message?: string;
+  data?: any;
+}
+
+export async function updateFeedbackStatus(
+  id: string | number,
+  status: FeedbackStatus
+): Promise<UpdateFeedbackStatusResponse> {
+  const tokenError = ensureValidTokenOrMessage();
+  if (tokenError) return { success: false, message: tokenError };
+  try {
+    const res = await authFetch(
+      `https://restaurant-bn-api.onrender.com/api/feedback/${encodeURIComponent(String(id))}/status`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      }
+    );
+    let json: any = null;
+    try { json = await res.json(); } catch {}
+    if (!res.ok) {
+      const msg = json?.message || json?.error || `Failed to update status (${res.status})`;
+      return { success: false, message: msg };
+    }
+    return (json ?? { success: true }) as UpdateFeedbackStatusResponse;
+  } catch (e: any) {
+    return { success: false, message: e?.message || "Network error" };
+  }
+}

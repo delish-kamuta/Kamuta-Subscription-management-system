@@ -3,10 +3,12 @@ import dayjs from 'dayjs'
 import { Header } from '../../../components/Header'
 import { SidebarTrigger } from '~/components/ui/sidebar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
-import { listFeedbacks, type FeedbackItem, getFeedbackStats, type FeedbackStats, getFeedbackById } from '~/services/feedback'
+import { listFeedbacks, type FeedbackItem, getFeedbackStats, type FeedbackStats, getFeedbackById, updateFeedbackStatus } from '~/services/feedback'
 import { Button } from '~/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '~/components/ui/sheet'
-import { EyeIcon } from 'lucide-react'
+import { EyeIcon, EditIcon } from 'lucide-react'
+import { useAppDispatch, useAppSelector } from '~/store/hooks'
+import { fetchBranchesThunk } from '~/store/branchesSlice'
 
 const typeOptions = [
   { v: '', l: 'All types' },
@@ -38,6 +40,10 @@ const ratingOptions = [
 ]
 
 export default function FeedbackPage() {
+  const dispatch = useAppDispatch()
+  const branches = useAppSelector(s => s.branches.items)
+  const branchesLoaded = useAppSelector(s => s.branches.loaded)
+  const branchesLoading = useAppSelector(s => s.branches.loading)
   const [items, setItems] = useState<FeedbackItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -51,6 +57,9 @@ export default function FeedbackPage() {
   const [detail, setDetail] = useState<FeedbackItem | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState('')
+  const [newStatus, setNewStatus] = useState('')
+  const [savingStatus, setSavingStatus] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   const fetchAll = async () => {
     try {
@@ -80,6 +89,13 @@ export default function FeedbackPage() {
     })()
   }, [])
 
+  // Ensure branches are available for resolving branch name in details
+  useEffect(() => {
+    if (!branchesLoaded && !branchesLoading) {
+      dispatch(fetchBranchesThunk())
+    }
+  }, [branchesLoaded, branchesLoading, dispatch])
+
   useEffect(() => {
     const loadDetail = async () => {
       if (!detailOpen || detailId == null) return
@@ -88,6 +104,8 @@ export default function FeedbackPage() {
         const res = await getFeedbackById(detailId)
         if (!res.success) { setDetailError(res.message || 'Failed to load feedback'); return }
         setDetail(res.data || null)
+        const current = (res.data?.status as string) || 'pending'
+        setNewStatus(current)
       } catch (e: any) {
         setDetailError(e?.message || 'Failed to load feedback')
       } finally {
@@ -97,7 +115,30 @@ export default function FeedbackPage() {
     loadDetail()
   }, [detailOpen, detailId])
 
+  const onUpdateStatus = async () => {
+    if (!detailId) return
+    try {
+      setSavingStatus(true); setSaveError('')
+      const res = await updateFeedbackStatus(detailId, newStatus)
+      if (!res.success) { setSaveError(res.message || 'Failed to update status'); return }
+      // Refresh detail, list, and stats
+      await Promise.all([getFeedbackById(detailId).then(r => { if (r.success) setDetail(r.data || null) }), fetchAll(), (async () => { const s = await getFeedbackStats(); if (s.success) setStats(s.data || null) })()])
+    } catch (e: any) {
+      setSaveError(e?.message || 'Failed to update status')
+    } finally {
+      setSavingStatus(false)
+    }
+  }
+
   const filtered = useMemo(() => items, [items])
+  const detailBranchName = useMemo(() => {
+    if (!detail) return '-'
+    if (detail.branch_name) return detail.branch_name
+    const id = (detail as any)?.branch_id || (detail as any)?.branchId || (detail as any)?.branch?.id
+    if (!id) return '-'
+    const found = branches.find(b => String(b.id) === String(id))
+    return found?.name || '-'
+  }, [detail, branches])
 
   return (
     <main className="dashboard wrapper">
@@ -189,10 +230,16 @@ export default function FeedbackPage() {
                     <TableCell className="hidden lg:table-cell">{f.is_anonymous ? 'Anonymous' : (f.user_name || '-')}</TableCell>
                     <TableCell className="hidden lg:table-cell">{f.status || 'pending'}</TableCell>
                     <TableCell>
-                      <Button variant="outline" size="sm" onClick={() => { setDetailId(f.id as any); setDetailOpen(true); }}>
-                        <EyeIcon className="size-4" />
-                        View
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => { setDetailId(f.id as any); setDetailOpen(true); }}>
+                          <EyeIcon className="size-4" />
+                          View
+                        </Button>
+                        <Button size="sm" onClick={() => { setDetailId(f.id as any); setDetailOpen(true); }}>
+                          <EditIcon className="size-4" />
+                          status
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -225,7 +272,15 @@ export default function FeedbackPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Status</p>
-                    <p className="text-sm font-medium">{detail.status || 'pending'}</p>
+                    <div className="flex flex-col  gap-2">
+                      <select className="border rounded px-2 py-1 text-sm" value={newStatus} onChange={(e) => setNewStatus(e.target.value)}>
+                        {statusOptions.filter(o => o.v !== '').map(o => (
+                          <option key={o.v} value={o.v}>{o.l}</option>
+                        ))}
+                      </select>
+                      <Button size="sm" disabled={savingStatus} onClick={onUpdateStatus} variant={'outline'}>Change status</Button>
+                    </div>
+                    {saveError && <p className="text-xs text-red-600 mt-1">{saveError}</p>}
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Type</p>
@@ -251,7 +306,7 @@ export default function FeedbackPage() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Branch</p>
-                    <p className="text-sm font-medium">{detail.branch_name || '-'}</p>
+                    <p className="text-sm font-medium">{detailBranchName}</p>
                   </div>
                 </div>
               </div>
