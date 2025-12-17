@@ -7,7 +7,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTr
 import { subscriptionData } from 'app/constants'
 import dayjs from 'dayjs'
 import RegisterSubscriptionSheet from '~/components/subscriptions/RegisterSubscriptionSheet'
-import { generateMealToken } from '~/services/mealToken'
+import { generateIrregularTicket } from '~/services/irregularTickets'
+import { UserRole } from '~/types/auth'
 
 // QR code generated via public API to avoid extra deps
 
@@ -19,11 +20,11 @@ const QuickAction = () => {
   const [openTicket, setOpenTicket] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
   // Ticket form controls
-  const [mealType, setMealType] = useState('Standard');
-  const [quantity, setQuantity] = useState<number>(1);
-  const [extras, setExtras] = useState('None');
-  const [extrasQty, setExtrasQty] = useState<number>(0);
-  const [totalPrice, setTotalPrice] = useState<number>(0);
+  // Walk-in (irregular) ticket form controls
+  const [payerName, setPayerName] = useState('')
+  const [mealType, setMealType] = useState('Regular')
+  const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [amountPaid, setAmountPaid] = useState<number>(0)
   // Generated ticket preview
   const [ticketId, setTicketId] = useState<string>('');
   const [ticketQr, setTicketQr] = useState<string>('');
@@ -34,6 +35,7 @@ const QuickAction = () => {
   // Branches from Redux (needed for ticket generation)
   const dispatch = useAppDispatch();
   const { items: branches, loading: branchesLoading, error: branchesError, loaded: branchesLoaded } = useAppSelector((s) => s.branches);
+  const currentRole = useAppSelector((s) => s.auth.user?.role)
 
   useEffect(() => {
     if (!branchesLoaded && !branchesLoading) {
@@ -41,34 +43,22 @@ const QuickAction = () => {
     }
   }, [branchesLoaded, branchesLoading, dispatch]);
 
-  // Auto-refresh QR every 30s while ticket sheet is open and generated
+  // Auto-refresh QR every 20s while ticket sheet is open and generated (cache-bust only)
   useEffect(() => {
     if (!openTicket || !ticketGenerated) return;
 
     const refresh = () => {
-      const dateStr = dayjs().format('D MMM YYYY');
-      const qrPayload = {
-        token: ticketId,
-        expires_at: expiresAt || undefined,
-        meal: {
-          type: mealType,
-          quantity,
-          extras,
-          extras_quantity: extrasQty,
-          total_price: totalPrice,
-        },
-        date: dateStr,
-        ts: Date.now(),
-      };
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(JSON.stringify(qrPayload))}&cacheBust=${Date.now()}`;
-      setTicketQr(qrUrl);
+      setTicketQr((prev) => {
+        if (!prev) return prev;
+        const base = prev.split('&cacheBust=')[0];
+        return `${base}&cacheBust=${Date.now()}`;
+      });
     };
 
-    // Initial refresh immediately to ensure up-to-date timestamp
     refresh();
     const interval = setInterval(refresh, 20000);
     return () => clearInterval(interval);
-  }, [openTicket, ticketGenerated, ticketId, mealType, extras, extrasQty, totalPrice, expiresAt]);
+  }, [openTicket, ticketGenerated]);
 
   // Print ticket content in a clean window
   const handlePrint = () => {
@@ -78,8 +68,6 @@ const QuickAction = () => {
     const clientName = selectedClient?.clientName || 'Client';
     const clientId = selectedClient?.id || '-';
     const type = selectedClient?.customerType || 'Student';
-    const total = Number(totalPrice || 0);
-    const extrasLine = extras !== 'None' && extrasQty > 0 ? `${extras} x${extrasQty}` : 'None';
     const html = `<!doctype html>
 <html>
   <head>
@@ -245,91 +233,68 @@ const QuickAction = () => {
     <Sheet open={openTicket} onOpenChange={(o) => { setOpenTicket(o); if (!o) setTicketGenerated(false); }}>
       <SheetContent side='right' className='w-full sm:max-w-lg bg-white p-6 border-none h-screen max-h-screen overflow-y-auto'>
         <SheetHeader>
-          <SheetTitle>Generate Ticket</SheetTitle>
-          <SheetDescription>Select items and quantities, then generate.</SheetDescription>
+          <SheetTitle>Generate Walk-in Ticket</SheetTitle>
+          <SheetDescription>Fill details for irregular client (24-hour QR).</SheetDescription>
         </SheetHeader>
         <form className='mt-6 space-y-6' onSubmit={(e) => e.preventDefault()}>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='space-y-2 md:col-span-2'>
+              <label className='text-sm font-medium text-gray-700'>Payer name</label>
+              <input className='w-full border rounded-md px-3 py-2' placeholder='e.g., John Walk-in' value={payerName} onChange={(e) => setPayerName(e.target.value)} />
+            </div>
             <div className='space-y-2'>
               <label className='text-sm font-medium text-gray-700'>Meal type</label>
               <select className='w-full border rounded-md px-3 py-2' value={mealType} onChange={(e) => setMealType(e.target.value)}>
-                <option value='None'>None</option>
-                <option value='Standard'>Standard</option>
-                <option value='Breakfast'>Breakfast</option>
-                <option value='Lunch'>Lunch</option>
-                <option value='Dinner'>Dinner</option>
+                <option value='Regular'>Regular</option>
+                <option value='VIP'>VIP</option>
+                <option value='VVIP'>VVIP</option>
               </select>
             </div>
             <div className='space-y-2'>
-              <label className='text-sm font-medium text-gray-700'>Quantity</label>
-              <input type='number' min={1} className='w-full border rounded-md px-3 py-2' placeholder='e.g., 1' value={quantity} onChange={(e) => setQuantity(Number(e.target.value) || 1)} />
-            </div>
-            <div className='space-y-2'>
-              <label className='text-sm font-medium text-gray-700'>Extras</label>
-              <select className='w-full border rounded-md px-3 py-2' value={extras} onChange={(e) => setExtras(e.target.value)}>
-                <option value='None'>None</option>
-                <option value='FANTA'>FANTA</option>
-                <option value='Coke'>Coke</option>
-                <option value='Juice'>Juice</option>
+              <label className='text-sm font-medium text-gray-700'>Payment Method</label>
+              <select className='w-full border rounded-md px-3 py-2' value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                <option value='cash'>Cash</option>
+                <option value='momo'>Mobile Money</option>
+                <option value='card'>Card/POS</option>
               </select>
             </div>
             <div className='space-y-2'>
-              <label className='text-sm font-medium text-gray-700'>Quantity of Extras</label>
-              <input type='number' min={0} className='w-full border rounded-md px-3 py-2' placeholder='e.g., 0' value={extrasQty} onChange={(e) => setExtrasQty(Number(e.target.value) || 0)} />
-            </div>
-            <div className='space-y-2 md:col-span-2'>
-              <label className='text-sm font-medium text-gray-700'>Total Price: RWF</label>
-              <input type='number' min={0} className='w-full border rounded-md px-3 py-2' placeholder='e.g., 2000' value={totalPrice} onChange={(e) => setTotalPrice(Number(e.target.value) || 0)} />
+              <label className='text-sm font-medium text-gray-700'>Amount Paid (RWF)</label>
+              <input type='number' min={0} className='w-full border rounded-md px-3 py-2' placeholder='e.g., 1000' value={amountPaid} onChange={(e) => setAmountPaid(Number(e.target.value) || 0)} />
             </div>
           </div>
           <div className='flex justify-end'>
             <Button
               className='bg-blue-600 text-white px-6 disabled:opacity-60'
-              disabled={isGenerating}
+              disabled={isGenerating || !payerName.trim() || (currentRole === UserRole.CASHIER && (!paymentMethod || amountPaid <= 0))}
               onClick={async () => {
                 try {
                   setIsGenerating(true)
-                  // Prepare payload for backend
-                  // Walk-in: no client required; send only form data to API
                   const payload = {
+                    payer_name: payerName.trim(),
                     meal_type: mealType,
-                    quantity,
-                    extras,
-                    extras_quantity: extrasQty,
-                    total_price: totalPrice,
+                    // For admin, backend allows without payment validation; for cashier, include below
+                    ...(currentRole === UserRole.CASHIER ? { payment_method: paymentMethod, amount_paid: amountPaid } : {}),
                   }
-                  const res = await generateMealToken(payload)
-                  const token = res?.data?.token || ''
-                  const exp = res?.data?.expires_at || ''
-                  // Always display the real API token; avoid random fallback
-                  setTicketId(token)
+                  const res = await generateIrregularTicket(payload)
+                  if (!res.success) throw new Error(res.message || 'Failed to generate ticket')
+                  const data = res.data!
+                  const qrCode = data.qr_code || ''
+                  const exp = data.expires_at || ''
+                  const ticket = data.ticket_id || ''
+                  setTicketId(ticket)
                   setExpiresAt(exp)
-                  const dateStr = dayjs().format('D MMM YYYY')
-                  // Embed API token + form data in QR payload
-                  const qrPayload = {
-                    token,
-                    expires_at: exp,
-                    meal: {
-                      type: mealType,
-                      quantity,
-                      extras,
-                      extras_quantity: extrasQty,
-                      total_price: totalPrice,
-                    },
-                    date: dateStr,
-                    ts: Date.now(),
-                  }
-                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(JSON.stringify(qrPayload))}`
+                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrCode)}`
                   setTicketQr(qrUrl)
                   setTicketGenerated(true)
                 } catch (e) {
-                  alert(e instanceof Error ? e.message : 'Failed to generate meal token')
+                  alert(e instanceof Error ? e.message : 'Failed to generate irregular ticket')
                 } finally {
                   setIsGenerating(false)
                 }
               }}
             >
-              {isGenerating ? 'Generating…' : 'Generate Ticket'}
+              {isGenerating ? 'Generating…' : 'Generate QR'}
             </Button>
           </div>
           {ticketGenerated && (
@@ -337,18 +302,18 @@ const QuickAction = () => {
               <div id='ticket-content' className='ticket'>
                 <div className='text-center font-semibold tracking-wide'>MEAL TICKET</div>
                 <div className='grid grid-cols-2 gap-1 mt-2 text-xs'>
-                  <div><span className='font-semibold'>API Token:</span> {ticketId || '—'}</div>
+                  <div><span className='font-semibold'>Ticket ID:</span> {ticketId || '—'}</div>
                   <div><span className='font-semibold'>Date:</span> {dayjs().format('D MMM YYYY, HH:mm')}</div>
                   {expiresAt && (<div><span className='font-semibold'>Expires:</span> {dayjs(expiresAt).format('D MMM YYYY, HH:mm')}</div>)}
+                  <div><span className='font-semibold'>Payer:</span> {payerName}</div>
                   <div><span className='font-semibold'>Meal:</span> {mealType}</div>
-                  <div><span className='font-semibold'>Qty:</span> {quantity}</div>
-                  <div><span className='font-semibold'>Extras:</span> {extras} {extras !== 'None' && extrasQty > 0 ? `x${extrasQty}` : ''}</div>
-                  <div><span className='font-semibold'>Total:</span> {totalPrice}</div>
+                  <div><span className='font-semibold'>Payment:</span> {paymentMethod}</div>
+                  <div><span className='font-semibold'>Paid:</span> {amountPaid}</div>
                 </div>
                 {/* Debug: show exact JSON payload encoded in QR for verification */}
                 {ticketQr && (
                   <div className='mt-2 text-[10px] text-gray-600 break-all'>
-                    <span className='font-semibold'>QR payload token:</span> {ticketId || '—'}
+                    <span className='font-semibold'>QR data:</span> generated from backend `qr_code`
                   </div>
                 )}
                 <div className='my-3 border-t border-dashed border-gray-200' />
