@@ -12,8 +12,8 @@ import { useAppDispatch, useAppSelector } from "~/store/hooks";
 import { UserRole } from "~/types/auth";
 import QuickAction from "../../../components/Quick-action"
 import ResetPasswordButton from "../../../components/ResetPasswordButton"
-import SubscriptionTable from "~\/components\/subscriptions\/SubscriptionTable";
-import { toDateKey } from "~\/lib\/date";
+import SubscriptionTable from "~/components/subscriptions/SubscriptionTable";
+import { toDateKey } from "~/lib/date";
 import { fetchSubscriptions } from "~/store/subscriptionsSlice";
 
 

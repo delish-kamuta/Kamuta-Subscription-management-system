@@ -61,13 +61,23 @@ export function useSubscriptionFilters({ data, pageSize = 8 }: UseSubscriptionFi
   // Derived filtered dataset
   const filteredData = useMemo(() => {
     return data.filter(item => {
-      const matchesSearch = item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || item.tel.includes(searchTerm);
+      const sTerm = searchTerm.toLowerCase().trim();
+      if (!sTerm) return true;
+
+      const name = (item.clientName || "").toLowerCase();
+      const tel = (item.tel || "").toLowerCase();
+      const id = (item.id || "").toLowerCase();
+      const branch = (item.branch || "").toLowerCase();
+
+      const matchesSearch = name.includes(sTerm) || tel.includes(sTerm) || id.includes(sTerm) || branch.includes(sTerm);
+      
       const matchesCustomerType = customerTypeFilter === "All" || item.customerType === customerTypeFilter;
       const matchesSubscriptionType = subscriptionTypeFilter === "All" || item.subscriptionType === subscriptionTypeFilter;
       const itemKey = toDateKey(item.dateStarted);
       const fromKey = toDateKey(startDate);
       const toKey = toDateKey(endDate);
       const withinRange = isWithinRange(itemKey, fromKey, toKey);
+      
       return matchesSearch && matchesCustomerType && matchesSubscriptionType && withinRange;
     });
   }, [data, searchTerm, customerTypeFilter, subscriptionTypeFilter, startDate, endDate]);
