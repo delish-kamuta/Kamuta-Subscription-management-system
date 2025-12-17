@@ -187,12 +187,15 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='w-full sm:max-w-lg bg-white p-6 border-none h-screen max-h-screen overflow-y-auto'>
-        <SheetHeader>
-          <SheetTitle>Record New Subscription</SheetTitle>
-          <SheetDescription>Provide customer and subscription details, then submit.</SheetDescription>
-        </SheetHeader>
-        <form onSubmit={handleSubmit} className='mt-6 space-y-6'>
+      <SheetContent side='right' className='w-full sm:max-w-lg bg-white border-none h-full max-h-screen flex flex-col p-0'>
+        <div className="p-6 pb-2">
+          <SheetHeader>
+            <SheetTitle>Record New Subscription</SheetTitle>
+            <SheetDescription>Provide customer and subscription details, then submit.</SheetDescription>
+          </SheetHeader>
+        </div>
+        <form onSubmit={handleSubmit} className='flex flex-col flex-1 overflow-hidden'>
+          <div className="flex-1 overflow-y-auto p-6 pt-2 space-y-6">
           {error && (
             <div className='bg-red-50 text-red-600 p-3 rounded-md text-sm'>
               {error}
@@ -346,21 +349,24 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
               </>
             )}
           </div>
-          <div className='flex justify-end gap-2'>
-            <Button 
-              type='button'
-              variant='outline'
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type='submit'
-              className='bg-blue-600 text-white px-6'
-              disabled={submitting}
-            >
-              {submitting ? 'Submitting...' : 'SUBMIT'}
-            </Button>
+          </div>
+          <div className='p-6 border-t bg-white mt-auto'>
+            <div className='flex justify-end gap-2'>
+              <Button 
+                type='button'
+                variant='outline'
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type='submit'
+                className='bg-blue-600 text-white px-6'
+                disabled={submitting}
+              >
+                {submitting ? 'Submitting...' : 'SUBMIT'}
+              </Button>
+            </div>
           </div>
         </form>
       </SheetContent>
