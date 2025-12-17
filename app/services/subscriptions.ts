@@ -47,6 +47,7 @@ function mapApiToSubscriptionItem(item: ApiSubscription): SubscriptionItem {
   const branchName = item.student?.user?.branch_id ? String(item.student.user.branch_id) : "";
   return {
     id: regNumber,
+    subscriptionId: item.id,
     userId: userId || undefined,
     tel: phone,
     clientName,
@@ -89,6 +90,39 @@ export async function createStudentSubscription(token: string | null, payload: a
   });
   if (!res.ok) {
     let msg = `Failed to create: ${res.status}`;
+    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function updateStudentSubscription(token: string | null, id: string, payload: any): Promise<any> {
+  const res = await fetch(`${BASE_URL}/student-subscriptions/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `${token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    let msg = `Failed to update: ${res.status}`;
+    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
+    throw new Error(msg);
+  }
+  return res.json();
+}
+
+export async function cancelStudentSubscription(token: string | null, id: string): Promise<any> {
+  const res = await fetch(`${BASE_URL}/student-subscriptions/${id}/cancel`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `${token}` } : {}),
+    },
+  });
+  if (!res.ok) {
+    let msg = `Failed to cancel: ${res.status}`;
     try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
     throw new Error(msg);
   }

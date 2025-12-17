@@ -4,18 +4,18 @@ import StatsCard from "../../../components/StatsCard";
 import { subscriptionStats } from "app/constants";
 import { Search, ChevronDown, Download } from "lucide-react"; // Importing icons
 // Local component state no longer needed after hook integration
-import { useAppSelector } from "~\/store\/hooks";
-import { UserRole } from "~\/types\/auth";
+import { useAppSelector } from "~/store/hooks";
+import { UserRole } from "~/types/auth";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { exportToCsv } from "~\/lib\/utils";
-import { useSubscriptionFilters } from "~\/hooks\/useSubscriptionFilters";
-import { useStudentSubscriptions } from "~\/hooks\/useStudentSubscriptions";
-import { useWorkerSubscriptions } from "~\/hooks\/useWorkerSubscriptions";
-import SubscriptionTable from "~\/components\/subscriptions\/SubscriptionTable";
-import WorkerSubscriptionTable from "~\/components\/subscriptions\/WorkerSubscriptionTable";
-import FiltersBar from "~\/components\/subscriptions\/FiltersBar"; // Importing FiltersBar component
-import RegisterSubscriptionSheet from "~\/components\/subscriptions\/RegisterSubscriptionSheet";
+import { exportToCsv } from "~/lib/utils";
+import { useSubscriptionFilters } from "~/hooks/useSubscriptionFilters";
+import { useStudentSubscriptions } from "~/hooks/useStudentSubscriptions";
+import { useWorkerSubscriptions } from "~/hooks/useWorkerSubscriptions";
+import SubscriptionTable from "~/components/subscriptions/SubscriptionTable";
+import WorkerSubscriptionTable from "~/components/subscriptions/WorkerSubscriptionTable";
+import FiltersBar from "~/components/subscriptions/FiltersBar"; // Importing FiltersBar component
+import RegisterSubscriptionSheet from "~/components/subscriptions/RegisterSubscriptionSheet";
 import { useState } from "react";
 
 const Subscription = () => {

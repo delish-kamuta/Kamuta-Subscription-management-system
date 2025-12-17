@@ -4,30 +4,41 @@ import  StatsCard  from "../../../components/StatsCard";
 import { dashboardStats, subscriptionData } from "app/constants";
 import { ChartPieSimple } from "../../../components/pie-chart";
 import { ChartBarMultiple} from "../../../components/BarChart";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Client from "components/client";
 import { listMealLogs, type MealLogItem } from "~/services/mealLogs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { useAppSelector } from "~/store/hooks";
+import { useAppDispatch, useAppSelector } from "~/store/hooks";
 import { UserRole } from "~/types/auth";
 import QuickAction from "../../../components/Quick-action"
 import ResetPasswordButton from "../../../components/ResetPasswordButton"
-import SubscriptionTable from "~\/components\/subscriptions\/SubscriptionTable";
-import { toDateKey } from "~\/lib\/date";
+import SubscriptionTable from "~/components/subscriptions/SubscriptionTable";
+import { toDateKey } from "~/lib/date";
+import { fetchSubscriptions } from "~/store/subscriptionsSlice";
 
 
 const Dashboard = () => {
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated, token } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+  const { items: subscriptions } = useAppSelector((state) => state.subscriptions);
   
   const userName = user?.name || "Guest";
   const userRole = user?.role;
   const isCashier = userRole === UserRole.CASHIER;
   const isAdmin = userRole === UserRole.ADMIN;
 
+  useEffect(() => {
+    if (isCashier && token) {
+      dispatch(fetchSubscriptions({ token }));
+    }
+  }, [isCashier, token, dispatch]);
+
   // Compute recent subscriptions (latest by dateStarted)
-  const recentSubscriptions = [...subscriptionData]
-    .sort((a, b) => (toDateKey(b.dateStarted) ?? 0) - (toDateKey(a.dateStarted) ?? 0))
-    .slice(0, 8);
+  const recentSubscriptions = useMemo(() => {
+    return [...subscriptions]
+      .sort((a, b) => (toDateKey(b.dateStarted) ?? 0) - (toDateKey(a.dateStarted) ?? 0))
+      .slice(0, 8);
+  }, [subscriptions]);
 
   // Client (Student/Worker) Dashboard with real data + recent meal logs
   const [myLogs, setMyLogs] = useState<MealLogItem[]>([]);
@@ -74,17 +85,19 @@ const Dashboard = () => {
       {/* Stats Cards Section */}
       <section className="flex flex-col gap-6">
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-          {dashboardStats.map((stat) => (
-            <StatsCard
-              key={stat.id}
-              title={stat.title}
-              value={stat.value}
-              currentDay={stat.currentDay}
-              lastDayCount={stat.lastDayCount}
-            />
-          ))}
-        </div>
+        {isAdmin && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+            {dashboardStats.map((stat) => (
+              <StatsCard
+                key={stat.id}
+                title={stat.title}
+                value={stat.value}
+                currentDay={stat.currentDay}
+                lastDayCount={stat.lastDayCount}
+              />
+            ))}
+          </div>
+        )}
 
         {(isCashier || isAdmin)&&(<QuickAction/>)}
 

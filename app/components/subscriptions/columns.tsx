@@ -8,12 +8,20 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import React, { useState, useEffect } from "react";
-import { useAppSelector } from "~/store/hooks";
+import { useAppSelector, useAppDispatch } from "~/store/hooks";
 import { generateQrOtpForUser } from "~/services/qr";
+import { cancelSubscription } from "~/store/subscriptionsSlice";
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
-  const [isOpen, setIsOpen] = useState(false);
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
@@ -23,6 +31,9 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [qrData, setQrData] = useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
   const [qrImage, setQrImage] = useState<string>('');
   const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
+  const dispatch = useAppDispatch();
+  const { token } = useAppSelector((state) => state.auth);
+
   // Generate QR-OTP when the sheet opens
   useEffect(() => {
     let mounted = true;
@@ -52,12 +63,18 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
     return () => { mounted = false; };
   }, [qrOpen, item.id]);
 
-  const handleDelete = () => {
-    if (confirm(`Are you sure you want to delete subscription for ${item.clientName}?`)) {
-      // TODO: Dispatch Redux action to delete subscription
-      console.log('Deleting subscription:', item.id);
-      alert(`Subscription for ${item.clientName} has been deleted`);
-      // Example: dispatch(deleteSubscription(item.id));
+  const handleCancel = async () => {
+    if (confirm(`Are you sure you want to cancel subscription for ${item.clientName}?`)) {
+      if (!item.subscriptionId) {
+        alert("Cannot cancel: Missing subscription ID");
+        return;
+      }
+      try {
+        await dispatch(cancelSubscription({ token, id: item.subscriptionId })).unwrap();
+        alert(`Subscription for ${item.clientName} has been cancelled`);
+      } catch (e) {
+        alert(`Failed to cancel: ${e}`);
+      }
     }
   };
 
@@ -70,78 +87,36 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   };
 
   return (
-    <div className="relative inline-block text-left">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-8 w-8 p-0"
-      >
-        <MoreHorizontal className="h-4 w-4" />
-      </Button>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="bg-white border-black/20">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => setViewDetailsOpen(true)}>
+            <Eye className="mr-2 h-4 w-4" />
+            View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setQrOpen(true)}>
+            <QrCode className="mr-2 h-4 w-4" />
+            Generate QR Code
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { setEditForm(item); setEditOpen(true); }}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleCancel} className="text-red-600">
+            <Trash2 className="mr-2 h-4 w-4" />
+            Cancel Subscription
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      {isOpen && (
-        <>
-          {/* Backdrop to close dropdown */}
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setIsOpen(false)}
-          />
-          {/* Dropdown Menu */}
-          <div className="absolute right-0 z-20 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black/10 ring-opacity-5">
-            <div className="py-1" role="menu">
-              <button
-                onClick={() => {
-                  setViewDetailsOpen(true);
-                  setIsOpen(false);
-                }}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                role="menuitem"
-              >
-                <Eye className="mr-3 h-4 w-4" />
-                View Details
-              </button>
-
-              <button
-                onClick={() => {
-                  setQrOpen(true);
-                  setIsOpen(false);
-                }}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                role="menuitem"
-              >
-                <QrCode className="mr-3 h-4 w-4" />
-                Generate QR Code
-              </button>
-
-              <button
-                onClick={() => {
-                  setEditForm(item);
-                  setEditOpen(true);
-                  setIsOpen(false);
-                }}
-                className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                role="menuitem"
-              >
-                <Edit className="mr-3 h-4 w-4" />
-                Edit
-              </button>
-
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  handleDelete();
-                }}
-                className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                role="menuitem"
-              >
-                <Trash2 className="mr-3 h-4 w-4" />
-                Delete
-              </button>
-            </div>
-          </div>
-        </>
-      )}
       {/* View Details Sheet */}
       <Sheet open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>
         <SheetContent className="overflow-y-auto bg-white p-6">
@@ -356,7 +331,7 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
           </div>
         </SheetContent>
       </Sheet>
-    </div>
+    </>
   );
 }
 

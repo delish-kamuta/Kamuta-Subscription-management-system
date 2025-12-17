@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { EyeIcon, EditIcon } from 'lucide-react'
 import { useAppDispatch, useAppSelector } from '~/store/hooks'
 import { fetchBranchesThunk } from '~/store/branchesSlice'
+import { fetchUsersThunk } from '~/store/usersSlice'
 
 const typeOptions = [
   { v: '', l: 'All types' },
@@ -44,6 +45,9 @@ export default function FeedbackPage() {
   const branches = useAppSelector(s => s.branches.items)
   const branchesLoaded = useAppSelector(s => s.branches.loaded)
   const branchesLoading = useAppSelector(s => s.branches.loading)
+  const users = useAppSelector(s => s.users.items)
+  const usersLoaded = useAppSelector(s => s.users.loaded)
+  const usersLoading = useAppSelector(s => s.users.loading)
   const [items, setItems] = useState<FeedbackItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -97,6 +101,12 @@ export default function FeedbackPage() {
   }, [branchesLoaded, branchesLoading, dispatch])
 
   useEffect(() => {
+    if (!usersLoaded && !usersLoading) {
+      dispatch(fetchUsersThunk())
+    }
+  }, [usersLoaded, usersLoading, dispatch])
+
+  useEffect(() => {
     const loadDetail = async () => {
       if (!detailOpen || detailId == null) return
       try {
@@ -139,6 +149,18 @@ export default function FeedbackPage() {
     const found = branches.find(b => String(b.id) === String(id))
     return found?.name || '-'
   }, [detail, branches])
+
+  const detailUserPhone = useMemo(() => {
+    if (!detail) return '-'
+    if (detail.is_anonymous) return '-'
+    if (detail.user_phone) return detail.user_phone
+    
+    const uid = detail.user_id || detail.userId
+    if (!uid) return '-'
+    
+    const found = users.find(u => String(u.id) === String(uid))
+    return found?.phone || '-'
+  }, [detail, users])
 
   return (
     <main className="dashboard wrapper">
@@ -303,6 +325,10 @@ export default function FeedbackPage() {
                   <div>
                     <p className="text-xs text-gray-500">Client</p>
                     <p className="text-sm font-medium">{detail.is_anonymous ? 'Anonymous' : (detail.user_name || '-')}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Phone</p>
+                    <p className="text-sm font-medium">{detailUserPhone}</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Branch</p>

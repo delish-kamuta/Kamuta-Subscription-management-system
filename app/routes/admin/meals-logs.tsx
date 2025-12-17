@@ -315,7 +315,11 @@ const MealsLogs = () => {
                 .slice((currentPage - 1) * itemsPerPage, (currentPage - 1) * itemsPerPage + itemsPerPage)
                 .map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="text-sm font-medium">{resolveUserName((item as any).client_user_id)}</TableCell>
+                    <TableCell className="text-sm font-medium">
+                      {resolveUserName((item as any).client_user_id) || 
+                        (item.client_type === 'irregular_client' ? 'Irregular Client' : 
+                         item.client_type === 'worker' ? 'Worker' : '-')}
+                    </TableCell>
                     <TableCell className="text-sm">{item.client_type}</TableCell>
                     <TableCell className="text-sm">{item.meal_type}</TableCell>
                     <TableCell className="text-sm">{item.deduction_source}</TableCell>

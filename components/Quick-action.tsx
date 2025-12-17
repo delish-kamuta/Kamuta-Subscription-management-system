@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '~/store/hooks'
 import { fetchBranchesThunk } from '~/store/branchesSlice'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '~/components/ui/sheet'
-import { subscriptionData } from 'app/constants'
 import dayjs from 'dayjs'
 import RegisterSubscriptionSheet from '~/components/subscriptions/RegisterSubscriptionSheet'
 import { generateIrregularTicket } from '~/services/irregularTickets'
 import { UserRole } from '~/types/auth'
+import { fetchSubscriptions } from '~/store/subscriptionsSlice'
 
 // QR code generated via public API to avoid extra deps
 
@@ -18,6 +18,15 @@ const QuickAction = () => {
   const [findQuery, setFindQuery] = useState('');
   const [findResults, setFindResults] = useState<any[]>([]);
   const [openTicket, setOpenTicket] = useState(false);
+  const { items: subscriptions, hydrated: subscriptionsHydrated } = useAppSelector((state) => state.subscriptions);
+  const { token } = useAppSelector((state) => state.auth);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (openFind && !subscriptionsHydrated && token) {
+      dispatch(fetchSubscriptions({ token }));
+    }
+  }, [openFind, subscriptionsHydrated, token, dispatch]);
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
   // Ticket form controls
   // Walk-in (irregular) ticket form controls
@@ -33,7 +42,6 @@ const QuickAction = () => {
   const [expiresAt, setExpiresAt] = useState<string>('');
 
   // Branches from Redux (needed for ticket generation)
-  const dispatch = useAppDispatch();
   const { items: branches, loading: branchesLoading, error: branchesError, loaded: branchesLoaded } = useAppSelector((s) => s.branches);
   const currentRole = useAppSelector((s) => s.auth.user?.role)
 
@@ -176,7 +184,7 @@ const QuickAction = () => {
             <Button
               onClick={() => {
                 const q = findQuery.trim().toLowerCase();
-                const results = subscriptionData.filter((s) =>
+                const results = subscriptions.filter((s) =>
                   s.clientName.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
                 );
                 setFindResults(results);
