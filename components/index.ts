@@ -6,3 +6,4 @@ export { default as SubscriptionsTable } from "./SubscriptionsTable";
 export { default as SubscriptionsChart } from "./SubscriptionsChart";
 export { default as RemainingMealsPieChart } from "./RemainingMealsPieChart";
 export { ProtectedRoute } from "./ProtectedRoute";
+export { default as FeedbackSheet } from "./FeedbackSheet";

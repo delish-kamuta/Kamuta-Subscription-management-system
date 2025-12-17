@@ -1,0 +1,187 @@
+import { authFetch, ensureValidTokenOrMessage } from "~/lib/api";
+
+export type FeedbackType =
+  | "meal_quality"
+  | "service_speed"
+  | "staff_behavior"
+  | "cleanliness"
+  | "other";
+
+export type FeedbackRating = "POOR" | "AVERAGE" | "GOOD" | "EXCELLENT";
+
+export interface SubmitFeedbackPayload {
+  type: FeedbackType | string;
+  rating: FeedbackRating | string;
+  title: string;
+  message: string;
+  is_anonymous?: boolean;
+}
+
+export interface SubmitFeedbackResponse {
+  success: boolean;
+  message?: string;
+  data?: any;
+}
+
+export async function submitFeedback(
+  payload: SubmitFeedbackPayload
+): Promise<SubmitFeedbackResponse> {
+  const tokenError = ensureValidTokenOrMessage();
+  if (tokenError) return { success: false, message: tokenError };
+  try {
+    const res = await authFetch(
+      "https://restaurant-bn-api.onrender.com/api/feedback",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
+    let json: any = null;
+    try { json = await res.json(); } catch {}
+    if (!res.ok) {
+      const msg = json?.message || json?.error || `Failed to submit feedback (${res.status})`;
+      return { success: false, message: msg };
+    }
+    return (json ?? { success: true }) as SubmitFeedbackResponse;
+  } catch (e: any) {
+    return { success: false, message: e?.message || "Network error" };
+  }
+}
+
+// Admin/staff: list feedbacks with optional filters
+export interface FeedbackFilters {
+  type?: string;   // meal_quality, service_quality, cleanliness, pricing, staff_behavior, system_issue, suggestion, complaint
+  status?: string; // pending, reviewed, resolved, dismissed
+  rating?: string; // EXCELLENT, GOOD, AVERAGE, POOR, TERRIBLE
+}
+
+export interface FeedbackItem {
+  id?: string | number;
+  type?: string;
+  rating?: string;
+  title?: string;
+  message?: string;
+  status?: string;
+  is_anonymous?: boolean;
+  user_name?: string;
+  branch_name?: string;
+  created_at?: string;
+}
+
+export interface ListFeedbackResponse {
+  success: boolean;
+  message?: string;
+  data?: FeedbackItem[];
+}
+
+export async function listFeedbacks(filters: FeedbackFilters = {}): Promise<ListFeedbackResponse> {
+  const tokenError = ensureValidTokenOrMessage();
+  if (tokenError) return { success: false, message: tokenError };
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, String(v)); });
+  const url = `https://restaurant-bn-api.onrender.com/api/feedback${params.toString() ? `?${params.toString()}` : ''}`;
+  const res = await authFetch(url);
+  let json: any = null;
+  try { json = await res.json(); } catch {}
+  if (!res.ok) {
+    const msg = json?.message || json?.error || `Failed to fetch feedback (${res.status})`;
+    return { success: false, message: msg };
+  }
+  return (json ?? { success: true, data: [] }) as ListFeedbackResponse;
+}
+
+// Admin/staff: get aggregated feedback statistics
+export interface FeedbackStats {
+  total?: number;
+  by_type?: Record<string, number>;
+  by_status?: Record<string, number>;
+  average_rating?: number | string;
+}
+
+export interface FeedbackStatsResponse {
+  success: boolean;
+  message?: string;
+  data?: FeedbackStats;
+}
+
+export async function getFeedbackStats(): Promise<FeedbackStatsResponse> {
+  const tokenError = ensureValidTokenOrMessage();
+  if (tokenError) return { success: false, message: tokenError };
+  try {
+    const res = await authFetch(
+      "https://restaurant-bn-api.onrender.com/api/feedback/stats"
+    );
+    let json: any = null;
+    try { json = await res.json(); } catch {}
+    if (!res.ok) {
+      const msg = json?.message || json?.error || `Failed to fetch feedback stats (${res.status})`;
+      return { success: false, message: msg };
+    }
+    return (json ?? { success: true, data: {} }) as FeedbackStatsResponse;
+  } catch (e: any) {
+    return { success: false, message: e?.message || "Network error" };
+  }
+}
+
+// Get a single feedback by ID
+export interface GetFeedbackByIdResponse {
+  success: boolean;
+  message?: string;
+  data?: FeedbackItem;
+}
+
+export async function getFeedbackById(id: string | number): Promise<GetFeedbackByIdResponse> {
+  const tokenError = ensureValidTokenOrMessage();
+  if (tokenError) return { success: false, message: tokenError };
+  try {
+    const res = await authFetch(
+      `https://restaurant-bn-api.onrender.com/api/feedback/${encodeURIComponent(String(id))}`
+    );
+    let json: any = null;
+    try { json = await res.json(); } catch {}
+    if (!res.ok) {
+      const msg = json?.message || json?.error || `Failed to fetch feedback (${res.status})`;
+      return { success: false, message: msg };
+    }
+    return (json ?? { success: true }) as GetFeedbackByIdResponse;
+  } catch (e: any) {
+    return { success: false, message: e?.message || "Network error" };
+  }
+}
+
+// Update feedback status (admin/cashier)
+export type FeedbackStatus = "pending" | "reviewed" | "resolved" | "dismissed" | string;
+
+export interface UpdateFeedbackStatusResponse {
+  success: boolean;
+  message?: string;
+  data?: any;
+}
+
+export async function updateFeedbackStatus(
+  id: string | number,
+  status: FeedbackStatus
+): Promise<UpdateFeedbackStatusResponse> {
+  const tokenError = ensureValidTokenOrMessage();
+  if (tokenError) return { success: false, message: tokenError };
+  try {
+    const res = await authFetch(
+      `https://restaurant-bn-api.onrender.com/api/feedback/${encodeURIComponent(String(id))}/status`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      }
+    );
+    let json: any = null;
+    try { json = await res.json(); } catch {}
+    if (!res.ok) {
+      const msg = json?.message || json?.error || `Failed to update status (${res.status})`;
+      return { success: false, message: msg };
+    }
+    return (json ?? { success: true }) as UpdateFeedbackStatusResponse;
+  } catch (e: any) {
+    return { success: false, message: e?.message || "Network error" };
+  }
+}

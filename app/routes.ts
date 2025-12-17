@@ -19,6 +19,7 @@ export default [
     route("settings", "routes/admin/settings.tsx"),
     route("payments", "routes/admin/payments.tsx"),
     route("users", "routes/admin/users.tsx"),
+    route("feedback", "routes/admin/feedback.tsx"),
   ]),
   route("/auth/login", "routes/auth/login.tsx"),
   route("/auth/signup", "routes/auth/signup.tsx"),
