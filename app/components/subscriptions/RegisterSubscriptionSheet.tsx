@@ -256,42 +256,45 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
                 <option value='worker'>Worker</option>
               </select>
             </div>
+            {/* Only show for students */}
             {formData.role === 'student' && (
-              <div className='space-y-2'>
-                <label className='text-sm font-medium text-gray-700'>Reg number *</label>
-                <input 
-                  className='w-full border rounded-md px-3 py-2' 
-                  placeholder='e.g., STU2024001'
-                  value={formData.reg_number}
-                  onChange={(e) => setFormData({ ...formData, reg_number: e.target.value })}
-                  required
-                />
-              </div>
+              <>
+                <div className='space-y-2'>
+                  <label className='text-sm font-medium text-gray-700'>Reg number *</label>
+                  <input 
+                    className='w-full border rounded-md px-3 py-2' 
+                    placeholder='e.g., STU2024001'
+                    value={formData.reg_number}
+                    onChange={(e) => setFormData({ ...formData, reg_number: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <label className='text-sm font-medium text-gray-700'>Number of Days *</label>
+                  <input 
+                    type='number' 
+                    min={1} 
+                    className='w-full border rounded-md px-3 py-2' 
+                    placeholder='e.g., 30'
+                    value={formData.days}
+                    onChange={(e) => setFormData({ ...formData, days: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <label className='text-sm font-medium text-gray-700'>Meal Type *</label>
+                  <select 
+                    className='w-full border rounded-md px-3 py-2'
+                    value={formData.meal_type}
+                    onChange={(e) => setFormData({ ...formData, meal_type: e.target.value })}
+                  >
+                    <option value='VVIP'>VVIP</option>
+                    <option value='VIP'>VIP</option>
+                    <option value='Regular'>Regular</option>
+                  </select>
+                </div>
+              </>
             )}
-            <div className='space-y-2'>
-              <label className='text-sm font-medium text-gray-700'>Number of Days *</label>
-              <input 
-                type='number' 
-                min={1} 
-                className='w-full border rounded-md px-3 py-2' 
-                placeholder='e.g., 30'
-                value={formData.days}
-                onChange={(e) => setFormData({ ...formData, days: e.target.value })}
-                required
-              />
-            </div>
-            <div className='space-y-2'>
-              <label className='text-sm font-medium text-gray-700'>Meal Type *</label>
-              <select 
-                className='w-full border rounded-md px-3 py-2'
-                value={formData.meal_type}
-                onChange={(e) => setFormData({ ...formData, meal_type: e.target.value })}
-              >
-                <option value='VVIP'>VVIP</option>
-                <option value='VIP'>VIP</option>
-                <option value='Regular'>Regular</option>
-              </select>
-            </div>
             {currentUser?.role === 'ADMIN' && (
               <div className='space-y-2'>
                 <label className='text-sm font-medium text-gray-700'>Branch *</label>
@@ -313,31 +316,35 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
                 )}
               </div>
             )}
-            <div className='space-y-2 md:col-span-1'>
-              <label className='text-sm font-medium text-gray-700'>Payment Method *</label>
-              <select 
-                className='w-full border rounded-md px-3 py-2'
-                value={formData.payment_method}
-                onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-                required
-              >
-                <option value=''>Select payment method</option>
-                <option value='cash'>Cash</option>
-                <option value='momo'>Mobile Money</option>
-              </select>
-            </div>
-            <div className='space-y-2 md:col-span-2'>
-              <label className='text-sm font-medium text-gray-700'>Amount to Pay (Auto-calculated) *</label>
-              <input 
-                type='number' 
-                min={1} 
-                className='w-full border rounded-md px-3 py-2 bg-gray-50' 
-                placeholder='Auto-calculated based on meal type and days'
-                value={formData.amount_paid}
-                readOnly
-                required
-              />
-            </div>
+            {formData.role === 'student' && (
+              <>
+                <div className='space-y-2 md:col-span-1'>
+                  <label className='text-sm font-medium text-gray-700'>Payment Method *</label>
+                  <select 
+                    className='w-full border rounded-md px-3 py-2'
+                    value={formData.payment_method}
+                    onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                    required
+                  >
+                    <option value=''>Select payment method</option>
+                    <option value='cash'>Cash</option>
+                    <option value='momo'>Mobile Money</option>
+                  </select>
+                </div>
+                <div className='space-y-2 md:col-span-2'>
+                  <label className='text-sm font-medium text-gray-700'>Amount to Pay (Auto-calculated) *</label>
+                  <input 
+                    type='number' 
+                    min={1} 
+                    className='w-full border rounded-md px-3 py-2 bg-gray-50' 
+                    placeholder='Auto-calculated based on meal type and days'
+                    value={formData.amount_paid}
+                    readOnly
+                    required
+                  />
+                </div>
+              </>
+            )}
           </div>
           <div className='flex justify-end gap-2'>
             <Button 
