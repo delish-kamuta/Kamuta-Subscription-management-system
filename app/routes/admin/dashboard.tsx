@@ -85,17 +85,19 @@ const Dashboard = () => {
       {/* Stats Cards Section */}
       <section className="flex flex-col gap-6">
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-          {dashboardStats.map((stat) => (
-            <StatsCard
-              key={stat.id}
-              title={stat.title}
-              value={stat.value}
-              currentDay={stat.currentDay}
-              lastDayCount={stat.lastDayCount}
-            />
-          ))}
-        </div>
+        {isAdmin && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+            {dashboardStats.map((stat) => (
+              <StatsCard
+                key={stat.id}
+                title={stat.title}
+                value={stat.value}
+                currentDay={stat.currentDay}
+                lastDayCount={stat.lastDayCount}
+              />
+            ))}
+          </div>
+        )}
 
         {(isCashier || isAdmin)&&(<QuickAction/>)}
 
