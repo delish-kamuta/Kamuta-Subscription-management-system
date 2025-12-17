@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { listStudentSubscriptions } from '~/services/subscriptions';
+import { listStudentSubscriptions, updateStudentSubscription, cancelStudentSubscription } from '~/services/subscriptions';
 import type { SubscriptionItem } from '~/hooks/useSubscriptionFilters';
 
 interface SubscriptionsState {
@@ -28,6 +28,30 @@ export const fetchSubscriptions = createAsyncThunk<SubscriptionItem[], { token: 
   }
 );
 
+export const updateSubscription = createAsyncThunk<any, { token: string | null, id: string, payload: any }>(
+  'subscriptions/update',
+  async ({ token, id, payload }, { rejectWithValue }) => {
+    try {
+      const response = await updateStudentSubscription(token, id, payload);
+      return response.data;
+    } catch (e: any) {
+      return rejectWithValue(e.message || String(e));
+    }
+  }
+);
+
+export const cancelSubscription = createAsyncThunk<any, { token: string | null, id: string }>(
+  'subscriptions/cancel',
+  async ({ token, id }, { rejectWithValue }) => {
+    try {
+      const response = await cancelStudentSubscription(token, id);
+      return { id, ...response };
+    } catch (e: any) {
+      return rejectWithValue(e.message || String(e));
+    }
+  }
+);
+
 const subscriptionsSlice = createSlice({
   name: 'subscriptions',
   initialState,
@@ -49,7 +73,26 @@ const subscriptionsSlice = createSlice({
     builder
       .addCase(fetchSubscriptions.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(fetchSubscriptions.fulfilled, (state, action) => { state.loading = false; state.items = action.payload; state.hydrated = true; })
-      .addCase(fetchSubscriptions.rejected, (state, action: any) => { state.loading = false; state.error = action.payload || 'Failed to fetch subscriptions'; });
+      .addCase(fetchSubscriptions.rejected, (state, action: any) => { state.loading = false; state.error = action.payload || 'Failed to fetch subscriptions'; })
+      .addCase(updateSubscription.fulfilled, (state, action) => {
+        const updatedData = action.payload;
+        const subId = action.meta.arg.id;
+        const idx = state.items.findIndex((s) => s.subscriptionId === subId);
+        if (idx >= 0) {
+          const item = state.items[idx];
+          item.totalMeals = Number(updatedData.total_meals ?? item.totalMeals);
+          item.mealsLeft = Number(updatedData.remaining_meals ?? item.mealsLeft);
+          if (updatedData.payment_history && updatedData.payment_history.length > 0) {
+             item.payment = updatedData.payment_history[0].payment_method;
+          }
+          state.items[idx] = item;
+        }
+      })
+      .addCase(cancelSubscription.fulfilled, (state, action) => {
+        const subId = action.meta.arg.id;
+        // Remove the cancelled subscription from the list
+        state.items = state.items.filter((s) => s.subscriptionId !== subId);
+      });
   }
 });
 

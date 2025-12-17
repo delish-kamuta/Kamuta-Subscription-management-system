@@ -18,8 +18,9 @@ import {
 } from "~/components/ui/dropdown-menu";
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import React, { useState, useEffect } from "react";
-import { useAppSelector } from "~/store/hooks";
+import { useAppSelector, useAppDispatch } from "~/store/hooks";
 import { generateQrOtpForUser } from "~/services/qr";
+import { cancelSubscription } from "~/store/subscriptionsSlice";
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -30,6 +31,9 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [qrData, setQrData] = useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
   const [qrImage, setQrImage] = useState<string>('');
   const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
+  const dispatch = useAppDispatch();
+  const { token } = useAppSelector((state) => state.auth);
+
   // Generate QR-OTP when the sheet opens
   useEffect(() => {
     let mounted = true;
@@ -59,12 +63,18 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
     return () => { mounted = false; };
   }, [qrOpen, item.id]);
 
-  const handleDelete = () => {
-    if (confirm(`Are you sure you want to delete subscription for ${item.clientName}?`)) {
-      // TODO: Dispatch Redux action to delete subscription
-      console.log('Deleting subscription:', item.id);
-      alert(`Subscription for ${item.clientName} has been deleted`);
-      // Example: dispatch(deleteSubscription(item.id));
+  const handleCancel = async () => {
+    if (confirm(`Are you sure you want to cancel subscription for ${item.clientName}?`)) {
+      if (!item.subscriptionId) {
+        alert("Cannot cancel: Missing subscription ID");
+        return;
+      }
+      try {
+        await dispatch(cancelSubscription({ token, id: item.subscriptionId })).unwrap();
+        alert(`Subscription for ${item.clientName} has been cancelled`);
+      } catch (e) {
+        alert(`Failed to cancel: ${e}`);
+      }
     }
   };
 
@@ -100,9 +110,9 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
             Edit
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+          <DropdownMenuItem onClick={handleCancel} className="text-red-600">
             <Trash2 className="mr-2 h-4 w-4" />
-            Delete
+            Cancel Subscription
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
