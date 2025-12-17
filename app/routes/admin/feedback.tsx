@@ -151,19 +151,19 @@ export default function FeedbackPage() {
       <section className="bg-white p-6 rounded-lg shadow mt-6">
         {/* Stats summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="border rounded-lg p-4">
+          <div className="border rounded-lg p-4 border-black/20">
             <p className="text-xs text-gray-500">Total feedback</p>
             <p className="text-2xl font-semibold">{stats?.total ?? '-'}</p>
           </div>
-          <div className="border rounded-lg p-4">
+          <div className="border rounded-lg p-4 border-black/20">
             <p className="text-xs text-gray-500">Pending</p>
             <p className="text-2xl font-semibold">{stats?.by_status?.pending ?? 0}</p>
           </div>
-          <div className="border rounded-lg p-4">
+          <div className="border rounded-lg p-4 border-black/20">
             <p className="text-xs text-gray-500">Resolved</p>
             <p className="text-2xl font-semibold">{stats?.by_status?.resolved ?? 0}</p>
           </div>
-          <div className="border rounded-lg p-4">
+          <div className="border rounded-lg p-4 border-black/20">
             <p className="text-xs text-gray-500">Average rating</p>
             <p className="text-2xl font-semibold">{stats?.average_rating ?? '-'}</p>
           </div>
@@ -174,27 +174,27 @@ export default function FeedbackPage() {
 
         <div className="flex flex-col md:flex-row md:items-end gap-3 justify-between mb-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full md:w-auto">
-            <div className="space-y-1">
+            <div className="space-y-1 space-x-2">
               <label className="text-xs text-gray-500">Type</label>
-              <select className="border rounded px-2 py-2" value={type} onChange={(e) => setType(e.target.value)}>
+              <select className="border border-black/20 rounded px-2 py-2" value={type} onChange={(e) => setType(e.target.value)}>
                 {typeOptions.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
               </select>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 space-x-2">
               <label className="text-xs text-gray-500">Status</label>
-              <select className="border rounded px-2 py-2" value={status} onChange={(e) => setStatus(e.target.value)}>
+              <select className="border border-black/20 rounded px-2 py-2" value={status} onChange={(e) => setStatus(e.target.value)}>
                 {statusOptions.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
               </select>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 space-x-2">
               <label className="text-xs text-gray-500">Rating</label>
-              <select className="border rounded px-2 py-2" value={rating} onChange={(e) => setRating(e.target.value)}>
+              <select className="border border-black/20 rounded px-2 py-2" value={rating} onChange={(e) => setRating(e.target.value)}>
                 {ratingOptions.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
               </select>
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="px-3 py-2 border rounded" onClick={() => { setType(''); setStatus(''); setRating(''); }}>Reset</button>
+            <button className="px-3 py-2 border border-black/20 rounded" onClick={() => { setType(''); setStatus(''); setRating(''); }}>Reset</button>
           </div>
         </div>
 
