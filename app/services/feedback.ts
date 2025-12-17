@@ -58,6 +58,8 @@ export interface FeedbackFilters {
 
 export interface FeedbackItem {
   id?: string | number;
+  user_id?: string | number;
+  userId?: string | number;
   type?: string;
   rating?: string;
   title?: string;
@@ -65,6 +67,7 @@ export interface FeedbackItem {
   status?: string;
   is_anonymous?: boolean;
   user_name?: string;
+  user_phone?: string;
   branch_name?: string;
   created_at?: string;
 }
