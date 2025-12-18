@@ -464,17 +464,52 @@ const handleTopUpSave = async () => {
                         <head>
                           <title>Print QR Code</title>
                           <style>
-                            body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }
-                            img { width: 300px; height: 300px; }
-                            .info { margin-top: 20px; text-align: center; }
-                            .name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-                            .meta { font-size: 16px; color: #555; }
+                            @page { margin: 0; size: auto; }
+                            body { 
+                              width: 58mm; 
+                              margin: 0 auto; 
+                              padding: 5px; 
+                              font-family: monospace; 
+                              text-align: center; 
+                            }
+                            .container {
+                              display: flex;
+                              flex-direction: column;
+                              align-items: center;
+                              width: 100%;
+                            }
+                            img { 
+                              width: 100%; 
+                              max-width: 200px;
+                              height: auto; 
+                              display: block;
+                              margin: 5px 0;
+                            }
+                            .name { 
+                              font-size: 14px; 
+                              font-weight: bold; 
+                              margin-bottom: 5px; 
+                              word-wrap: break-word;
+                            }
+                            .info { 
+                              margin-top: 5px; 
+                              border-top: 1px dashed #000; 
+                              padding-top: 5px; 
+                              width: 100%;
+                            }
+                            .meta { 
+                              font-size: 12px; 
+                              color: #000; 
+                              margin: 2px 0; 
+                            }
                           </style>
                         </head>
                         <body>
-                          <img src="${qrImage}" />
-                          <div class="info">
-                            <div class="meta">Expires in: ${qrData?.expires_in_seconds}s</div>
+                          <div class="container">
+                            <img src="${qrImage}" />
+                            <div class="info">
+                              <div class="meta">Expires: ${qrData?.expires_in_seconds}s</div>
+                            </div>
                           </div>
                           <script>
                             window.onload = function() { window.print(); window.close(); }
