@@ -104,7 +104,6 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete,
           </select>
         </div>
       </div>
-
       <Table>
         <TableHeader>
           <TableRow>
