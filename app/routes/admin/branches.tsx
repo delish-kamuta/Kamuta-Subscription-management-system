@@ -57,9 +57,9 @@ export default function BranchesPage() {
       const payload = {
         name: branchForm.name,
         campus: branchForm.campus,
-        regular_price: String(branchForm.regular_price),
-        vip_price: String(branchForm.vip_price),
-        vvip_price: String(branchForm.vvip_price),
+        regular_price: Number(branchForm.regular_price),
+        vip_price: Number(branchForm.vip_price),
+        vvip_price: Number(branchForm.vvip_price),
       }
       const res = await createBranch(payload)
       const newBranch = res.data || res
@@ -99,9 +99,9 @@ export default function BranchesPage() {
       const payload = {
         name: branchForm.name,
         campus: branchForm.campus,
-        regular_price: String(branchForm.regular_price),
-        vip_price: String(branchForm.vip_price),
-        vvip_price: String(branchForm.vvip_price),
+        regular_price: Number(branchForm.regular_price),
+        vip_price: Number(branchForm.vip_price),
+        vvip_price: Number(branchForm.vvip_price),
       }
       const res = await updateBranch(selectedBranch.id, payload)
       const updated = res.data || res
