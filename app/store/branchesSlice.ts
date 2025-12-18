@@ -4,6 +4,7 @@ import { getToken } from "~/lib/api";
 export interface BranchItem { 
   id: string; 
   name?: string;
+  campus?: string;
   regular_price?: number;
   vip_price?: number;
   vvip_price?: number;
@@ -45,6 +46,7 @@ export const fetchBranchesThunk = createAsyncThunk(
       return list.map((b: any) => ({ 
         id: String(b.id), 
         name: String(b.name || ""),
+        campus: String(b.campus || ""),
         regular_price: Number(b.regular_price) || 0,
         vip_price: Number(b.vip_price) || 0,
         vvip_price: Number(b.vvip_price) || 0

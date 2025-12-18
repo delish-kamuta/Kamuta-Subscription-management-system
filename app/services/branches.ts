@@ -36,7 +36,7 @@ export async function updateBranch(id: string, payload: Partial<BranchPayload>) 
   if (tokenError) throw new Error(tokenError);
 
   const res = await authFetch(`${BASE_URL}/${id}`, {
-    method: "PATCH", // or PUT, usually PATCH for partial updates
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });

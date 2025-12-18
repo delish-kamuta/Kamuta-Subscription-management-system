@@ -139,7 +139,7 @@ export default function BranchesPage() {
     setSelectedBranch(branch)
     setBranchForm({
       name: branch.name || "",
-      campus: "University of Rwanda", // Assuming default or we need to fetch it if not in list
+      campus: branch.campus || "University of Rwanda",
       regular_price: branch.regular_price || 0,
       vip_price: branch.vip_price || 0,
       vvip_price: branch.vvip_price || 0,
