@@ -6,7 +6,14 @@ import { useSearchParams } from "react-router-dom"
 import { useAppSelector } from "~/store/hooks"
 import { getWorkerWallet, addWorkerWalletPayment } from "~/services/wallet"
 import { UserRole } from "~/types/auth"
-// Using a basic table to avoid dependency on missing UI table component
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table"
 
 export default function WalletPage() {
   const { user } = useAppSelector((s) => s.auth)
@@ -137,17 +144,17 @@ export default function WalletPage() {
             {data.transactions && data.transactions.length > 0 ? (
               <div className="mt-6">
                 <h3 className="text-lg font-semibold mb-2">Recent Transactions</h3>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="text-left p-2">Date</th>
-                      <th className="text-left p-2">Type</th>
-                      <th className="text-left p-2">Category</th>
-                      <th className="text-left p-2">Amount</th>
-                      <th className="text-left p-2 hidden md:table-cell">Reference</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead>Date</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead className="hidden md:table-cell">Reference</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {data.transactions.slice(0, 20).map((t: any, idx: number) => {
                       const combinedStr = (
                         (t.type || '') + ' ' + 
@@ -169,11 +176,15 @@ export default function WalletPage() {
                                       combinedStr.includes('transfer') ||
                                       combinedStr.includes('fund') ||
                                       combinedStr.includes('admin');
+                      
+                      const dateStr = t.date || t.created_at;
+                      const formattedDate = dateStr ? new Date(dateStr).toLocaleString() : '-';
+
                       return (
-                        <tr key={idx} className="border-t">
-                          <td className="p-2 font-mono text-xs">{t.date || t.created_at || '-'}</td>
-                          <td className="p-2">{t.type || '-'}</td>
-                          <td className="p-2">
+                        <TableRow key={idx}>
+                          <TableCell className="font-mono text-xs">{formattedDate}</TableCell>
+                          <TableCell>{t.type || '-'}</TableCell>
+                          <TableCell>
                             {isTopUp ? (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                                 Top Up
@@ -183,14 +194,14 @@ export default function WalletPage() {
                                 Charge
                               </span>
                             )}
-                          </td>
-                          <td className="p-2">{t.amount ?? t.value ?? '-'}</td>
-                          <td className="p-2 hidden md:table-cell">{t.reference || t.id || '-'}</td>
-                        </tr>
+                          </TableCell>
+                          <TableCell>{t.amount ?? t.value ?? '-'}</TableCell>
+                          <TableCell className="hidden md:table-cell">{t.reference || t.id || '-'}</TableCell>
+                        </TableRow>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             ) : (
               <p className="text-sm text-gray-500 mt-4">No transactions found.</p>
