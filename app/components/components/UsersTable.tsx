@@ -51,6 +51,10 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete,
       const matchesRole = roleFilter === "all" || user.role === roleFilter
       
       return matchesSearch && matchesRole
+    }).sort((a, b) => {
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+      return dateB - dateA;
     })
   }, [users, searchTerm, roleFilter])
 

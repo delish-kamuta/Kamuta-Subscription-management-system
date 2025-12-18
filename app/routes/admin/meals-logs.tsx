@@ -114,6 +114,10 @@ const MealsLogs = () => {
     const matchesBranch = !branchFilter || item.branch_id === branchFilter;
     
     return matchesSearch && withinRange && matchesClientType && matchesMealType && matchesSource && matchesBranch;
+  }).sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime();
+    const dateB = new Date(b.created_at).getTime();
+    return dateB - dateA;
   });
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;

@@ -155,7 +155,15 @@ export default function WalletPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.transactions.slice(0, 20).map((t: any, idx: number) => {
+                    {data.transactions
+                      .slice() // Create a copy to avoid mutating the original array
+                      .sort((a: any, b: any) => {
+                        const dateA = new Date(a.date || a.created_at).getTime();
+                        const dateB = new Date(b.date || b.created_at).getTime();
+                        return dateB - dateA;
+                      })
+                      .slice(0, 20)
+                      .map((t: any, idx: number) => {
                       const combinedStr = (
                         (t.type || '') + ' ' + 
                         (t.payment_method || '') + ' ' + 

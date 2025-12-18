@@ -46,7 +46,7 @@ export default function BranchesPage() {
   const filteredBranches = branches.filter(b => 
     (b.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
     (b.id || "").toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  ).sort((a, b) => Number(b.id) - Number(a.id))
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()

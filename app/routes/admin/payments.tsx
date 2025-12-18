@@ -137,6 +137,10 @@ const Payments = () => {
     const toKey = toDateKey(endDate);
     const withinRange = isWithinRange(itemKey, fromKey, toKey);
     return matchesSearch && matchesBranch && matchesCashier && withinRange;
+  }).sort((a, b) => {
+    const dateA = new Date(a.paymentDate).getTime();
+    const dateB = new Date(b.paymentDate).getTime();
+    return dateB - dateA;
   });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
