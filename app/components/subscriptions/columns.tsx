@@ -1,4 +1,4 @@
-import { MoreHorizontal, Eye, Edit, Trash2, QrCode, X } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Trash2, QrCode, X, PlusCircle } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import {
@@ -20,19 +20,50 @@ import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import React, { useState, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "~/store/hooks";
 import { generateQrOtpForUser } from "~/services/qr";
-import { cancelSubscription } from "~/store/subscriptionsSlice";
+import { cancelSubscription, updateSubscription } from "~/store/subscriptionsSlice";
+import { fetchBranchesThunk } from "~/store/branchesSlice";
+import { UserRole } from "~/types/auth";
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [topUpOpen, setTopUpOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [editForm, setEditForm] = useState<SubscriptionItem>(item);
+  const [topUpForm, setTopUpForm] = useState({ days: 0, mealsToAdd: 0, paymentMethod: 'Cash', amountPaid: 0 });
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState('');
   const [qrData, setQrData] = useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
   const [qrImage, setQrImage] = useState<string>('');
+  const { token, user } = useAppSelector((state) => state.auth);
+  const isAdmin = user?.role === UserRole.ADMIN;
   const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
   const dispatch = useAppDispatch();
-  const { token } = useAppSelector((state) => state.auth);
+
+  // Fetch branches if needed
+  useEffect(() => {
+    if (topUpOpen && branches.length === 0) {
+      dispatch(fetchBranchesThunk());
+    }
+  }, [topUpOpen, branches.length, dispatch]);
+
+  // Auto-calculate meals and amount for Top Up
+  useEffect(() => {
+    if (topUpOpen && topUpForm.days > 0) {
+      const branch = branches.find((b: any) => b.name === item.branch);
+      if (branch) {
+        const meals = topUpForm.days * 2;
+        let price = 0;
+        const type = item.subscriptionType || 'Regular';
+        if (type === 'Regular') price = branch.regular_price || 0;
+        else if (type === 'VIP') price = branch.vip_price || 0;
+        else if (type === 'VVIP') price = branch.vvip_price || 0;
+        else price = branch.regular_price || 0; // Fallback
+
+        const amount = meals * price;
+        setTopUpForm(prev => ({ ...prev, mealsToAdd: meals, amountPaid: amount }));
+      }
+    }
+  }, [topUpForm.days, item.branch, item.subscriptionType, branches, topUpOpen]);
 
   // Generate QR-OTP when the sheet opens
   useEffect(() => {
@@ -85,6 +116,30 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
     // Example: dispatch(updateSubscription(editForm));
     setEditOpen(false);
   };
+const handleTopUpSave = async () => {
+    if (!item.subscriptionId) {
+      alert("Cannot top up: Missing subscription ID");
+      return;
+    }
+    try {
+      await dispatch(updateSubscription({
+        token,
+        id: item.subscriptionId,
+        payload: {
+          total_meals: topUpForm.days * 2,
+          payment: {
+            amount: topUpForm.amountPaid,
+            payment_method: topUpForm.paymentMethod.toLowerCase()
+          }
+        }
+      })).unwrap();
+      alert(`Top up successful for ${item.clientName}`);
+      setTopUpOpen(false);
+      setTopUpForm({ days: 0, mealsToAdd: 0, paymentMethod: 'Cash', amountPaid: 0 });
+    } catch (e) {
+      alert(`Failed to top up: ${e}`);
+    }
+  };
 
   return (
     <>
@@ -105,15 +160,23 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
             <QrCode className="mr-2 h-4 w-4" />
             Generate QR Code
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { setEditForm(item); setEditOpen(true); }}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
+          <DropdownMenuItem onClick={() => setTopUpOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Top Up
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleCancel} className="text-red-600">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Cancel Subscription
-          </DropdownMenuItem>
+          {isAdmin && (
+            <>
+              <DropdownMenuItem onClick={() => { setEditForm(item); setEditOpen(true); }}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleCancel} className="text-red-600">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Cancel Subscription
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -240,6 +303,53 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
             <div className="flex gap-2 pt-4">
               <Button onClick={handleEditSave} className="flex-1">Save Changes</Button>
               <Button onClick={() => setEditOpen(false)} variant="outline" className="flex-1">Cancel</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Top Up Sheet */}
+      <Sheet open={topUpOpen} onOpenChange={setTopUpOpen}>
+        <SheetContent className="overflow-y-auto bg-white p-6">
+          <SheetHeader>
+            <SheetTitle>Top Up Subscription</SheetTitle>
+            <SheetDescription>Add meals and record payment for {item.clientName}</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div>
+              <label className="text-sm font-medium">Days</label>
+              <Input
+                type="number"
+                min={1}
+                value={topUpForm.days}
+                onChange={(e) => setTopUpForm({ ...topUpForm, days: parseInt(e.target.value) || 0 })}
+                placeholder="Enter number of days"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Amount Paid</label>
+              <Input
+                type="number"
+                min={0}
+                value={topUpForm.amountPaid}
+                onChange={(e) => setTopUpForm({ ...topUpForm, amountPaid: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Payment Method</label>
+              <select
+                value={topUpForm.paymentMethod}
+                onChange={(e) => setTopUpForm({ ...topUpForm, paymentMethod: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option>Cash</option>
+                <option>Mobile Money</option>
+                <option>Bank Transfer</option>
+              </select>
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleTopUpSave} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">Confirm Top Up</Button>
+              <Button onClick={() => setTopUpOpen(false)} variant="outline" className="flex-1">Cancel</Button>
             </div>
           </div>
         </SheetContent>
