@@ -152,20 +152,49 @@ export async function listWorkerSubscriptions(token: string | null): Promise<Sub
     const branchId = w?.user?.branch_id != null ? String(w.user.branch_id) : (w?.branch_id != null ? String(w.branch_id) : '');
     const baseId = String(w?.reg_number || w?.id || '');
     const userId = String(w?.user?.id || w?.user_id || '');
+    
+    // Helper to get wallet object
+    const walletObj = w?.wallet || w?.user?.wallet;
+    
     const walletBalance = Number(
-      (w?.wallet && (w.wallet.balance ?? w.wallet.amount)) ??
-      w?.wallet_balance ?? w?.balance ?? 0
+      (walletObj && (
+        walletObj.remaining_amount ?? 
+        walletObj.balance ?? 
+        walletObj.amount ??
+        walletObj.current_balance
+      )) ??
+      w?.wallet_balance ?? 
+      w?.balance ?? 
+      w?.remaining_amount ??
+      0
     ) || 0;
+
     const prepaidBalance = Number(
-      (w?.wallet && (w.wallet.prepaid ?? w.wallet.prepaid_balance ?? w.wallet.balance)) ??
-      w?.prepaid_balance ?? w?.prepaid ?? walletBalance
+      (walletObj && (
+        walletObj.prepaid_amount ?? 
+        walletObj.prepaid ??
+        walletObj.prepaid_balance ?? 
+        walletObj.balance
+      )) ??
+      w?.prepaid_balance ?? 
+      w?.prepaid ?? 
+      w?.prepaid_amount ??
+      walletBalance
     ) || 0;
+
     const creditBalance = Number(
-      (w?.wallet && (w.wallet.credit ?? w.wallet.credit_balance)) ??
-      w?.credit_balance ?? w?.credit ?? 0
+      (walletObj && (
+        walletObj.credit_used ?? 
+        walletObj.credit ?? 
+        walletObj.credit_balance
+      )) ??
+      w?.credit_balance ?? 
+      w?.credit ?? 
+      w?.credit_used ??
+      0
     ) || 0;
     const lastTopUp = String(
-      (w?.wallet && (w.wallet.lastTopUp ?? w.wallet.last_topup)) ??
+      (walletObj && (walletObj.lastTopUp ?? walletObj.last_topup)) ??
       w?.last_topup ?? w?.lastTopUp ?? w?.updated_at ?? ''
     );
     const mealsThisMonth = Number(w?.meals_this_month ?? w?.stats?.meals_this_month ?? 0) || 0;

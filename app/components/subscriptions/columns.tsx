@@ -202,6 +202,10 @@ const handleTopUpSave = async () => {
                 <p className="text-base font-medium">{item.clientName}</p>
               </div>
               <div>
+                <label className="text-sm font-medium text-gray-500">Phone Number</label>
+                <p className="text-base font-mono">{item.tel || 'N/A'}</p>
+              </div>
+              <div>
                 <label className="text-sm font-medium text-gray-500">Subscription Type</label>
                 <p className="text-base">{item.subscriptionType}</p>
               </div>

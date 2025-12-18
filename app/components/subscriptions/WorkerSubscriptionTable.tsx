@@ -58,10 +58,7 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
               : "";
             const prepaid = Number((item as any).prepaidBalance ?? 0);
             const credit = Number((item as any).creditBalance ?? 0);
-            const baseWallet = Number((item as any).walletBalance ?? 0);
-            const wallet = Number.isFinite(baseWallet) && baseWallet !== 0
-              ? baseWallet
-              : (prepaid - credit);
+            const wallet = prepaid - credit;
             const mealsThisMonth = Number((item as any).mealsThisMonth ?? 0);
 
             return (
@@ -69,7 +66,9 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                 <TableCell className="font-mono text-xs">{item.tel}</TableCell>
                 <TableCell className="font-medium text-black">{item.clientName}</TableCell>
                 <TableCell className="hidden md:table-cell text-sm">{item.branch}</TableCell>
-                <TableCell className="font-semibold">{formatCurrency(wallet)}</TableCell>
+                <TableCell className={`font-semibold ${wallet < 0 ? "text-red-600" : ""}`}>
+                  {formatCurrency(wallet)}
+                </TableCell>
                 <TableCell className="font-semibold">{mealsThisMonth}</TableCell>
                 <TableCell className="hidden md:table-cell text-sm">{lastMealFmt}</TableCell>
                 <TableCell className="hidden md:table-cell text-sm">{lastTopUpFmt}</TableCell>

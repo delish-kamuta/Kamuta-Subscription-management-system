@@ -125,10 +125,6 @@ export default function WalletPage() {
                 <p className="text-lg font-semibold">{data.prepaid_amount}</p>
               </div>
               <div className="p-4 border rounded">
-                <p className="text-xs text-gray-500">Remaining Amount</p>
-                <p className="text-lg font-semibold">{data.remaining_amount}</p>
-              </div>
-              <div className="p-4 border rounded">
                 <p className="text-xs text-gray-500">Credit Limit</p>
                 <p className="text-lg font-semibold">{data.credit_limit}</p>
               </div>
