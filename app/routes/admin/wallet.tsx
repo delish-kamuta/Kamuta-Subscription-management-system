@@ -59,7 +59,7 @@ export default function WalletPage() {
           <div className="mb-6">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
-                <button className="px-3 py-2 rounded bg-green-600 text-white">Add Wallet Payment</button>
+                <button className="px-3 py-2 rounded bg-blue-600 text-white">Add Wallet Payment</button>
               </SheetTrigger>
               <SheetContent className="bg-white p-6">
                 <SheetHeader>
@@ -88,7 +88,7 @@ export default function WalletPage() {
                     <button className="px-3 py-2 rounded border">Cancel</button>
                   </SheetClose>
                   <button
-                    className="px-3 py-2 rounded bg-green-600 text-white disabled:opacity-50"
+                    className="px-3 py-2 rounded bg-blue-600 text-white disabled:opacity-50"
                     disabled={saving || !amount || Number(amount) <= 0}
                     onClick={async () => {
                       const targetId = selectedUserId || String(user?.id || '')
@@ -142,19 +142,53 @@ export default function WalletPage() {
                     <tr className="bg-gray-50">
                       <th className="text-left p-2">Date</th>
                       <th className="text-left p-2">Type</th>
+                      <th className="text-left p-2">Category</th>
                       <th className="text-left p-2">Amount</th>
                       <th className="text-left p-2 hidden md:table-cell">Reference</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {data.transactions.slice(0, 20).map((t: any, idx: number) => (
-                      <tr key={idx} className="border-t">
-                        <td className="p-2 font-mono text-xs">{t.date || t.created_at || '-'}</td>
-                        <td className="p-2">{t.type || '-'}</td>
-                        <td className="p-2">{t.amount ?? t.value ?? '-'}</td>
-                        <td className="p-2 hidden md:table-cell">{t.reference || t.id || '-'}</td>
-                      </tr>
-                    ))}
+                    {data.transactions.slice(0, 20).map((t: any, idx: number) => {
+                      const combinedStr = (
+                        (t.type || '') + ' ' + 
+                        (t.payment_method || '') + ' ' + 
+                        (t.method || '') + ' ' + 
+                        (t.category || '') + ' ' +
+                        (t.description || '') + ' ' +
+                        (t.note || '')
+                      ).toLowerCase();
+
+                      const isTopUp = combinedStr.includes('payment') || 
+                                      combinedStr.includes('credit') || 
+                                      combinedStr.includes('deposit') || 
+                                      combinedStr.includes('top') ||
+                                      combinedStr.includes('cash') ||
+                                      combinedStr.includes('momo') ||
+                                      combinedStr.includes('card') ||
+                                      combinedStr.includes('mobile') ||
+                                      combinedStr.includes('transfer') ||
+                                      combinedStr.includes('fund') ||
+                                      combinedStr.includes('admin');
+                      return (
+                        <tr key={idx} className="border-t">
+                          <td className="p-2 font-mono text-xs">{t.date || t.created_at || '-'}</td>
+                          <td className="p-2">{t.type || '-'}</td>
+                          <td className="p-2">
+                            {isTopUp ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                Top Up
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                Charge
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-2">{t.amount ?? t.value ?? '-'}</td>
+                          <td className="p-2 hidden md:table-cell">{t.reference || t.id || '-'}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
