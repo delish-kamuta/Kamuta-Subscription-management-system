@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useAppDispatch, useAppSelector } from '~/store/hooks'
 import { fetchBranchesThunk } from '~/store/branchesSlice'
 import { upsertSubscription } from '~/store/subscriptionsSlice'
@@ -12,6 +13,7 @@ interface RegisterSubscriptionSheetProps {
 }
 
 export default function RegisterSubscriptionSheet({ open, onOpenChange }: RegisterSubscriptionSheetProps) {
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { items: branches, loading: branchesLoading, error: branchesError, loaded: branchesLoaded } = useAppSelector((s) => s.branches)
   const authToken = useAppSelector((s) => (s.auth as any)?.token || (s.auth as any)?.user?.token)
@@ -160,6 +162,13 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
           created_at: new Date().toISOString(),
           student: formData.role === 'student' ? { reg_number: formData.reg_number } : undefined,
         }))
+
+        if (formData.role === 'worker') {
+          const userId = String(created.id || created.user_id || newSubscription.id)
+          onOpenChange(false)
+          navigate(`/wallet?userId=${userId}`)
+          return
+        }
       }
 
       // Reset form

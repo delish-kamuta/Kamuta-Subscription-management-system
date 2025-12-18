@@ -152,20 +152,49 @@ export async function listWorkerSubscriptions(token: string | null): Promise<Sub
     const branchId = w?.user?.branch_id != null ? String(w.user.branch_id) : (w?.branch_id != null ? String(w.branch_id) : '');
     const baseId = String(w?.reg_number || w?.id || '');
     const userId = String(w?.user?.id || w?.user_id || '');
+    
+    // Helper to get wallet object
+    const walletObj = w?.wallet || w?.user?.wallet;
+    
     const walletBalance = Number(
-      (w?.wallet && (w.wallet.balance ?? w.wallet.amount)) ??
-      w?.wallet_balance ?? w?.balance ?? 0
+      (walletObj && (
+        walletObj.remaining_amount ?? 
+        walletObj.balance ?? 
+        walletObj.amount ??
+        walletObj.current_balance
+      )) ??
+      w?.wallet_balance ?? 
+      w?.balance ?? 
+      w?.remaining_amount ??
+      0
     ) || 0;
+
     const prepaidBalance = Number(
-      (w?.wallet && (w.wallet.prepaid ?? w.wallet.prepaid_balance ?? w.wallet.balance)) ??
-      w?.prepaid_balance ?? w?.prepaid ?? walletBalance
+      (walletObj && (
+        walletObj.prepaid_amount ?? 
+        walletObj.prepaid ??
+        walletObj.prepaid_balance ?? 
+        walletObj.balance
+      )) ??
+      w?.prepaid_balance ?? 
+      w?.prepaid ?? 
+      w?.prepaid_amount ??
+      walletBalance
     ) || 0;
+
     const creditBalance = Number(
-      (w?.wallet && (w.wallet.credit ?? w.wallet.credit_balance)) ??
-      w?.credit_balance ?? w?.credit ?? 0
+      (walletObj && (
+        walletObj.credit_used ?? 
+        walletObj.credit ?? 
+        walletObj.credit_balance
+      )) ??
+      w?.credit_balance ?? 
+      w?.credit ?? 
+      w?.credit_used ??
+      0
     ) || 0;
     const lastTopUp = String(
-      (w?.wallet && (w.wallet.lastTopUp ?? w.wallet.last_topup)) ??
+      (walletObj && (walletObj.lastTopUp ?? walletObj.last_topup)) ??
       w?.last_topup ?? w?.lastTopUp ?? w?.updated_at ?? ''
     );
     const mealsThisMonth = Number(w?.meals_this_month ?? w?.stats?.meals_this_month ?? 0) || 0;
@@ -236,38 +265,142 @@ export interface PaymentRow {
 
 export async function listPaymentsFromSubscriptions(token: string | null): Promise<PaymentRow[]> {
   // Fetch raw subscriptions to access payment_history
-  const res = await fetch(`${BASE_URL}/student-subscriptions`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
-    },
-  });
-  if (!res.ok) {
-    let msg = `Failed to fetch: ${res.status}`;
-    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
-    throw new Error(msg);
-  }
-  const json = await res.json();
-  const apiItems: ApiSubscription[] = json.data || json.items || json;
+  const [studentRes, workerRes] = await Promise.all([
+    fetch(`${BASE_URL}/student-subscriptions`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `${token}` } : {}),
+      },
+    }),
+    fetch(`${BASE_URL}/workers`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `${token}` } : {}),
+      },
+    })
+  ]);
+
   const rows: PaymentRow[] = [];
-  apiItems.forEach((api) => {
-    const regNumber = api.student?.reg_number || api.id || '';
-    const customerName = api.student?.user?.full_name || '';
-    const branchId = api.student?.user?.branch_id ? String(api.student.user.branch_id) : '';
-    const history = Array.isArray(api.payment_history) ? api.payment_history : [];
-    history.forEach((ph) => {
-      rows.push({
-        id: rows.length + 1,
-        customerName,
-        regNumber,
-        amount: String(ph.amount ?? api.amount_paid ?? ''),
-        paymentMethod: ph.payment_method || '',
-        date: ph.created_at || api.created_at || api.start_date || '',
-        status: 'Completed',
-        branch: branchId,
-        cashier: 'N/A',
+
+  // Process Students
+  if (studentRes.ok) {
+    const json = await studentRes.json();
+    const apiItems: ApiSubscription[] = json.data || json.items || json;
+    if (Array.isArray(apiItems)) {
+      apiItems.forEach((api) => {
+        const regNumber = api.student?.reg_number || api.id || '';
+        const customerName = api.student?.user?.full_name || '';
+        const branchId = api.student?.user?.branch_id ? String(api.student.user.branch_id) : '';
+        const history = Array.isArray(api.payment_history) ? api.payment_history : [];
+        history.forEach((ph) => {
+          rows.push({
+            id: rows.length + 1,
+            customerName,
+            regNumber,
+            amount: String(ph.amount ?? api.amount_paid ?? ''),
+            paymentMethod: ph.payment_method || '',
+            date: ph.created_at || api.created_at || api.start_date || '',
+            status: 'Completed',
+            branch: branchId,
+            cashier: 'N/A',
+          });
+        });
       });
-    });
-  });
+    }
+  }
+
+  // Process Workers
+  if (workerRes.ok) {
+    const json = await workerRes.json();
+    const workers: any[] = json.data || json.items || json || [];
+    if (Array.isArray(workers)) {
+      // Fetch wallets for all workers to get transactions
+      const walletPromises = workers.map(async (w: any) => {
+        try {
+          const res = await fetch(`${BASE_URL}/workers/${w.id}/wallet`, {
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `${token}` } : {}),
+            },
+          });
+          if (res.ok) {
+            const walletData = await res.json();
+            return { worker: w, wallet: walletData.data };
+          }
+        } catch (e) {
+          // ignore error
+        }
+        return { worker: w, wallet: null };
+      });
+
+      const results = await Promise.all(walletPromises);
+
+      results.forEach(({ worker: w, wallet }) => {
+        const customerName = w?.user?.full_name || w?.full_name || '';
+        const regNumber = w?.reg_number || w?.id || '';
+        const branchId = w?.user?.branch_id != null ? String(w.user.branch_id) : (w?.branch_id != null ? String(w.branch_id) : '');
+        
+        // 1. Process Subscriptions (if any)
+        const subs = Array.isArray(w?.subscriptions) ? w.subscriptions : [];
+        subs.forEach((s: any) => {
+           const history = Array.isArray(s.payment_history) ? s.payment_history : [];
+           history.forEach((ph: any) => {
+              rows.push({
+                id: rows.length + 1,
+                customerName,
+                regNumber,
+                amount: String(ph.amount ?? s.amount_paid ?? ''),
+                paymentMethod: ph.payment_method || '',
+                date: ph.created_at || s.created_at || s.start_date || '',
+                status: 'Completed',
+                branch: branchId,
+                cashier: 'N/A',
+              });
+           });
+        });
+
+        // 2. Process Wallet Transactions (Top Ups)
+        if (wallet && Array.isArray(wallet.transactions)) {
+          wallet.transactions.forEach((t: any) => {
+            const combinedStr = (
+              (t.type || '') + ' ' + 
+              (t.payment_method || '') + ' ' + 
+              (t.method || '') + ' ' + 
+              (t.category || '') + ' ' +
+              (t.description || '') + ' ' +
+              (t.note || '')
+            ).toLowerCase();
+
+            const isTopUp = combinedStr.includes('payment') || 
+                            combinedStr.includes('credit') || 
+                            combinedStr.includes('deposit') || 
+                            combinedStr.includes('top') ||
+                            combinedStr.includes('cash') ||
+                            combinedStr.includes('momo') ||
+                            combinedStr.includes('card') ||
+                            combinedStr.includes('mobile') ||
+                            combinedStr.includes('transfer') ||
+                            combinedStr.includes('fund') ||
+                            combinedStr.includes('admin');
+
+            if (isTopUp) {
+               rows.push({
+                id: rows.length + 1,
+                customerName,
+                regNumber, // Using worker reg number as ID
+                amount: String(t.amount ?? t.value ?? ''),
+                paymentMethod: t.payment_method || t.method || 'Wallet',
+                date: t.date || t.created_at || '',
+                status: 'Completed',
+                branch: branchId,
+                cashier: 'N/A',
+              });
+            }
+          });
+        }
+      });
+    }
+  }
+
   return rows;
 }

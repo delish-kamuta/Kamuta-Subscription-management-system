@@ -1,4 +1,4 @@
-import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode, ScanLine, Users, MessageSquare } from "lucide-react"
+import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode, ScanLine, Users, MessageSquare, Building2 } from "lucide-react"
 
 export const sidebarItems = [
   {
@@ -20,7 +20,7 @@ export const sidebarItems = [
     icon: ScanLine,
     label: "Scan QR Code",
     href: "/scan-qr",
-    roles: ["scanner", "admin"], // Allow scanner, admin
+    roles: ["scanner","cashier", "admin"], // Allow scanner, admin
   },
   {
     id: 4,
@@ -52,6 +52,13 @@ export const sidebarItems = [
   },
   {
     id: 8,
+    icon: Building2,
+    label: "Branches",
+    href: "/branches",
+    roles: ["admin"], // Only for admin
+  },
+  {
+    id: 9,
     icon: MessageSquare,
     label: "Feedback",
     href: "/feedback",

@@ -80,6 +80,10 @@ export function useSubscriptionFilters({ data, pageSize = 8 }: UseSubscriptionFi
       const withinRange = isWithinRange(itemKey, fromKey, toKey);
       
       return matchesSearch && matchesCustomerType && matchesSubscriptionType && withinRange;
+    }).sort((a, b) => {
+      const dateA = new Date(a.dateStarted).getTime();
+      const dateB = new Date(b.dateStarted).getTime();
+      return dateB - dateA;
     });
   }, [data, searchTerm, customerTypeFilter, subscriptionTypeFilter, startDate, endDate]);
 

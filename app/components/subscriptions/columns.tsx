@@ -1,4 +1,4 @@
-import { MoreHorizontal, Eye, Edit, Trash2, QrCode, X } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Trash2, QrCode, X, PlusCircle } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import {
@@ -7,6 +7,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
+  SheetFooter,
 } from "~/components/ui/sheet";
 import {
   DropdownMenu,
@@ -20,19 +21,54 @@ import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import React, { useState, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "~/store/hooks";
 import { generateQrOtpForUser } from "~/services/qr";
-import { cancelSubscription } from "~/store/subscriptionsSlice";
+import { cancelSubscription, updateSubscription } from "~/store/subscriptionsSlice";
+import { fetchBranchesThunk } from "~/store/branchesSlice";
+import { UserRole } from "~/types/auth";
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [topUpOpen, setTopUpOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
   const [editForm, setEditForm] = useState<SubscriptionItem>(item);
+  const [topUpForm, setTopUpForm] = useState({ days: 0, mealsToAdd: 0, paymentMethod: 'Cash', amountPaid: 0 });
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState('');
   const [qrData, setQrData] = useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
   const [qrImage, setQrImage] = useState<string>('');
+  const { token, user } = useAppSelector((state) => state.auth);
+  const isAdmin = user?.role === UserRole.ADMIN;
   const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
   const dispatch = useAppDispatch();
-  const { token } = useAppSelector((state) => state.auth);
+
+  // Fetch branches if needed
+  useEffect(() => {
+    if (topUpOpen && branches.length === 0) {
+      dispatch(fetchBranchesThunk());
+    }
+  }, [topUpOpen, branches.length, dispatch]);
+
+  // Auto-calculate meals and amount for Top Up
+  useEffect(() => {
+    if (topUpOpen && topUpForm.days > 0) {
+      // Try to find branch by name or ID
+      const branch = branches.find((b: any) => b.name === item.branch || b.id === item.branch);
+      
+      if (branch) {
+        const meals = topUpForm.days * 2;
+        let price = 0;
+        const type = item.subscriptionType || 'Regular';
+        
+        // Handle case-insensitive comparison if needed, though usually exact match
+        if (type === 'Regular') price = branch.regular_price || 0;
+        else if (type === 'VIP') price = branch.vip_price || 0;
+        else if (type === 'VVIP') price = branch.vvip_price || 0;
+        else price = branch.regular_price || 0; // Fallback
+
+        const amount = meals * price;
+        setTopUpForm(prev => ({ ...prev, mealsToAdd: meals, amountPaid: amount }));
+      }
+    }
+  }, [topUpForm.days, item.branch, item.subscriptionType, branches, topUpOpen]);
 
   // Generate QR-OTP when the sheet opens
   useEffect(() => {
@@ -85,6 +121,30 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
     // Example: dispatch(updateSubscription(editForm));
     setEditOpen(false);
   };
+const handleTopUpSave = async () => {
+    if (!item.subscriptionId) {
+      alert("Cannot top up: Missing subscription ID");
+      return;
+    }
+    try {
+      await dispatch(updateSubscription({
+        token,
+        id: item.subscriptionId,
+        payload: {
+          total_meals: topUpForm.days * 2,
+          payment: {
+            amount: topUpForm.amountPaid,
+            payment_method: topUpForm.paymentMethod.toLowerCase()
+          }
+        }
+      })).unwrap();
+      alert(`Top up successful for ${item.clientName}`);
+      setTopUpOpen(false);
+      setTopUpForm({ days: 0, mealsToAdd: 0, paymentMethod: 'Cash', amountPaid: 0 });
+    } catch (e) {
+      alert(`Failed to top up: ${e}`);
+    }
+  };
 
   return (
     <>
@@ -105,15 +165,23 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
             <QrCode className="mr-2 h-4 w-4" />
             Generate QR Code
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => { setEditForm(item); setEditOpen(true); }}>
-            <Edit className="mr-2 h-4 w-4" />
-            Edit
+          <DropdownMenuItem onClick={() => setTopUpOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Top Up
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleCancel} className="text-red-600">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Cancel Subscription
-          </DropdownMenuItem>
+          {isAdmin && (
+            <>
+              <DropdownMenuItem onClick={() => { setEditForm(item); setEditOpen(true); }}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleCancel} className="text-red-600">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Cancel Subscription
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -135,16 +203,30 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
                 <p className="text-base font-medium">{item.clientName}</p>
               </div>
               <div>
+                <label className="text-sm font-medium text-gray-500">Phone Number</label>
+                <p className="text-base font-mono">{item.tel || 'N/A'}</p>
+              </div>
+              <div>
                 <label className="text-sm font-medium text-gray-500">Subscription Type</label>
                 <p className="text-base">{item.subscriptionType}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Date Started</label>
-                <p className="text-base">{item.dateStarted}</p>
+                <p className="text-base">
+                  {item.dateStarted ? new Date(item.dateStarted).toLocaleString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  }) : 'N/A'}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Branch</label>
-                <p className="text-base">{item.branch}</p>
+                <p className="text-base">
+                  {branches.find((b: any) => b.id === item.branch)?.name || item.branch || 'N/A'}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Total Meals</label>
@@ -245,14 +327,62 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
         </SheetContent>
       </Sheet>
 
-      {/* Generate QR Sheet */}
-      <Sheet open={qrOpen} onOpenChange={setQrOpen}>
+      {/* Top Up Sheet */}
+      <Sheet open={topUpOpen} onOpenChange={setTopUpOpen}>
         <SheetContent className="overflow-y-auto bg-white p-6">
           <SheetHeader>
+            <SheetTitle>Top Up Subscription</SheetTitle>
+            <SheetDescription>Add meals and record payment for {item.clientName}</SheetDescription>
+          </SheetHeader>
+          <div className="mt-6 space-y-4">
+            <div>
+              <label className="text-sm font-medium">Days</label>
+              <Input
+                type="number"
+                min={1}
+                value={topUpForm.days}
+                onChange={(e) => setTopUpForm({ ...topUpForm, days: parseInt(e.target.value) || 0 })}
+                placeholder="Enter number of days"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Amount to Pay (Auto-calculated) *</label>
+              <Input
+                type="number"
+                min={0}
+                value={topUpForm.amountPaid}
+                readOnly
+                className="bg-gray-100"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Payment Method</label>
+              <select
+                value={topUpForm.paymentMethod}
+                onChange={(e) => setTopUpForm({ ...topUpForm, paymentMethod: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option value='cash'>Cash</option>
+                <option value='momo'>Mobile Money</option>
+              </select>
+            </div>
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleTopUpSave} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">Confirm Top Up</Button>
+              <Button onClick={() => setTopUpOpen(false)} variant="outline" className="flex-1">Cancel</Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Generate QR Sheet */}
+      <Sheet open={qrOpen} onOpenChange={setQrOpen}>
+        <SheetContent className="flex flex-col h-full p-0 bg-white">
+          <SheetHeader className="p-6 border-b">
             <SheetTitle>QR-OTP</SheetTitle>
             <SheetDescription>Temporary QR for {item.clientName}</SheetDescription>
           </SheetHeader>
-          <div className="mt-6 space-y-6">
+          
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Client Info */}
             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between">
@@ -294,9 +424,11 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
                 <p className="text-xs text-gray-500">Use this code to generate a scannable QR or print it. It expires automatically.</p>
               </div>
             )}
+          </div>
 
-            {/* Actions */}
-            <div className="flex gap-2">
+          {/* Actions */}
+          <SheetFooter className="p-6 border-t bg-gray-50">
+            <div className="flex gap-2 w-full">
               <Button 
                 onClick={async () => {
                   try {
@@ -321,6 +453,77 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
               >
                 Regenerate
               </Button>
+              <Button
+                disabled={!qrImage}
+                onClick={() => {
+                  if (!qrImage) return;
+                  const printWindow = window.open('', '_blank');
+                  if (printWindow) {
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>Print QR Code</title>
+                          <style>
+                            @page { margin: 0; size: auto; }
+                            body { 
+                              width: 58mm; 
+                              margin: 0 auto; 
+                              padding: 5px; 
+                              font-family: monospace; 
+                              text-align: center; 
+                            }
+                            .container {
+                              display: flex;
+                              flex-direction: column;
+                              align-items: center;
+                              width: 100%;
+                            }
+                            img { 
+                              width: 100%; 
+                              max-width: 200px;
+                              height: auto; 
+                              display: block;
+                              margin: 5px 0;
+                            }
+                            .name { 
+                              font-size: 14px; 
+                              font-weight: bold; 
+                              margin-bottom: 5px; 
+                              word-wrap: break-word;
+                            }
+                            .info { 
+                              margin-top: 5px; 
+                              border-top: 1px dashed #000; 
+                              padding-top: 5px; 
+                              width: 100%;
+                            }
+                            .meta { 
+                              font-size: 12px; 
+                              color: #000; 
+                              margin: 2px 0; 
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          <div class="container">
+                            <img src="${qrImage}" />
+                            <div class="info">
+                              <div class="meta">Expires: ${qrData?.expires_in_seconds}s</div>
+                            </div>
+                          </div>
+                          <script>
+                            window.onload = function() { window.print(); window.close(); }
+                          </script>
+                        </body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                  }
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Print QR
+              </Button>
               <Button 
                 onClick={() => setQrOpen(false)}
                 className="flex-1"
@@ -328,7 +531,7 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
                 Close
               </Button>
             </div>
-          </div>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     </>

@@ -128,8 +128,12 @@ const ScanQR = () => {
           handleStopScan();
         },
         (errorMessage) => {
-          // Show scan error to help debug camera/decoding issues
-          setScanError(`Decoder error: ${String(errorMessage)}`)
+          // Ignore standard scanning errors (no QR found in frame)
+          // Only report critical errors if needed
+          const msg = String(errorMessage);
+          if (!msg.includes("NotFoundException") && !msg.includes("No MultiFormat Readers")) {
+             console.warn("QR Scan Error:", msg);
+          }
         }
       );
 
@@ -190,7 +194,23 @@ const ScanQR = () => {
               {/* Scanner Display */}
               <div className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
                 {isScanning ? (
-                  <div id={scannerElementId} className="w-full h-full"></div>
+                  <>
+                    <div id={scannerElementId} className="w-full h-full"></div>
+                    <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
+                      <div className="w-48 h-48 border-2 border-white/30 rounded-lg relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-0.5 bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
+                      </div>
+                      <p className="mt-4 text-white/80 text-sm font-medium animate-pulse">Scanning...</p>
+                    </div>
+                    <style>{`
+                      @keyframes scan {
+                        0% { top: 0; opacity: 0; }
+                        10% { opacity: 1; }
+                        90% { opacity: 1; }
+                        100% { top: 100%; opacity: 0; }
+                      }
+                    `}</style>
+                  </>
                 ) : (
                   <div className="text-center text-gray-400 space-y-3">
                     <Camera className="w-16 h-16 mx-auto opacity-50" />

@@ -10,6 +10,7 @@ import PaymentModals from "~/components/payments/PaymentModals";
 import PaymentTable from "~/components/payments/PaymentTable";
 import { useAppDispatch, useAppSelector } from "~/store/hooks";
 import { fetchPaymentsThunk } from "~/store/paymentsSlice";
+import { fetchBranchesThunk } from "~/store/branchesSlice";
 import { useEffect } from "react";
 
 interface Payment {
@@ -37,7 +38,10 @@ const Payments = () => {
     if (!paymentsState?.loaded && !paymentsState?.loading) {
       dispatch(fetchPaymentsThunk());
     }
-  }, [dispatch, paymentsState?.loaded, paymentsState?.loading]);
+    if (!branchesState?.loaded && !branchesState?.loading) {
+      dispatch(fetchBranchesThunk());
+    }
+  }, [dispatch, paymentsState?.loaded, paymentsState?.loading, branchesState?.loaded, branchesState?.loading]);
   const [currentPage, setCurrentPage] = useState(1);
   const [branchFilter, setBranchFilter] = useState("All");
   const [cashierFilter, setCashierFilter] = useState("All");
@@ -133,6 +137,10 @@ const Payments = () => {
     const toKey = toDateKey(endDate);
     const withinRange = isWithinRange(itemKey, fromKey, toKey);
     return matchesSearch && matchesBranch && matchesCashier && withinRange;
+  }).sort((a, b) => {
+    const dateA = new Date(a.paymentDate).getTime();
+    const dateB = new Date(b.paymentDate).getTime();
+    return dateB - dateA;
   });
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);

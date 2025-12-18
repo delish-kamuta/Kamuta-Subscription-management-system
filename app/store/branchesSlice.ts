@@ -4,6 +4,7 @@ import { getToken } from "~/lib/api";
 export interface BranchItem { 
   id: string; 
   name?: string;
+  campus?: string;
   regular_price?: number;
   vip_price?: number;
   vvip_price?: number;
@@ -45,6 +46,7 @@ export const fetchBranchesThunk = createAsyncThunk(
       return list.map((b: any) => ({ 
         id: String(b.id), 
         name: String(b.name || ""),
+        campus: String(b.campus || ""),
         regular_price: Number(b.regular_price) || 0,
         vip_price: Number(b.vip_price) || 0,
         vvip_price: Number(b.vvip_price) || 0
@@ -58,7 +60,20 @@ export const fetchBranchesThunk = createAsyncThunk(
 const branchesSlice = createSlice({
   name: "branches",
   initialState,
-  reducers: {},
+  reducers: {
+    addBranchOptimistic(state, action: { payload: BranchItem }) {
+      state.items.unshift(action.payload);
+    },
+    updateBranchOptimistic(state, action: { payload: BranchItem }) {
+      const index = state.items.findIndex((b) => b.id === action.payload.id);
+      if (index !== -1) {
+        state.items[index] = { ...state.items[index], ...action.payload };
+      }
+    },
+    removeBranchOptimistic(state, action: { payload: string }) {
+      state.items = state.items.filter((b) => b.id !== action.payload);
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchBranchesThunk.pending, (state) => {
@@ -78,4 +93,5 @@ const branchesSlice = createSlice({
   },
 });
 
+export const { addBranchOptimistic, updateBranchOptimistic, removeBranchOptimistic } = branchesSlice.actions;
 export default branchesSlice.reducer;

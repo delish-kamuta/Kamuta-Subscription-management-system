@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Button } from "~/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "~/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "~/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,10 +58,7 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
               : "";
             const prepaid = Number((item as any).prepaidBalance ?? 0);
             const credit = Number((item as any).creditBalance ?? 0);
-            const baseWallet = Number((item as any).walletBalance ?? 0);
-            const wallet = Number.isFinite(baseWallet) && baseWallet !== 0
-              ? baseWallet
-              : (prepaid - credit);
+            const wallet = prepaid - credit;
             const mealsThisMonth = Number((item as any).mealsThisMonth ?? 0);
 
             return (
@@ -69,7 +66,9 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                 <TableCell className="font-mono text-xs">{item.tel}</TableCell>
                 <TableCell className="font-medium text-black">{item.clientName}</TableCell>
                 <TableCell className="hidden md:table-cell text-sm">{item.branch}</TableCell>
-                <TableCell className="font-semibold">{formatCurrency(wallet)}</TableCell>
+                <TableCell className={`font-semibold ${wallet < 0 ? "text-red-600" : ""}`}>
+                  {formatCurrency(wallet)}
+                </TableCell>
                 <TableCell className="font-semibold">{mealsThisMonth}</TableCell>
                 <TableCell className="hidden md:table-cell text-sm">{lastMealFmt}</TableCell>
                 <TableCell className="hidden md:table-cell text-sm">{lastTopUpFmt}</TableCell>
@@ -116,12 +115,13 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
       </Table>
         {items.map((item) => (
           <Sheet key={`qr-${item.id}`} open={qrOpenId === String(item.id)} onOpenChange={(o) => !o && setQrOpenId(null)}>
-            <SheetContent className="overflow-y-auto bg-white p-6">
-              <SheetHeader>
+            <SheetContent className="flex flex-col h-full p-0 bg-white">
+              <SheetHeader className="p-6 border-b">
                 <SheetTitle>QR-OTP</SheetTitle>
                 <SheetDescription>Temporary QR for {item.clientName}</SheetDescription>
               </SheetHeader>
-              <div className="mt-6 space-y-6">
+              
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Registration Number:</span>
@@ -140,7 +140,7 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                 )}
                 {qrData && (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between bg-white border rounded p-4">
+                    <div className="flex flex-col items-center justify-between bg-white border rounded p-4">
                       <div>
                         <p className="text-sm"><span className="text-gray-500">User:</span> {qrData.user_name}</p>
                         <p className="text-sm"><span className="text-gray-500">Expires:</span> {qrData.expires_in_seconds}s</p>
@@ -153,9 +153,13 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                         </div>
                       )}
                     </div>
+                    <p className="text-xs text-gray-500">Use this code to generate a scannable QR or print it. It expires automatically.</p>
                   </div>
                 )}
-                <div className="flex gap-2">
+              </div>
+
+              <SheetFooter className="p-6 border-t bg-gray-50">
+                <div className="flex gap-2 w-full">
                   <Button 
                     onClick={async () => {
                       try {
@@ -181,9 +185,80 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                   >
                     Regenerate
                   </Button>
+                  <Button
+                    disabled={!qrImage}
+                    onClick={() => {
+                      if (!qrImage) return;
+                      const printWindow = window.open('', '_blank');
+                      if (printWindow) {
+                        printWindow.document.write(`
+                          <html>
+                            <head>
+                              <title>Print QR Code</title>
+                              <style>
+                                @page { margin: 0; size: auto; }
+                                body { 
+                                  width: 58mm; 
+                                  margin: 0 auto; 
+                                  padding: 5px; 
+                                  font-family: monospace; 
+                                  text-align: center; 
+                                }
+                                .container {
+                                  display: flex;
+                                  flex-direction: column;
+                                  align-items: center;
+                                  width: 100%;
+                                }
+                                img { 
+                                  width: 100%; 
+                                  max-width: 200px;
+                                  height: auto; 
+                                  display: block;
+                                  margin: 5px 0;
+                                }
+                                .name { 
+                                  font-size: 14px; 
+                                  font-weight: bold; 
+                                  margin-bottom: 5px; 
+                                  word-wrap: break-word;
+                                }
+                                .info { 
+                                  margin-top: 5px; 
+                                  border-top: 1px dashed #000; 
+                                  padding-top: 5px; 
+                                  width: 100%;
+                                }
+                                .meta { 
+                                  font-size: 12px; 
+                                  color: #000; 
+                                  margin: 2px 0; 
+                                }
+                              </style>
+                            </head>
+                            <body>
+                              <div class="container">
+                                <img src="${qrImage}" />
+                                <div class="info">
+                                  <div class="meta">Expires: ${qrData?.expires_in_seconds}s</div>
+                                </div>
+                              </div>
+                              <script>
+                                window.onload = function() { window.print(); window.close(); }
+                              </script>
+                            </body>
+                          </html>
+                        `);
+                        printWindow.document.close();
+                      }
+                    }}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Print QR
+                  </Button>
                   <Button onClick={() => setQrOpenId(null)} className="flex-1">Close</Button>
                 </div>
-              </div>
+              </SheetFooter>
             </SheetContent>
           </Sheet>
         ))}
