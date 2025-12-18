@@ -7,6 +7,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
+  SheetFooter,
 } from "~/components/ui/sheet";
 import {
   DropdownMenu,
@@ -375,12 +376,13 @@ const handleTopUpSave = async () => {
 
       {/* Generate QR Sheet */}
       <Sheet open={qrOpen} onOpenChange={setQrOpen}>
-        <SheetContent className="overflow-y-auto bg-white p-6">
-          <SheetHeader>
+        <SheetContent className="flex flex-col h-full p-0 bg-white">
+          <SheetHeader className="p-6 border-b">
             <SheetTitle>QR-OTP</SheetTitle>
             <SheetDescription>Temporary QR for {item.clientName}</SheetDescription>
           </SheetHeader>
-          <div className="mt-6 space-y-6">
+          
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Client Info */}
             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between">
@@ -422,9 +424,11 @@ const handleTopUpSave = async () => {
                 <p className="text-xs text-gray-500">Use this code to generate a scannable QR or print it. It expires automatically.</p>
               </div>
             )}
+          </div>
 
-            {/* Actions */}
-            <div className="flex gap-2">
+          {/* Actions */}
+          <SheetFooter className="p-6 border-t bg-gray-50">
+            <div className="flex gap-2 w-full">
               <Button 
                 onClick={async () => {
                   try {
@@ -449,6 +453,42 @@ const handleTopUpSave = async () => {
               >
                 Regenerate
               </Button>
+              <Button
+                disabled={!qrImage}
+                onClick={() => {
+                  if (!qrImage) return;
+                  const printWindow = window.open('', '_blank');
+                  if (printWindow) {
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>Print QR Code</title>
+                          <style>
+                            body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }
+                            img { width: 300px; height: 300px; }
+                            .info { margin-top: 20px; text-align: center; }
+                            .name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+                            .meta { font-size: 16px; color: #555; }
+                          </style>
+                        </head>
+                        <body>
+                          <img src="${qrImage}" />
+                          <div class="info">
+                            <div class="meta">Expires in: ${qrData?.expires_in_seconds}s</div>
+                          </div>
+                          <script>
+                            window.onload = function() { window.print(); window.close(); }
+                          </script>
+                        </body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                  }
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Print QR
+              </Button>
               <Button 
                 onClick={() => setQrOpen(false)}
                 className="flex-1"
@@ -456,7 +496,7 @@ const handleTopUpSave = async () => {
                 Close
               </Button>
             </div>
-          </div>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     </>
