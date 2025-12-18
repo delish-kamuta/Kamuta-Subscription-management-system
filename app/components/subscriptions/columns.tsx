@@ -207,11 +207,21 @@ const handleTopUpSave = async () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Date Started</label>
-                <p className="text-base">{item.dateStarted}</p>
+                <p className="text-base">
+                  {item.dateStarted ? new Date(item.dateStarted).toLocaleString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  }) : 'N/A'}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Branch</label>
-                <p className="text-base">{item.branch}</p>
+                <p className="text-base">
+                  {branches.find((b: any) => b.id === item.branch)?.name || item.branch || 'N/A'}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Total Meals</label>
