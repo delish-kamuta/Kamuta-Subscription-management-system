@@ -49,11 +49,15 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   // Auto-calculate meals and amount for Top Up
   useEffect(() => {
     if (topUpOpen && topUpForm.days > 0) {
-      const branch = branches.find((b: any) => b.name === item.branch);
+      // Try to find branch by name or ID
+      const branch = branches.find((b: any) => b.name === item.branch || b.id === item.branch);
+      
       if (branch) {
         const meals = topUpForm.days * 2;
         let price = 0;
         const type = item.subscriptionType || 'Regular';
+        
+        // Handle case-insensitive comparison if needed, though usually exact match
         if (type === 'Regular') price = branch.regular_price || 0;
         else if (type === 'VIP') price = branch.vip_price || 0;
         else if (type === 'VVIP') price = branch.vvip_price || 0;
@@ -327,12 +331,13 @@ const handleTopUpSave = async () => {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Amount Paid</label>
+              <label className="text-sm font-medium">Amount to Pay (Auto-calculated) *</label>
               <Input
                 type="number"
                 min={0}
                 value={topUpForm.amountPaid}
-                onChange={(e) => setTopUpForm({ ...topUpForm, amountPaid: parseInt(e.target.value) || 0 })}
+                readOnly
+                className="bg-gray-100"
               />
             </div>
             <div>
@@ -342,9 +347,8 @@ const handleTopUpSave = async () => {
                 onChange={(e) => setTopUpForm({ ...topUpForm, paymentMethod: e.target.value })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               >
-                <option>Cash</option>
-                <option>Mobile Money</option>
-                <option>Bank Transfer</option>
+                <option value='cash'>Cash</option>
+                <option value='momo'>Mobile Money</option>
               </select>
             </div>
             <div className="flex gap-2 pt-4">
