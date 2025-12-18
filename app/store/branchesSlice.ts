@@ -58,7 +58,20 @@ export const fetchBranchesThunk = createAsyncThunk(
 const branchesSlice = createSlice({
   name: "branches",
   initialState,
-  reducers: {},
+  reducers: {
+    addBranchOptimistic(state, action: { payload: BranchItem }) {
+      state.items.unshift(action.payload);
+    },
+    updateBranchOptimistic(state, action: { payload: BranchItem }) {
+      const index = state.items.findIndex((b) => b.id === action.payload.id);
+      if (index !== -1) {
+        state.items[index] = { ...state.items[index], ...action.payload };
+      }
+    },
+    removeBranchOptimistic(state, action: { payload: string }) {
+      state.items = state.items.filter((b) => b.id !== action.payload);
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchBranchesThunk.pending, (state) => {
@@ -78,4 +91,5 @@ const branchesSlice = createSlice({
   },
 });
 
+export const { addBranchOptimistic, updateBranchOptimistic, removeBranchOptimistic } = branchesSlice.actions;
 export default branchesSlice.reducer;

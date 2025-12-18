@@ -17,15 +17,17 @@ type Props = {
   }
   setBranchForm: (data: any) => void
   onSubmit: (e: React.FormEvent) => void
+  title?: string
+  submitLabel?: string
 }
 
-export function AddBranchSheet({ open, onOpenChange, error, successMessage, isLoading, branchForm, setBranchForm, onSubmit }: Props) {
+export function AddBranchSheet({ open, onOpenChange, error, successMessage, isLoading, branchForm, setBranchForm, onSubmit, title = "Add New Branch", submitLabel = "Add Branch" }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto bg-white p-6">
         <SheetHeader>
-          <SheetTitle>Add New Branch</SheetTitle>
-          <SheetDescription>Provide branch details to create a new campus branch</SheetDescription>
+          <SheetTitle>{title}</SheetTitle>
+          <SheetDescription>Provide branch details</SheetDescription>
         </SheetHeader>
 
         <form onSubmit={onSubmit} className="space-y-4 mt-6">
@@ -59,7 +61,7 @@ export function AddBranchSheet({ open, onOpenChange, error, successMessage, isLo
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={isLoading}>Cancel</Button>
-            <Button type="submit" className="flex-1 bg-primary-100 hover:bg-primary-100/90" disabled={isLoading}>{isLoading ? "Adding..." : "Add Branch"}</Button>
+            <Button type="submit" className="flex-1 bg-primary-100 hover:bg-primary-100/90" disabled={isLoading}>{isLoading ? "Saving..." : submitLabel}</Button>
           </div>
         </form>
       </SheetContent>
