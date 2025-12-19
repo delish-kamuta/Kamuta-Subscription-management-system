@@ -177,17 +177,19 @@ const Home = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-dark-300 text-white pt-20 pb-10">
+      <footer className="bg-white border-t border-gray-200 pt-20 pb-10">
         <div className="container mx-auto px-6">
           <div className="grid md:grid-cols-4 gap-12 mb-16">
             <div className="col-span-1 md:col-span-1">
               <div className="flex items-center gap-2 mb-6">
-                <div className="bg-primary-500 p-1.5 rounded-lg">
-                  <Utensils className="w-6 h-6 text-white" />
+                <div className="bg-primary-50 p-1.5 rounded-lg">
+                  <Utensils className="w-6 h-6 text-primary-500" />
                 </div>
-                <span className="text-xl font-bold">RestaurantSys</span>
+                <span className="text-xl font-bold text-dark-300">
+                  RestaurantSys
+                </span>
               </div>
-              <p className="text-gray-400 mb-6">
+              <p className="text-gray-500 mb-6">
                 Making campus dining smarter, faster, and more enjoyable for
                 everyone.
               </p>
@@ -196,7 +198,7 @@ const Home = () => {
                   <a
                     key={i}
                     href="#"
-                    className="w-10 h-10 rounded-full bg-dark-400 flex items-center justify-center hover:bg-primary-500 transition-colors"
+                    className="w-10 h-10 rounded-full bg-light-200 flex items-center justify-center text-gray-500 hover:bg-primary-500 hover:text-white transition-all duration-300"
                   >
                     <Icon className="w-5 h-5" />
                   </a>
@@ -205,8 +207,10 @@ const Home = () => {
             </div>
 
             <div>
-              <h4 className="font-bold text-lg mb-6">Quick Links</h4>
-              <ul className="space-y-4 text-gray-400">
+              <h4 className="font-bold text-lg mb-6 text-dark-300">
+                Quick Links
+              </h4>
+              <ul className="space-y-4 text-gray-500">
                 <li>
                   <Link
                     to="/"
@@ -243,8 +247,8 @@ const Home = () => {
             </div>
 
             <div>
-              <h4 className="font-bold text-lg mb-6">Support</h4>
-              <ul className="space-y-4 text-gray-400">
+              <h4 className="font-bold text-lg mb-6 text-dark-300">Support</h4>
+              <ul className="space-y-4 text-gray-500">
                 <li>
                   <a
                     href="#"
@@ -281,8 +285,8 @@ const Home = () => {
             </div>
 
             <div>
-              <h4 className="font-bold text-lg mb-6">Contact</h4>
-              <ul className="space-y-4 text-gray-400">
+              <h4 className="font-bold text-lg mb-6 text-dark-300">Contact</h4>
+              <ul className="space-y-4 text-gray-500">
                 <li className="flex items-start gap-3">
                   <span className="text-primary-500">📍</span>
                   Kigali, Rwanda
@@ -299,7 +303,7 @@ const Home = () => {
             </div>
           </div>
 
-          <div className="border-t border-dark-400 pt-8 text-center text-gray-500 text-sm">
+          <div className="border-t border-gray-200 pt-8 text-center text-gray-400 text-sm">
             <p>© 2025 School Restaurant System. All rights reserved.</p>
           </div>
         </div>
