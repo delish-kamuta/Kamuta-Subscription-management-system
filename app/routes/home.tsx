@@ -10,6 +10,9 @@ import {
   Smartphone,
   Shield,
   Utensils,
+  MapPin,
+  Phone,
+  Mail,
 } from "lucide-react";
 
 const Home = () => {
@@ -288,15 +291,15 @@ const Home = () => {
               <h4 className="font-bold text-lg mb-6 text-dark-300">Contact</h4>
               <ul className="space-y-4 text-gray-500">
                 <li className="flex items-start gap-3">
-                  <span className="text-primary-500">📍</span>
+                  <MapPin className="w-5 h-5 text-primary-500 shrink-0" />
                   Kigali, Rwanda
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-primary-500">📞</span>
+                  <Phone className="w-5 h-5 text-primary-500 shrink-0" />
                   +250 791 268 906
                 </li>
                 <li className="flex items-center gap-3">
-                  <span className="text-primary-500">✉️</span>
+                  <Mail className="w-5 h-5 text-primary-500 shrink-0" />
                   michelmunezero25@gmail.com
                 </li>
               </ul>
