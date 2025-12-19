@@ -9,41 +9,35 @@ import {
   QrCode,
   Smartphone,
   Shield,
+  Utensils,
 } from "lucide-react";
 
 const Home = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+    <div className="min-h-screen bg-light-200 font-inter">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 border-b border-gray-100">
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-200">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img
-                src="/assets/images/Logo For our system.png"
-                alt="Restaurant Logo"
-                className="h-14 w-auto object-contain rounded-xl shadow-sm"
-              />
-              <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">
-                Restaurant
+              <div className="bg-primary-50 p-2 rounded-xl">
+                <Utensils className="w-8 h-8 text-primary-500" />
+              </div>
+              <span className="text-2xl font-bold text-dark-300">
+                Restaurant<span className="text-primary-500">System</span>
               </span>
             </div>
 
-            <div className="flex gap-3">
-              <Link to="/auth/login">
-                <Button
-                  variant="default"
-                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white shadow-md hover:shadow-lg transition-all duration-300"
-                >
-                  Student Login
-                </Button>
+            <div className="flex gap-4 items-center">
+              <Link
+                to="/auth/login"
+                className="hidden md:block text-gray-500 hover:text-primary-500 font-medium transition-colors"
+              >
+                Student Login
               </Link>
               <Link to="/auth/login">
-                <Button
-                  variant="default"
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-300"
-                >
-                  Admin Login
+                <Button className="bg-primary-500 hover:bg-primary-100 text-white shadow-lg shadow-primary-500/20 transition-all duration-300 rounded-full px-6">
+                  Admin Portal
                 </Button>
               </Link>
             </div>
@@ -52,269 +46,267 @@ const Home = () => {
       </header>
 
       {/* Hero Section */}
-      <main className="container mx-auto px-6 py-12">
-        <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 rounded-3xl p-12 md:p-16 text-white shadow-2xl relative overflow-hidden">
-          {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-600/30 rounded-full -ml-48 -mb-48 blur-3xl"></div>
+      <main>
+        <section className="relative pt-20 pb-32 overflow-hidden">
+          <div className="container mx-auto px-6 relative z-10">
+            <div className="flex flex-col lg:flex-row items-center gap-12">
+              <div className="lg:w-1/2 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 text-primary-500 font-medium text-sm mb-6">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-500 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary-500"></span>
+                  </span>
+                  Smart Dining Experience
+                </div>
+                <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight text-dark-300">
+                  Delicious Meals, <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-100">
+                    Digital Payments
+                  </span>
+                </h1>
+                <p className="text-xl text-gray-500 mb-10 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                  Skip the line and enjoy your food. The smartest way to manage
+                  meal plans, payments, and dining at your campus.
+                </p>
 
-          <div className="max-w-4xl mx-auto text-center relative z-10">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              Welcome to School Restaurant
-            </h1>
-
-            <p className="text-xl md:text-2xl mb-10 leading-relaxed text-blue-50 max-w-2xl mx-auto">
-              Experience the future of campus dining with our digital payment
-              system. Quick, secure, and convenient meals for every student.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
-              <Link to="/auth/signup">
-                <Button
-                  size="lg"
-                  className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold px-10 py-6 text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
-                >
-                  Get Started
-                </Button>
-              </Link>
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-white hover:bg-gray-50 text-blue-600 font-semibold px-10 py-6 text-lg border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
-              >
-                Learn More
-              </Button>
-            </div>
-
-            {/* Social Media Section */}
-            <div className="mb-12">
-              <p className="text-sm font-semibold mb-5 tracking-wide uppercase">
-                Connect With Us
-              </p>
-              <div className="flex gap-3 justify-center">
-                <a
-                  href="#"
-                  className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                  aria-label="YouTube"
-                >
-                  <Youtube className="w-5 h-5" />
-                </a>
-                <a
-                  href="#"
-                  className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                  aria-label="Facebook"
-                >
-                  <Facebook className="w-5 h-5" />
-                </a>
-                <a
-                  href="#"
-                  className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                  aria-label="Instagram"
-                >
-                  <Instagram className="w-5 h-5" />
-                </a>
-                <a
-                  href="#"
-                  className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                  aria-label="LinkedIn"
-                >
-                  <Linkedin className="w-5 h-5" />
-                </a>
-                <a
-                  href="#"
-                  className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                  aria-label="Twitter"
-                >
-                  <Twitter className="w-5 h-5" />
-                </a>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                  <Link to="/auth/signup">
+                    <Button
+                      size="lg"
+                      className="bg-primary-500 hover:bg-primary-100 text-white px-8 py-6 text-lg rounded-full shadow-xl shadow-primary-500/20 transition-all hover:scale-105"
+                    >
+                      Get Started Now
+                    </Button>
+                  </Link>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-2 border-gray-200 hover:border-primary-500 hover:bg-primary-50 text-gray-700 hover:text-primary-500 px-8 py-6 text-lg rounded-full transition-all"
+                  >
+                    View Menu
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            {/* Features Cards */}
-            <div className="bg-white rounded-3xl p-10 text-gray-800 shadow-2xl">
-              <h2 className="text-3xl font-bold mb-8 text-gray-900">
-                Why Choose Us?
-              </h2>
-              <div className="grid md:grid-cols-3 gap-8">
-                {/* QR Code Payments */}
-                <div className="text-center group hover:transform hover:scale-105 transition-all duration-300">
-                  <div className="w-20 h-20 mx-auto mb-5 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center group-hover:shadow-lg transition-all duration-300">
-                    <QrCode className="w-10 h-10 text-blue-600" />
-                  </div>
-                  <h3 className="font-bold text-xl mb-3 text-gray-900">
-                    QR Code Payments
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    Secure and fast payment system using QR codes. No more cash
-                    or card hassles during meal times.
-                  </p>
-                </div>
-
-                {/* Mobile Friendly */}
-                <div className="text-center group hover:transform hover:scale-105 transition-all duration-300">
-                  <div className="w-20 h-20 mx-auto mb-5 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center group-hover:shadow-lg transition-all duration-300">
-                    <Smartphone className="w-10 h-10 text-green-600" />
-                  </div>
-                  <h3 className="font-bold text-xl mb-3 text-gray-900">
-                    Mobile Friendly
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    Access your account, check balance, and make payments right
-                    from your smartphone.
-                  </p>
-                </div>
-
-                {/* Secure & Protected */}
-                <div className="text-center group hover:transform hover:scale-105 transition-all duration-300">
-                  <div className="w-20 h-20 mx-auto mb-5 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center group-hover:shadow-lg transition-all duration-300">
-                    <Shield className="w-10 h-10 text-purple-600" />
-                  </div>
-                  <h3 className="font-bold text-xl mb-3 text-gray-900">
-                    Secure & Protected
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    Your payments and personal information are protected with
-                    enterprise-grade security.
-                  </p>
-                </div>
+              <div className="lg:w-1/2 relative">
+                <div className="absolute inset-0 bg-gradient-to-tr from-primary-500/20 to-transparent rounded-full blur-3xl transform translate-x-10 translate-y-10"></div>
+                <img
+                  src="/assets/images/hero-img.png"
+                  alt="Delicious Food"
+                  className="relative z-10 w-full max-w-lg mx-auto transform hover:scale-105 transition-transform duration-500 drop-shadow-2xl"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop";
+                  }}
+                />
               </div>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="py-24 bg-white">
+          <div className="container mx-auto px-6">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-dark-300">
+                Why Choose Our System?
+              </h2>
+              <p className="text-gray-500 text-lg">
+                We provide a seamless dining experience with top-notch security
+                and convenience.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                {
+                  icon: <QrCode className="w-8 h-8 text-white" />,
+                  title: "QR Code Payments",
+                  desc: "Scan and pay in seconds. No cash needed, just your smartphone.",
+                  color: "bg-primary-500",
+                },
+                {
+                  icon: <Smartphone className="w-8 h-8 text-white" />,
+                  title: "Mobile First",
+                  desc: "Manage your account and track expenses on the go.",
+                  color: "bg-navy-500",
+                },
+                {
+                  icon: <Shield className="w-8 h-8 text-white" />,
+                  title: "Secure Transactions",
+                  desc: "Bank-grade security for all your payments and data.",
+                  color: "bg-success-500",
+                },
+              ].map((feature, idx) => (
+                <div
+                  key={idx}
+                  className="group p-8 rounded-3xl bg-light-200 hover:bg-white border border-transparent hover:border-gray-100 hover:shadow-2xl hover:shadow-primary-500/10 transition-all duration-300"
+                >
+                  <div
+                    className={`w-16 h-16 ${feature.color} rounded-2xl flex items-center justify-center mb-6 shadow-lg transform group-hover:rotate-6 transition-transform`}
+                  >
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-dark-300">
+                    {feature.title}
+                  </h3>
+                  <p className="text-gray-500 leading-relaxed">
+                    {feature.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-20">
+          <div className="container mx-auto px-6">
+            <div className="bg-primary-500 rounded-3xl p-12 md:p-20 text-center relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-full bg-[url('/assets/images/pattern.png')] opacity-10"></div>
+              <div className="relative z-10 max-w-3xl mx-auto">
+                <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+                  Ready to upgrade your dining experience?
+                </h2>
+                <p className="text-primary-50 text-lg mb-10">
+                  Join thousands of students enjoying hassle-free meals today.
+                </p>
+                <Link to="/auth/signup">
+                  <Button className="bg-white text-primary-500 hover:bg-gray-100 px-10 py-6 text-lg rounded-full font-bold shadow-xl transition-transform hover:scale-105">
+                    Create Free Account
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white py-16 mt-20">
+      <footer className="bg-dark-300 text-white pt-20 pb-10">
         <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-10 mb-12">
-            {/* Our Services */}
-            <div>
-              <h4 className="font-bold text-xl mb-5 text-white">
-                Our Services
-              </h4>
-              <ul className="space-y-3 text-gray-300">
-                <li className="hover:text-white transition-colors cursor-pointer flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                  Digital Meal Payments
-                </li>
-                <li className="hover:text-white transition-colors cursor-pointer flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                  Subscription Management
-                </li>
-                <li className="hover:text-white transition-colors cursor-pointer flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                  Balance Tracking
-                </li>
-                <li className="hover:text-white transition-colors cursor-pointer flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                  Meal Planning
-                </li>
-              </ul>
-            </div>
-
-            {/* Our Location */}
-            <div>
-              <h4 className="font-bold text-xl mb-5 text-white">
-                Our Location
-              </h4>
-              <div className="text-gray-300 space-y-3">
-                <p className="flex items-start gap-3 hover:text-white transition-colors">
-                  <span className="text-red-500 text-xl">📍</span>
-                  <span>Kigali, Rwanda</span>
-                </p>
-                <div className="space-y-2 pl-8 text-sm">
-                  <p className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                    Mon-Fri: 7:00 AM - 8:00 PM
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
-                    Sat-Sun: 8:00 AM - 6:00 PM
-                  </p>
+          <div className="grid md:grid-cols-4 gap-12 mb-16">
+            <div className="col-span-1 md:col-span-1">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="bg-primary-500 p-1.5 rounded-lg">
+                  <Utensils className="w-6 h-6 text-white" />
                 </div>
+                <span className="text-xl font-bold">RestaurantSys</span>
+              </div>
+              <p className="text-gray-400 mb-6">
+                Making campus dining smarter, faster, and more enjoyable for
+                everyone.
+              </p>
+              <div className="flex gap-4">
+                {[Facebook, Twitter, Instagram, Linkedin].map((Icon, i) => (
+                  <a
+                    key={i}
+                    href="#"
+                    className="w-10 h-10 rounded-full bg-dark-400 flex items-center justify-center hover:bg-primary-500 transition-colors"
+                  >
+                    <Icon className="w-5 h-5" />
+                  </a>
+                ))}
               </div>
             </div>
 
-            {/* Contact Us */}
             <div>
-              <h4 className="font-bold text-xl mb-5 text-white">Contact Us</h4>
-              <div className="text-gray-300 space-y-3">
-                <a
-                  href="tel:+250791268906"
-                  className="flex items-center gap-3 hover:text-white transition-colors group"
-                >
-                  <span className="text-xl group-hover:scale-110 transition-transform">
-                    📞
-                  </span>
-                  <span>+250 791 268 906</span>
-                </a>
-                <a
-                  href="mailto:michelmunezero25@gmail.com"
-                  className="flex items-center gap-3 hover:text-white transition-colors group break-all"
-                >
-                  <span className="text-xl group-hover:scale-110 transition-transform">
-                    ✉️
-                  </span>
-                  <span>michelmunezero25@gmail.com</span>
-                </a>
-                <p className="flex items-center gap-3 text-green-400">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                  Support: 24/7 Available
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Links */}
-            <div>
-              <h4 className="font-bold text-xl mb-5 text-white">Quick Links</h4>
-              <ul className="space-y-3 text-gray-300">
+              <h4 className="font-bold text-lg mb-6">Quick Links</h4>
+              <ul className="space-y-4 text-gray-400">
+                <li>
+                  <Link
+                    to="/"
+                    className="hover:text-primary-500 transition-colors"
+                  >
+                    Home
+                  </Link>
+                </li>
                 <li>
                   <Link
                     to="/auth/login"
-                    className="hover:text-white transition-colors flex items-center gap-2 group"
+                    className="hover:text-primary-500 transition-colors"
                   >
-                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:bg-white transition-colors"></span>
-                    Student Login
+                    Login
                   </Link>
                 </li>
                 <li>
                   <Link
                     to="/auth/signup"
-                    className="hover:text-white transition-colors flex items-center gap-2 group"
+                    className="hover:text-primary-500 transition-colors"
                   >
-                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:bg-white transition-colors"></span>
-                    Create Account
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/auth/login"
-                    className="hover:text-white transition-colors flex items-center gap-2 group"
-                  >
-                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:bg-white transition-colors"></span>
-                    Help Center
+                    Register
                   </Link>
                 </li>
                 <li>
                   <a
                     href="#"
-                    className="hover:text-white transition-colors flex items-center gap-2 group"
+                    className="hover:text-primary-500 transition-colors"
                   >
-                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full group-hover:bg-white transition-colors"></span>
+                    Menu
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-lg mb-6">Support</h4>
+              <ul className="space-y-4 text-gray-400">
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-primary-500 transition-colors"
+                  >
+                    Help Center
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-primary-500 transition-colors"
+                  >
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-primary-500 transition-colors"
+                  >
                     Privacy Policy
                   </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    className="hover:text-primary-500 transition-colors"
+                  >
+                    Contact Us
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-lg mb-6">Contact</h4>
+              <ul className="space-y-4 text-gray-400">
+                <li className="flex items-start gap-3">
+                  <span className="text-primary-500">📍</span>
+                  Kigali, Rwanda
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-primary-500">📞</span>
+                  +250 791 268 906
+                </li>
+                <li className="flex items-center gap-3">
+                  <span className="text-primary-500">✉️</span>
+                  michelmunezero25@gmail.com
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t border-gray-700 pt-8 text-center">
-            <p className="text-gray-400 text-sm">
-              © 2025 School Restaurant System. All rights reserved.
-            </p>
-            <p className="text-gray-500 text-xs mt-2">
-              Built with ❤️ for students by students
-            </p>
+          <div className="border-t border-dark-400 pt-8 text-center text-gray-500 text-sm">
+            <p>© 2025 School Restaurant System. All rights reserved.</p>
           </div>
         </div>
       </footer>
