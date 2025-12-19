@@ -29,15 +29,9 @@ const Home = () => {
             </div>
 
             <div className="flex gap-4 items-center">
-              <Link
-                to="/auth/login"
-                className="hidden md:block text-gray-500 hover:text-primary-500 font-medium transition-colors"
-              >
-                Student Login
-              </Link>
               <Link to="/auth/login">
                 <Button className="bg-primary-500 hover:bg-primary-100 text-white shadow-lg shadow-primary-500/20 transition-all duration-300 rounded-full px-6">
-                  Admin Portal
+                  Login
                 </Button>
               </Link>
             </div>
