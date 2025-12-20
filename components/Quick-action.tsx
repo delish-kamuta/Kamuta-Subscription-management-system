@@ -305,8 +305,8 @@ const QuickAction = () => {
                   const payload = {
                     payer_name: payerName.trim(),
                     meal_type: mealType,
-                    // For admin, backend allows without payment validation; for cashier, include below
-                    ...(currentRole === UserRole.CASHIER ? { payment_method: paymentMethod, amount_paid: amountPaid } : {}),
+                    payment_method: paymentMethod,
+                    amount_paid: amountPaid
                   }
                   const res = await generateIrregularTicket(payload)
                   if (!res.success) throw new Error(res.message || 'Failed to generate ticket')
