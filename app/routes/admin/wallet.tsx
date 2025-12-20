@@ -173,9 +173,9 @@ export default function WalletPage() {
                         (t.note || '')
                       ).toLowerCase();
 
-                      const isTopUp = combinedStr.includes('payment') || 
-                                      combinedStr.includes('credit') || 
-                                      combinedStr.includes('deposit') || 
+                      const isTopUp = combinedStr.includes('payment') ||
+                                      combinedStr.includes('credit') ||
+                                      combinedStr.includes('deposit') ||
                                       combinedStr.includes('top') ||
                                       combinedStr.includes('cash') ||
                                       combinedStr.includes('momo') ||

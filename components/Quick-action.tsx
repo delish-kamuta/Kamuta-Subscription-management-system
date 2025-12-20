@@ -1,9 +1,9 @@
 import {Button} from '~/components/ui/button'
-import { Search,Ticket,Wallet } from 'lucide-react'
+import { Search,Ticket,Wallet, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '~/store/hooks'
 import { fetchBranchesThunk } from '~/store/branchesSlice'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '~/components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger, SheetFooter } from '~/components/ui/sheet'
 import dayjs from 'dayjs'
 import RegisterSubscriptionSheet from '~/components/subscriptions/RegisterSubscriptionSheet'
 import { generateIrregularTicket } from '~/services/irregularTickets'
@@ -21,6 +21,38 @@ const QuickAction = () => {
   const { items: subscriptions, hydrated: subscriptionsHydrated } = useAppSelector((state) => state.subscriptions);
   const { token } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
+
+  // Printer settings
+  const [printerConfig, setPrinterConfig] = useState<{
+    type: string;
+    ip: string;
+    port: number;
+    vid?: string;
+    pid?: string;
+  }>({
+    type: 'network',
+    ip: '192.168.1.100',
+    port: 9100,
+    vid: '',
+    pid: ''
+  });
+  const [openPrinterSettings, setOpenPrinterSettings] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('printerConfig');
+    if (saved) {
+      try {
+        setPrinterConfig(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to parse printer config', e);
+      }
+    }
+  }, []);
+
+  const savePrinterConfig = () => {
+    localStorage.setItem('printerConfig', JSON.stringify(printerConfig));
+    setOpenPrinterSettings(false);
+  };
 
   useEffect(() => {
     if (openFind && !subscriptionsHydrated && token) {
@@ -68,59 +100,48 @@ const QuickAction = () => {
     return () => clearInterval(interval);
   }, [openTicket, ticketGenerated]);
 
-  // Print ticket content in a clean window
-  const handlePrint = () => {
-    const win = window.open('', '_blank', 'width=800,height=900');
-    if (!win) return;
+  // Print ticket content via thermal printer API
+  const handlePrint = async () => {
     const dateStr = dayjs().format('D MMM YYYY, HH:mm');
-    const clientName = selectedClient?.clientName || 'Client';
-    const clientId = selectedClient?.id || '-';
-    const type = selectedClient?.customerType || 'Student';
-    const html = `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Meal Ticket ${ticketId ? `- ${ticketId}` : ''}</title>
-    <style>
-      :root { --border:#e5e7eb; --text:#111827; }
-      * { box-sizing: border-box; }
-      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color: var(--text); padding: 24px; }
-      .ticket { width: 370px; margin: 0 auto; border: 1px solid var(--border); padding: 18px; }
-      .title { text-align: center; font-weight: 700; letter-spacing: 1px; }
-      .meta { margin-top: 8px; font-size: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
-      .row { display:flex; justify-content:space-between; font-size: 14px; margin-top: 8px; }
-      .divider { margin: 12px 0; border-top: 1px dashed var(--border); }
-      .qr { display:flex; align-items:center; justify-content:center; padding: 8px 0; }
-      .qr img { width: 180px; height: 180px; }
-      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; color:#374151; }
-      .totals { margin-top: 8px; }
-      .footer { text-align:center; font-size: 11px; color:#6b7280; margin-top: 12px; }
-      @media print { @page { margin: 10mm; } }
-    </style>
-  </head>
-  <body>
-    <div class="ticket">
-      <div class="title">MEAL TICKET</div>
-      <div class="meta">
-        <div><strong>Ticket:</strong> ${ticketId}</div>
-        <div><strong>Date:</strong> ${dateStr}</div>
-        <div><strong>Client:</strong> ${clientName}</div>
-        <div><strong>Reg #:</strong> ${clientId}</div>
-      </div>
-      <div class="qr">
-        ${ticketQr ? `<img src="${ticketQr}" alt="QR Code"/>` : '<div class="mono">QR unavailable</div>'}
-      </div>
-      <div class="divider"></div>
-      <div class="footer mono">Scan at point of service • Thank you</div>
-    </div>
-    <script>
-      window.onload = function(){ window.print(); setTimeout(function(){ window.close(); }, 300); }
-    <\/script>
-  </body>
-</html>`;
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
+    // Use generated ticket details if available, otherwise selected client
+    const clientName = ticketGenerated ? payerName : (selectedClient?.clientName || 'Client');
+    const clientId = ticketGenerated ? 'Walk-in' : (selectedClient?.id || '-');
+    const tId = ticketId || '-';
+
+    const ticketData = {
+        id: tId,
+        date: dateStr,
+        clientName,
+        regNumber: clientId
+    };
+
+    // Use configured settings
+    const config = {
+      ...printerConfig,
+      vid: (printerConfig.vid && !isNaN(parseInt(printerConfig.vid, 16))) ? parseInt(printerConfig.vid, 16) : undefined,
+      pid: (printerConfig.pid && !isNaN(parseInt(printerConfig.pid, 16))) ? parseInt(printerConfig.pid, 16) : undefined
+    };
+
+    try {
+        const formData = new FormData();
+        formData.append('ticket', JSON.stringify(ticketData));
+        formData.append('config', JSON.stringify(config));
+
+        const res = await fetch('/api/print-ticket', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const json = await res.json();
+        if (json.success) {
+            alert('Ticket sent to printer!');
+        } else {
+            alert('Failed to print: ' + (json.message || 'Unknown error'));
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Failed to connect to print service');
+    }
   };
 
   // Download ticket content as a standalone HTML file
@@ -155,8 +176,11 @@ const QuickAction = () => {
   };
   return (
 <div className='flex flex-col gap-5 w-full'>
-    <div>
+    <div className="flex justify-between items-center">
         <p className='text-dark font-medium'>Quick Actions</p>
+        <Button variant="ghost" size="icon" onClick={() => setOpenPrinterSettings(true)} title="Printer Settings">
+            <Settings className="h-4 w-4" />
+        </Button>
     </div>
     <div className='flex flex-col justify-between lg:gap-5 md:flex-row md:gap-0 gap-5'>
       <Button size='icon-lg' onClick={() => setOpenRegister(true)} className=' md:w-auto lg:w-[30%] px-2 bg-blue-600 text-white h-[50px] w-full '><Wallet/>Register New Subscription</Button>
@@ -342,6 +366,85 @@ const QuickAction = () => {
             </div>
           )}
         </form>
+      </SheetContent>
+    </Sheet>
+
+    {/* Printer Settings Sheet */}
+    <Sheet open={openPrinterSettings} onOpenChange={setOpenPrinterSettings}>
+      <SheetContent className='bg-white p-6'>
+        <SheetHeader>
+          <SheetTitle>Printer Settings</SheetTitle>
+          <SheetDescription>Configure thermal printer connection.</SheetDescription>
+        </SheetHeader>
+        <div className="gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <label htmlFor="type" className="text-right text-sm font-medium">Type</label>
+            <select 
+              id="type" 
+              value={printerConfig.type} 
+              onChange={(e) => setPrinterConfig({...printerConfig, type: e.target.value})}
+              className="col-span-3 border rounded p-2 text-sm"
+            >
+              <option value="network">Network (Ethernet/WiFi)</option>
+              <option value="usb">USB</option>
+            </select>
+          </div>
+          {printerConfig.type === 'network' && (
+            <>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="ip" className="text-right text-sm font-medium">IP Address</label>
+                <input 
+                  id="ip" 
+                  value={printerConfig.ip} 
+                  onChange={(e) => setPrinterConfig({...printerConfig, ip: e.target.value})}
+                  className="col-span-3 border rounded p-2 text-sm"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="port" className="text-right text-sm font-medium">Port</label>
+                <input 
+                  id="port" 
+                  type="number"
+                  value={printerConfig.port} 
+                  onChange={(e) => setPrinterConfig({...printerConfig, port: parseInt(e.target.value) || 9100})}
+                  className="col-span-3 border rounded p-2 text-sm"
+                />
+              </div>
+            </>
+          )}
+          {printerConfig.type === 'usb' && (
+             <>
+               <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="vid" className="text-right text-sm font-medium">Vendor ID (Hex)</label>
+                <input 
+                  id="vid" 
+                  placeholder="e.g. 0x0483"
+                  value={printerConfig.vid || ''} 
+                  onChange={(e) => setPrinterConfig({...printerConfig, vid: e.target.value})}
+                  className="col-span-3 border rounded p-2 text-sm"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="pid" className="text-right text-sm font-medium">Product ID (Hex)</label>
+                <input 
+                  id="pid" 
+                  placeholder="e.g. 0x5743"
+                  value={printerConfig.pid || ''} 
+                  onChange={(e) => setPrinterConfig({...printerConfig, pid: e.target.value})}
+                  className="col-span-3 border rounded p-2 text-sm"
+                />
+              </div>
+              <div className="col-span-4 text-sm text-gray-500 text-center">
+                Leave blank to auto-detect first USB printer.
+                <br/>
+                Note: On Windows, you may need to install WinUSB driver using Zadig.
+             </div>
+             </>
+          )}
+        </div>
+        <SheetFooter>
+          <Button onClick={savePrinterConfig}>Save changes</Button>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
 </div>
