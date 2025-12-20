@@ -24,9 +24,10 @@ type Props = {
   onEdit?: (user: UserRow) => void
   onDelete?: (user: UserRow) => void
   onAdminResetPassword?: (user: UserRow) => void
+  branches?: { id: string, name: string }[]
 }
 
-export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete, onAdminResetPassword }: Props) {
+export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete, onAdminResetPassword, branches = [] }: Props) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [pendingUser, setPendingUser] = useState<UserRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -34,6 +35,7 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete,
   // Filter states
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
+  const [branchFilter, setBranchFilter] = useState("all")
 
   const uniqueRoles = useMemo(() => {
     return Array.from(new Set(users.map(u => u.role))).sort()
@@ -49,14 +51,15 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete,
         (user.reg_number?.toLowerCase().includes(searchLower) ?? false)
       
       const matchesRole = roleFilter === "all" || user.role === roleFilter
+      const matchesBranch = branchFilter === "all" || String(user.branch_id) === String(branchFilter)
       
-      return matchesSearch && matchesRole
+      return matchesSearch && matchesRole && matchesBranch
     }).sort((a, b) => {
       const dateA = new Date(a.created_at).getTime();
       const dateB = new Date(b.created_at).getTime();
       return dateB - dateA;
     })
-  }, [users, searchTerm, roleFilter])
+  }, [users, searchTerm, roleFilter, branchFilter])
 
   const requestDelete = (user: UserRow) => {
     setPendingUser(user)
@@ -96,6 +99,18 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete,
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <select
             className="h-10 w-full sm:w-[180px] rounded-md border border-black/20 bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            value={branchFilter}
+            onChange={(e) => setBranchFilter(e.target.value)}
+          >
+            <option value="all">All Branches</option>
+            {branches.map(branch => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="h-10 w-full sm:w-[180px] rounded-md border border-black/20 bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
           >
@@ -114,6 +129,7 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete,
             <TableHead>Full Name</TableHead>
             <TableHead>Phone</TableHead>
             <TableHead>Role</TableHead>
+            <TableHead>Branch</TableHead>
             <TableHead>Registration Number</TableHead>
             <TableHead>Created At</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -126,30 +142,32 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete,
                 <TableCell className="font-medium"><Skeleton className="h-4 w-40 animate-pulse" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-32 animate-pulse" /></TableCell>
                 <TableCell><Skeleton className="h-5 w-20 rounded-full animate-pulse" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-24 animate-pulse" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-28 animate-pulse" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-24 animate-pulse" /></TableCell>
                 <TableCell className="text-right"><Skeleton className="h-6 w-40 animate-pulse ml-auto" /></TableCell>
               </TableRow>
             ))
           ) : filteredUsers.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center text-gray-500 py-8">
-                {users.length === 0 ? "No users found." : "No users match your filters."}
-              </TableCell>
-            </TableRow>
-          ) : (
-            filteredUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.full_name}</TableCell>
-                <TableCell>{user.phone}</TableCell>
-                <TableCell>
-                  <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                    {user.role}
-                  </span>
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-gray-500 py-8">
+                  {users.length === 0 ? "No users found." : "No users match your filters."}
                 </TableCell>
-                <TableCell>{user?.student?.reg_number || '-'}</TableCell>
-                <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                <TableCell className="text-right">
+              </TableRow>
+            ) : (
+              filteredUsers.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.full_name}</TableCell>
+                  <TableCell>{user.phone}</TableCell>
+                  <TableCell>
+                    <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                      {user.role}
+                    </span>
+                  </TableCell>
+                  <TableCell>{branches.find(b => String(b.id) === String(user.branch_id))?.name || '-'}</TableCell>
+                  <TableCell>{user?.student?.reg_number || '-'}</TableCell>
+                  <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <button
                       type="button"
