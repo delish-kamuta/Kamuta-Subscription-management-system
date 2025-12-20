@@ -48,9 +48,7 @@ const Payments = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Payment | null>(null);
-  const [editForm, setEditForm] = useState<Payment | null>(null);
   const itemsPerPage = 8;
 
   // Prepare data for charts
@@ -176,19 +174,6 @@ const Payments = () => {
     setViewDetailsOpen(true);
   };
 
-  const handleEdit = (payment: Payment) => {
-    setEditForm(payment);
-    setEditOpen(true);
-  };
-
-  const handleDelete = (payment: Payment) => {
-    if (confirm(`Are you sure you want to delete payment for ${payment.clientName}?`)) {
-      console.log("Deleting payment:", payment.paymentId);
-      alert(`Payment for ${payment.clientName} has been deleted`);
-      // TODO: Dispatch Redux action to delete payment
-    }
-  };
-
   // Convert filtered data to match PaymentTable component interface
   const tableData = filteredData.map((p) => ({
     id: parseInt(String(p.paymentId).replace("PAY-", "")) || 0,
@@ -254,14 +239,6 @@ const Payments = () => {
             const original = sourceData.find((p) => p.paymentId === payment.regNumber);
             if (original) handleViewDetails(original);
           }}
-          onEdit={(payment) => {
-            const original = sourceData.find((p) => p.paymentId === payment.regNumber);
-            if (original) handleEdit(original);
-          }}
-          onDelete={(payment) => {
-            const original = sourceData.find((p) => p.paymentId === payment.regNumber);
-            if (original) handleDelete(original);
-          }}
         />
         )}
 
@@ -303,11 +280,7 @@ const Payments = () => {
       <PaymentModals
         viewDetailsOpen={viewDetailsOpen}
         setViewDetailsOpen={setViewDetailsOpen}
-        editOpen={editOpen}
-        setEditOpen={setEditOpen}
         selectedItem={selectedItem}
-        editForm={editForm}
-        setEditForm={setEditForm}
       />
     </main>
   );

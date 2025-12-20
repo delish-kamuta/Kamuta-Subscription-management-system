@@ -35,7 +35,7 @@ export async function updateUser(id: string | number, payload: Partial<UserPaylo
   if (tokenError) throw new Error(tokenError)
   const token = getToken()
   const resp = await fetch(`https://restaurant-bn-api.onrender.com/api/users/${id}`, {
-    method: 'PATCH',
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: token } : {}),

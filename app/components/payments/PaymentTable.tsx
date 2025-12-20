@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Button } from "~/components/ui/button";
-import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import { MoreHorizontal, Eye } from "lucide-react";
 import { useSelector } from "react-redux";
 
 interface Payment {
@@ -32,8 +32,6 @@ interface PaymentTableProps {
   currentPage: number;
   itemsPerPage: number;
   onViewDetails: (payment: Payment) => void;
-  onEdit: (payment: Payment) => void;
-  onDelete: (payment: Payment) => void;
 }
 
 export default function PaymentTable({
@@ -41,8 +39,6 @@ export default function PaymentTable({
   currentPage,
   itemsPerPage,
   onViewDetails,
-  onEdit,
-  onDelete,
 }: PaymentTableProps) {
   const branches = useSelector((state: any) => state?.branches?.items || state?.branches?.branches || []);
   const branchById: Record<string, string> = Array.isArray(branches)
@@ -92,17 +88,6 @@ export default function PaymentTable({
                   <DropdownMenuItem onClick={() => onViewDetails(payment)}>
                     <Eye className="mr-2 h-4 w-4" />
                     View Details
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onEdit(payment)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onDelete(payment)}
-                    className="text-red-600"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -25,4 +25,5 @@ export default [
   route("/auth/login", "routes/auth/login.tsx"),
   route("/auth/signup", "routes/auth/signup.tsx"),
   route("/unauthorized", "routes/unauthorized.tsx"),
+  route("api/print-ticket", "routes/api/print-ticket.ts"),
 ] satisfies RouteConfig;
