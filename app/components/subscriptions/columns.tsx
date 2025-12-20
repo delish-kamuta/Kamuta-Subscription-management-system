@@ -455,69 +455,48 @@ const handleTopUpSave = async () => {
               </Button>
               <Button
                 disabled={!qrImage}
-                onClick={() => {
-                  if (!qrImage) return;
-                  const printWindow = window.open('', '_blank');
-                  if (printWindow) {
-                    printWindow.document.write(`
-                      <html>
-                        <head>
-                          <title>Print QR Code</title>
-                          <style>
-                            @page { margin: 0; size: auto; }
-                            body { 
-                              width: 58mm; 
-                              margin: 0 auto; 
-                              padding: 5px; 
-                              font-family: monospace; 
-                              text-align: center; 
-                            }
-                            .container {
-                              display: flex;
-                              flex-direction: column;
-                              align-items: center;
-                              width: 100%;
-                            }
-                            img { 
-                              width: 100%; 
-                              max-width: 200px;
-                              height: auto; 
-                              display: block;
-                              margin: 5px 0;
-                            }
-                            .name { 
-                              font-size: 14px; 
-                              font-weight: bold; 
-                              margin-bottom: 5px; 
-                              word-wrap: break-word;
-                            }
-                            .info { 
-                              margin-top: 5px; 
-                              border-top: 1px dashed #000; 
-                              padding-top: 5px; 
-                              width: 100%;
-                            }
-                            .meta { 
-                              font-size: 12px; 
-                              color: #000; 
-                              margin: 2px 0; 
-                            }
-                          </style>
-                        </head>
-                        <body>
-                          <div class="container">
-                            <img src="${qrImage}" />
-                            <div class="info">
-                              <div class="meta">Expires: ${qrData?.expires_in_seconds}s</div>
-                            </div>
-                          </div>
-                          <script>
-                            window.onload = function() { window.print(); window.close(); }
-                          </script>
-                        </body>
-                      </html>
-                    `);
-                    printWindow.document.close();
+                onClick={async () => {
+                  if (!qrData?.qr_code) return;
+
+                  // Get printer config
+                  let printerConfig: any = { type: 'network', ip: '192.168.1.100', port: 9100 };
+                  try {
+                    const saved = localStorage.getItem('printerConfig');
+                    if (saved) printerConfig = JSON.parse(saved);
+                  } catch (e) { console.error(e); }
+
+                  const config = {
+                    ...printerConfig,
+                    vid: (printerConfig.vid && !isNaN(parseInt(printerConfig.vid, 16))) ? parseInt(printerConfig.vid, 16) : undefined,
+                    pid: (printerConfig.pid && !isNaN(parseInt(printerConfig.pid, 16))) ? parseInt(printerConfig.pid, 16) : undefined
+                  };
+
+                  const ticketData = {
+                    id: qrData.qr_code,
+                    date: new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                    clientName: item.clientName,
+                    regNumber: String(item.id)
+                  };
+
+                  try {
+                    const formData = new FormData();
+                    formData.append('ticket', JSON.stringify(ticketData));
+                    formData.append('config', JSON.stringify(config));
+
+                    const res = await fetch('/api/print-ticket', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const json = await res.json();
+                    if (json.success) {
+                        alert('Sent to printer!');
+                    } else {
+                        alert('Failed to print: ' + (json.message || 'Unknown error'));
+                    }
+                  } catch (e) {
+                    console.error(e);
+                    alert('Failed to connect to print service');
                   }
                 }}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
