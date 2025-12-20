@@ -3,7 +3,7 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { Camera, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { Camera, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useAppSelector } from "~/store/hooks";
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { scanQrOtp } from "~/services/qr";
@@ -25,6 +25,7 @@ const ScanQR = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [rawContent, setRawContent] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerElementId = "qr-reader";
 
@@ -38,6 +39,8 @@ const ScanQR = () => {
   }, [isScanning]);
 
   const processQRData = async (decodedText: string) => {
+    if (processing) return;
+    setProcessing(true);
     try {
       const qrCode = decodedText.trim();
       
@@ -91,6 +94,8 @@ const ScanQR = () => {
       const msg = error instanceof Error ? error.message : String(error);
       setScanError(`Processing error: ${msg}`);
       setScanResult({ success: false, message: "Invalid QR code", timestamp: new Date().toLocaleString() });
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -213,16 +218,25 @@ const ScanQR = () => {
                   </>
                 ) : (
                   <div className="text-center text-gray-400 space-y-3">
-                    <Camera className="w-16 h-16 mx-auto opacity-50" />
-                    <p>Camera ready to scan</p>
-                    <p className="text-xs">Press the button below to start scanning</p>
-                    {hasPermission === false && (
-                      <p className="text-xs text-red-400">
-                        Camera permission denied. Please enable camera access.
-                      </p>
-                    )}
-                    {scanError && (
-                      <p className="text-xs text-red-500 break-all">{scanError}</p>
+                    {processing ? (
+                      <div className="flex flex-col items-center justify-center py-4">
+                        <Loader2 className="w-12 h-12 animate-spin text-primary-100 mb-4" />
+                        <p className="text-lg font-medium text-gray-700">Verifying ticket...</p>
+                      </div>
+                    ) : (
+                      <>
+                        <Camera className="w-16 h-16 mx-auto opacity-50" />
+                        <p>Camera ready to scan</p>
+                        <p className="text-xs">Press the button below to start scanning</p>
+                        {hasPermission === false && (
+                          <p className="text-xs text-red-400">
+                            Camera permission denied. Please enable camera access.
+                          </p>
+                        )}
+                        {scanError && (
+                          <p className="text-xs text-red-500 break-all">{scanError}</p>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
