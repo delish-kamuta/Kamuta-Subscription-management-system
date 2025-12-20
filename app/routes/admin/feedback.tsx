@@ -71,7 +71,7 @@ export default function FeedbackPage() {
       const res = await listFeedbacks({ type, status, rating })
       if (!res.success) { setError(res.message || 'Failed to load feedback'); setItems([]); return }
       const data = Array.isArray(res.data) ? res.data : []
-      data.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+      data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       setItems(data)
     } catch (e: any) {
       setError(e?.message || 'Failed to load feedback')
@@ -233,7 +233,6 @@ export default function FeedbackPage() {
                 <TableHead>Date</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Rating</TableHead>
-                <TableHead>Title</TableHead>
                 <TableHead className="hidden lg:table-cell">Client</TableHead>
                 <TableHead className="hidden lg:table-cell">Status</TableHead>
                 <TableHead>Actions</TableHead>
@@ -250,12 +249,11 @@ export default function FeedbackPage() {
                     <TableCell className="font-mono text-xs">{f.created_at ? dayjs(f.created_at).format('D MMM YYYY, h:mm A') : '-'}</TableCell>
                     <TableCell>{f.type || '-'}</TableCell>
                     <TableCell>{f.rating || '-'}</TableCell>
-                    <TableCell className="font-semibold">{f.title || '-'}</TableCell>
                     <TableCell className="hidden lg:table-cell">{f.is_anonymous ? 'Anonymous' : (f.user_name || '-')}</TableCell>
                     <TableCell className="hidden lg:table-cell">{f.status || 'pending'}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => { setDetailId(f.id as any); setDetailOpen(true); }}>
+                        <Button  size="sm" onClick={() => { setDetailId(f.id as any); setDetailOpen(true); }}>
                           <EyeIcon className="size-4" />
                           View
                         </Button>
@@ -314,10 +312,6 @@ export default function FeedbackPage() {
                     <p className="text-xs text-gray-500">Rating</p>
                     <p className="text-sm font-medium">{detail.rating || '-'}</p>
                   </div>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Title</p>
-                  <p className="text-base font-semibold">{detail.title || '-'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Message</p>

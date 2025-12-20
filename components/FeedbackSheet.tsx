@@ -11,7 +11,6 @@ interface FeedbackSheetProps {
 const FeedbackSheet = ({ open, onOpenChange }: FeedbackSheetProps) => {
   const [type, setType] = useState<FeedbackType | string>('meal_quality')
   const [rating, setRating] = useState<FeedbackRating | string>('GOOD')
-  const [title, setTitle] = useState('')
   const [message, setMessage] = useState('')
   const [isAnonymous, setIsAnonymous] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -21,7 +20,6 @@ const FeedbackSheet = ({ open, onOpenChange }: FeedbackSheetProps) => {
   const reset = () => {
     setType('meal_quality')
     setRating('GOOD')
-    setTitle('')
     setMessage('')
     setIsAnonymous(false)
     setError('')
@@ -31,14 +29,13 @@ const FeedbackSheet = ({ open, onOpenChange }: FeedbackSheetProps) => {
   const handleSubmit = async () => {
     try {
       setSubmitting(true); setError(''); setSuccess('')
-      if (!title.trim() || !message.trim()) {
-        setError('Please provide a title and message')
+      if (!message.trim()) {
+        setError('Please provide a message')
         return
       }
       const res = await submitFeedback({
         type,
         rating,
-        title: title.trim(),
         message: message.trim(),
         is_anonymous: isAnonymous,
       })
@@ -85,16 +82,6 @@ const FeedbackSheet = ({ open, onOpenChange }: FeedbackSheetProps) => {
                 <option value='EXCELLENT'>Excellent</option>
               </select>
             </div>
-          </div>
-
-          <div className='space-y-2'>
-            <label className='text-sm font-medium text-gray-700'>Title</label>
-            <input
-              className='w-full border rounded-md px-3 py-2'
-              placeholder='Great meal today'
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
           </div>
 
           <div className='space-y-2'>
