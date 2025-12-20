@@ -358,6 +358,7 @@ export default function UsersPage() {
       <UsersTable
         users={filteredUsers}
         isLoading={usersLoading}
+        branches={branches}
         onView={(user) => { setSelectedUser(user); setIsViewUserOpen(true); ensureBranchPresent(user.branch_id) }}
         onEdit={(user) => { setSelectedUser(user); setIsEditUserOpen(true); ensureBranchPresent(user.branch_id) }}
         onAdminResetPassword={async (user) => {
