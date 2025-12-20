@@ -130,7 +130,6 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete,
             <TableHead>Phone</TableHead>
             <TableHead>Role</TableHead>
             <TableHead>Branch</TableHead>
-            <TableHead>Registration Number</TableHead>
             <TableHead>Created At</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -165,7 +164,6 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete,
                     </span>
                   </TableCell>
                   <TableCell>{branches.find(b => String(b.id) === String(user.branch_id))?.name || '-'}</TableCell>
-                  <TableCell>{user?.student?.reg_number || '-'}</TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
