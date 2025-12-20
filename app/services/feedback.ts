@@ -12,7 +12,6 @@ export type FeedbackRating = "POOR" | "AVERAGE" | "GOOD" | "EXCELLENT";
 export interface SubmitFeedbackPayload {
   type: FeedbackType | string;
   rating: FeedbackRating | string;
-  title: string;
   message: string;
   is_anonymous?: boolean;
 }
