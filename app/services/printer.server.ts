@@ -5,11 +5,22 @@ let escpos: any;
 
 try {
   escpos = require('escpos');
-  escpos.Network = require('escpos-network');
-  escpos.USB = require('escpos-usb');
-  // escpos.Bluetooth = require('escpos-bluetooth'); // Optional
 } catch (e) {
-  console.warn('Printer dependencies missing. Install escpos, escpos-network, escpos-usb');
+  console.error("Failed to load escpos core module:", e);
+}
+
+if (escpos) {
+  try {
+    escpos.Network = require('escpos-network');
+  } catch (e) {
+    console.warn("Failed to load escpos-network module:", e);
+  }
+
+  try {
+    escpos.USB = require('escpos-usb');
+  } catch (e) {
+    console.warn("Failed to load escpos-usb module (this is expected in serverless environments):", e);
+  }
 }
 
 interface TicketData {
@@ -29,14 +40,16 @@ interface PrinterConfig {
 }
 
 export const printTicket = async (ticket: TicketData, config: PrinterConfig = { type: 'network', ip: '192.168.1.100' }) => {
-  if (!escpos) throw new Error("ESC/POS libraries not installed");
+  if (!escpos) throw new Error("ESC/POS libraries not installed or failed to load");
 
   return new Promise<void>((resolve, reject) => {
     let device;
     try {
       if (config.type === 'network') {
+        if (!escpos.Network) throw new Error("Network printer adapter not loaded");
         device = new escpos.Network(config.ip || '192.168.1.100', config.port || 9100);
       } else if (config.type === 'usb') {
+        if (!escpos.USB) throw new Error("USB printer adapter not loaded (requires local server)");
         device = (config.vid && config.pid) 
           ? new escpos.USB(config.vid, config.pid) 
           : new escpos.USB();
