@@ -100,16 +100,16 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   }, [qrOpen, item.id]);
 
   const handleCancel = async () => {
-    if (confirm(`Are you sure you want to cancel subscription for ${item.clientName}?`)) {
+    if (confirm(`⚠️ WARNING: You are about to cancel the subscription for ${item.clientName}.\n\nThis action is irreversible. Are you sure you want to proceed?`)) {
       if (!item.subscriptionId) {
         alert("Cannot cancel: Missing subscription ID");
         return;
       }
       try {
         await dispatch(cancelSubscription({ token, id: item.subscriptionId })).unwrap();
-        alert(`Subscription for ${item.clientName} has been cancelled`);
+        alert(`✅ SUCCESS: Subscription for ${item.clientName} has been cancelled.`);
       } catch (e) {
-        alert(`Failed to cancel: ${e}`);
+        alert(`❌ Failed to cancel: ${e}`);
       }
     }
   };
@@ -585,19 +585,32 @@ export function getSubscriptionColumns(isCashier: boolean, resolveBranchName?: (
       cellClassName: "font-semibold",
     },
     {
-      key: "payment",
-      header: "Payment",
-      render: (item) => (
-        <span
-          className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
-            item.payment === "Cash"
-              ? "bg-green-100 text-green-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {item.payment}
-        </span>
-      ),
+      key: "status",
+      header: "Status",
+      render: (item) => {
+        let status = item.status?.toLowerCase() || '';
+        
+        if (item.mealsLeft === 0) {
+           status = 'expired';
+        } else if (status === 'expired') {
+           status = 'cancelled';
+        } else if (!status) {
+           status = 'active';
+        }
+        
+        let colorClass = "bg-gray-100 text-gray-800";
+        if (status === 'active') colorClass = "bg-green-100 text-green-800";
+        else if (status === 'expired') colorClass = "bg-red-100 text-red-800";
+        else if (status === 'cancelled') colorClass = "bg-yellow-100 text-yellow-800";
+
+        return (
+          <span
+            className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap capitalize ${colorClass}`}
+          >
+            {status}
+          </span>
+        );
+      },
     },
     {
       key: "action",
