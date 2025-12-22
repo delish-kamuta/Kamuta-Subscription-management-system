@@ -1,5 +1,5 @@
 import {Button} from '~/components/ui/button'
-import { Search,Ticket,Wallet, Settings } from 'lucide-react'
+import { Search, Ticket, Wallet } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '~/store/hooks'
 import { fetchBranchesThunk } from '~/store/branchesSlice'

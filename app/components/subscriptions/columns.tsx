@@ -99,6 +99,51 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
     return () => { mounted = false; };
   }, [qrOpen, item.id]);
 
+  const handlePrint = async () => {
+    const content = document.getElementById(`ticket-content-${item.id}`);
+    if (!content) {
+      alert('Ticket content not found to print.');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank', 'width=300,height=500');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Print Meal Ticket</title>
+            <style>
+              @page { margin: 2mm; }
+              body { font-family: 'Courier New', Courier, monospace; padding: 0; margin: 0; }
+              .ticket { max-width: 57mm; width: 100%; margin: 0 auto; }
+              .text-center { text-align: center; }
+              .font-semibold { font-weight: 600; }
+              .tracking-wide { letter-spacing: 0.025em; }
+              .grid { display: grid; }
+              .grid-cols-2 { grid-template-columns: 1fr 1fr; }
+              .gap-1 { gap: 0.25rem; }
+              .mt-2 { margin-top: 0.5rem; }
+              .text-xs { font-size: 11px; line-height: 1.2; }
+              .break-all { word-break: break-all; }
+              .border-t { border-top: 1px dashed #000; }
+              .my-3 { margin-top: 0.75rem; margin-bottom: 0.75rem; }
+              .qr { display: flex; justify-content: center; margin: 0.5rem 0; }
+              .qr img { max-width: 80% !important; height: auto !important; }
+            </style>
+          </head>
+          <body>
+            ${content.outerHTML}
+            <script>
+              window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  };
+
   const handleCancel = async () => {
     if (confirm(`⚠️ WARNING: You are about to cancel the subscription for ${item.clientName}.\n\nThis action is irreversible. Are you sure you want to proceed?`)) {
       if (!item.subscriptionId) {
@@ -424,6 +469,25 @@ const handleTopUpSave = async () => {
                 <p className="text-xs text-gray-500">Use this code to generate a scannable QR or print it. It expires automatically.</p>
               </div>
             )}
+
+            {/* Hidden Ticket Content for Printing */}
+            {qrData && (
+              <div className="hidden">
+                <div id={`ticket-content-${item.id}`} className="ticket">
+                  <div className="text-center font-semibold tracking-wide">MEAL TICKET</div>
+                  <div className="grid grid-cols-1 gap-1 mt-2 text-xs">
+                    <div><span className="font-semibold">Date:</span> {new Date().toLocaleDateString()}</div>
+                    <div><span className="font-semibold">Client:</span> {item.clientName}</div>
+                  </div>
+                  <div className="my-3 border-t border-dashed border-black" />
+                  <div className="qr flex items-center justify-center">
+                    {qrImage && <img src={qrImage} alt="QR Code" className="w-44 h-44" />}
+                  </div>
+                  <div className="my-3 border-t border-dashed border-black" />
+                  <div className="text-center text-xs">Scan at point of service</div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
@@ -455,50 +519,7 @@ const handleTopUpSave = async () => {
               </Button>
               <Button
                 disabled={!qrImage}
-                onClick={async () => {
-                  if (!qrData?.qr_code) return;
-
-                  // Get printer config
-                  let printerConfig: any = { type: 'network', ip: '192.168.1.100', port: 9100 };
-                  try {
-                    const saved = localStorage.getItem('printerConfig');
-                    if (saved) printerConfig = JSON.parse(saved);
-                  } catch (e) { console.error(e); }
-
-                  const config = {
-                    ...printerConfig,
-                    vid: (printerConfig.vid && !isNaN(parseInt(printerConfig.vid, 16))) ? parseInt(printerConfig.vid, 16) : undefined,
-                    pid: (printerConfig.pid && !isNaN(parseInt(printerConfig.pid, 16))) ? parseInt(printerConfig.pid, 16) : undefined
-                  };
-
-                  const ticketData = {
-                    id: qrData.qr_code,
-                    date: new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-                    clientName: item.clientName,
-                    regNumber: String(item.id)
-                  };
-
-                  try {
-                    const formData = new FormData();
-                    formData.append('ticket', JSON.stringify(ticketData));
-                    formData.append('config', JSON.stringify(config));
-
-                    const res = await fetch('/api/print-ticket', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    const json = await res.json();
-                    if (json.success) {
-                        alert('Sent to printer!');
-                    } else {
-                        alert('Failed to print: ' + (json.message || 'Unknown error'));
-                    }
-                  } catch (e) {
-                    console.error(e);
-                    alert('Failed to connect to print service');
-                  }
-                }}
+                onClick={handlePrint}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Print QR
