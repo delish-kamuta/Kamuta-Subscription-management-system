@@ -1,4 +1,4 @@
-import { getToken, ensureValidTokenOrMessage } from "~/lib/api"
+import { apiClient, ensureValidTokenOrMessage } from "~/lib/api"
 
 export interface GenerateMealTokenPayload {
   reg_number?: string | number
@@ -23,23 +23,11 @@ export interface GenerateMealTokenResponse {
 export async function generateMealToken(payload: GenerateMealTokenPayload): Promise<GenerateMealTokenResponse> {
   const tokenError = ensureValidTokenOrMessage()
   if (tokenError) throw new Error(tokenError)
-  const token = getToken()
-  const resp = await fetch('https://restaurant-bn-api.onrender.com/api/auth/generate-meal-token', {
+  
+  return apiClient("/auth/generate-meal-token", {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: token } : {}),
-    },
     body: JSON.stringify(payload),
   })
-  let msg = 'Failed to generate meal token'
-  if (!resp.ok) {
-    try { const j = await resp.json(); msg = j.message || msg } catch {
-      try { const t = await resp.text(); if (t) msg = `${msg}: ${t}` } catch {}
-    }
-    throw new Error(`${msg} (status ${resp.status})`)
-  }
-  return resp.json()
 }
 
 export interface ValidateMealTokenResponse {
@@ -65,27 +53,14 @@ export interface ValidateMealTokenResponse {
 export async function validateMealToken(tokenValue: string): Promise<ValidateMealTokenResponse> {
   const tokenError = ensureValidTokenOrMessage()
   if (tokenError) throw new Error(tokenError)
-  const token = getToken()
-  const resp = await fetch('https://restaurant-bn-api.onrender.com/api/auth/validate-meal-token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: token } : {}),
-    },
-    body: JSON.stringify({ token: tokenValue }),
-  })
-  if (!resp.ok) {
-    let msg = 'Failed to validate meal token'
-    let errorText: string | undefined
-    try {
-      const j = await resp.json()
-      msg = j.message || msg
-      return { success: false, message: msg, status: resp.status, data: j.data }
-    } catch {
-      try { const t = await resp.text(); if (t) { errorText = t; msg = `${msg}: ${t}` } } catch {}
-    }
-    return { success: false, message: msg, status: resp.status, errorText }
+  
+  try {
+    const data = await apiClient<any>("/auth/validate-meal-token", {
+      method: 'POST',
+      body: JSON.stringify({ token: tokenValue }),
+    })
+    return data as ValidateMealTokenResponse
+  } catch (e: any) {
+    return { success: false, message: e?.message || "Validation failed", status: e?.status }
   }
-  const data = await resp.json()
-  return data
 }

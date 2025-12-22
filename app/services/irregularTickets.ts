@@ -1,4 +1,4 @@
-import { authFetch, ensureValidTokenOrMessage } from "~/lib/api";
+import { apiClient, ensureValidTokenOrMessage } from "~/lib/api";
 
 export interface GenerateIrregularTicketPayload {
   payer_name: string;
@@ -31,21 +31,11 @@ export async function generateIrregularTicket(
   const tokenError = ensureValidTokenOrMessage();
   if (tokenError) return { success: false, message: tokenError };
   try {
-    const res = await authFetch(
-      "https://restaurant-bn-api.onrender.com/api/irregular-tickets/generate",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }
-    );
-    let json: any = null;
-    try { json = await res.json(); } catch {}
-    if (!res.ok) {
-      const msg = json?.message || json?.error || `Failed to generate ticket (${res.status})`;
-      return { success: false, message: msg };
-    }
-    return (json ?? { success: true }) as GenerateIrregularTicketResponse;
+    const data = await apiClient<any>("/irregular-tickets/generate", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return data as GenerateIrregularTicketResponse;
   } catch (e: any) {
     return { success: false, message: e?.message || "Network error" };
   }
@@ -55,21 +45,11 @@ export async function scanIrregularTicket(qrCode: string): Promise<GenerateIrreg
   const tokenError = ensureValidTokenOrMessage();
   if (tokenError) return { success: false, message: tokenError };
   try {
-    const res = await authFetch(
-      "https://restaurant-bn-api.onrender.com/api/irregular-tickets/scan",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ qr_code: qrCode }),
-      }
-    );
-    let json: any = null;
-    try { json = await res.json(); } catch {}
-    if (!res.ok) {
-      const msg = json?.message || json?.error || `Failed to scan ticket (${res.status})`;
-      return { success: false, message: msg };
-    }
-    return (json ?? { success: true }) as GenerateIrregularTicketResponse;
+    const data = await apiClient<any>("/irregular-tickets/scan", {
+      method: "POST",
+      body: JSON.stringify({ qr_code: qrCode }),
+    });
+    return data as GenerateIrregularTicketResponse;
   } catch (e: any) {
     return { success: false, message: e?.message || "Network error" };
   }

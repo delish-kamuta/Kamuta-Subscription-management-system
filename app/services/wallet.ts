@@ -1,4 +1,4 @@
-import { authFetch, ensureValidTokenOrMessage } from "~/lib/api"
+import { apiClient } from "~/lib/api"
 
 export interface WorkerWalletResponse {
   success: boolean
@@ -13,35 +13,22 @@ export interface WorkerWalletResponse {
 }
 
 export async function getWorkerWallet(workerId: string): Promise<WorkerWalletResponse> {
-  const tokenError = ensureValidTokenOrMessage()
-  if (tokenError) return { success: false, message: tokenError }
-  const resp = await authFetch(`https://restaurant-bn-api.onrender.com/api/workers/${workerId}/wallet`)
-  if (!resp.ok) {
-    let msg = 'Failed to fetch wallet'
-    try { const j = await resp.json(); msg = j.message || msg } catch {}
-    return { success: false, message: msg }
-  }
   try {
-    const data = await resp.json()
-    return data as WorkerWalletResponse
+    const data = await apiClient<WorkerWalletResponse>(`/workers/${workerId}/wallet`);
+    return data;
   } catch (e) {
-    return { success: false, message: e instanceof Error ? e.message : 'Parse error' }
+    return { success: false, message: e instanceof Error ? e.message : 'Failed to fetch wallet' };
   }
 }
 
 export async function addWorkerWalletPayment(workerId: string, payload: { amount: number; payment_method?: string; note?: string }): Promise<{ success: boolean; message?: string; data?: any }> {
-  const tokenError = ensureValidTokenOrMessage()
-  if (tokenError) return { success: false, message: tokenError }
-  const res = await authFetch(`https://restaurant-bn-api.onrender.com/api/workers/${workerId}/wallet/payment`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: tokenError || '' },
-    body: JSON.stringify(payload),
-  })
-  let data: any = null
-  try { data = await res.json() } catch {}
-  if (!res.ok) {
-    const msg = data?.message || data?.error || `Add payment failed: ${res.status}`
-    return { success: false, message: msg }
+  try {
+    const data = await apiClient<any>(`/workers/${workerId}/wallet/payment`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return { success: true, data: data?.data || data };
+  } catch (e) {
+    return { success: false, message: e instanceof Error ? e.message : 'Add payment failed' };
   }
-  return { success: true, data: data?.data || data }
 }

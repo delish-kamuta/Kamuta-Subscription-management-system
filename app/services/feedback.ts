@@ -1,4 +1,4 @@
-import { authFetch, ensureValidTokenOrMessage } from "~/lib/api";
+import { apiClient, ensureValidTokenOrMessage } from "~/lib/api";
 
 export type FeedbackType =
   | "meal_quality"
@@ -28,21 +28,11 @@ export async function submitFeedback(
   const tokenError = ensureValidTokenOrMessage();
   if (tokenError) return { success: false, message: tokenError };
   try {
-    const res = await authFetch(
-      "https://restaurant-bn-api.onrender.com/api/feedback",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }
-    );
-    let json: any = null;
-    try { json = await res.json(); } catch {}
-    if (!res.ok) {
-      const msg = json?.message || json?.error || `Failed to submit feedback (${res.status})`;
-      return { success: false, message: msg };
-    }
-    return (json ?? { success: true }) as SubmitFeedbackResponse;
+    const data = await apiClient<any>("/feedback", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    return data as SubmitFeedbackResponse;
   } catch (e: any) {
     return { success: false, message: e?.message || "Network error" };
   }
@@ -82,15 +72,14 @@ export async function listFeedbacks(filters: FeedbackFilters = {}): Promise<List
   if (tokenError) return { success: false, message: tokenError };
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, String(v)); });
-  const url = `https://restaurant-bn-api.onrender.com/api/feedback${params.toString() ? `?${params.toString()}` : ''}`;
-  const res = await authFetch(url);
-  let json: any = null;
-  try { json = await res.json(); } catch {}
-  if (!res.ok) {
-    const msg = json?.message || json?.error || `Failed to fetch feedback (${res.status})`;
-    return { success: false, message: msg };
+  const queryString = params.toString() ? `?${params.toString()}` : '';
+  
+  try {
+    const data = await apiClient<any>(`/feedback${queryString}`);
+    return data as ListFeedbackResponse;
+  } catch (e: any) {
+    return { success: false, message: e?.message || "Network error" };
   }
-  return (json ?? { success: true, data: [] }) as ListFeedbackResponse;
 }
 
 // Admin/staff: get aggregated feedback statistics
@@ -111,16 +100,8 @@ export async function getFeedbackStats(): Promise<FeedbackStatsResponse> {
   const tokenError = ensureValidTokenOrMessage();
   if (tokenError) return { success: false, message: tokenError };
   try {
-    const res = await authFetch(
-      "https://restaurant-bn-api.onrender.com/api/feedback/stats"
-    );
-    let json: any = null;
-    try { json = await res.json(); } catch {}
-    if (!res.ok) {
-      const msg = json?.message || json?.error || `Failed to fetch feedback stats (${res.status})`;
-      return { success: false, message: msg };
-    }
-    return (json ?? { success: true, data: {} }) as FeedbackStatsResponse;
+    const data = await apiClient<any>("/feedback/stats");
+    return data as FeedbackStatsResponse;
   } catch (e: any) {
     return { success: false, message: e?.message || "Network error" };
   }
@@ -137,16 +118,8 @@ export async function getFeedbackById(id: string | number): Promise<GetFeedbackB
   const tokenError = ensureValidTokenOrMessage();
   if (tokenError) return { success: false, message: tokenError };
   try {
-    const res = await authFetch(
-      `https://restaurant-bn-api.onrender.com/api/feedback/${encodeURIComponent(String(id))}`
-    );
-    let json: any = null;
-    try { json = await res.json(); } catch {}
-    if (!res.ok) {
-      const msg = json?.message || json?.error || `Failed to fetch feedback (${res.status})`;
-      return { success: false, message: msg };
-    }
-    return (json ?? { success: true }) as GetFeedbackByIdResponse;
+    const data = await apiClient<any>(`/feedback/${encodeURIComponent(String(id))}`);
+    return data as GetFeedbackByIdResponse;
   } catch (e: any) {
     return { success: false, message: e?.message || "Network error" };
   }
@@ -168,21 +141,11 @@ export async function updateFeedbackStatus(
   const tokenError = ensureValidTokenOrMessage();
   if (tokenError) return { success: false, message: tokenError };
   try {
-    const res = await authFetch(
-      `https://restaurant-bn-api.onrender.com/api/feedback/${encodeURIComponent(String(id))}/status`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      }
-    );
-    let json: any = null;
-    try { json = await res.json(); } catch {}
-    if (!res.ok) {
-      const msg = json?.message || json?.error || `Failed to update status (${res.status})`;
-      return { success: false, message: msg };
-    }
-    return (json ?? { success: true }) as UpdateFeedbackStatusResponse;
+    const data = await apiClient<any>(`/feedback/${encodeURIComponent(String(id))}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status }),
+    });
+    return data as UpdateFeedbackStatusResponse;
   } catch (e: any) {
     return { success: false, message: e?.message || "Network error" };
   }

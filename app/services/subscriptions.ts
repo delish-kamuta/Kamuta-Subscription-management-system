@@ -1,6 +1,5 @@
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
-
-const BASE_URL = "https://restaurant-bn-api.onrender.com/api";
+import { apiClient } from "~/lib/api";
 
 export interface ApiSubscription {
   id: string;
@@ -64,86 +63,34 @@ function mapApiToSubscriptionItem(item: ApiSubscription): SubscriptionItem {
 }
 
 export async function listStudentSubscriptions(token: string | null): Promise<SubscriptionItem[]> {
-  const res = await fetch(`${BASE_URL}/student-subscriptions`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
-    },
-  });
-  if (!res.ok) {
-    let msg = `Failed to fetch: ${res.status}`;
-    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
-    throw new Error(msg);
-  }
-  const json = await res.json();
+  const json = await apiClient<any>("/student-subscriptions");
   const items: ApiSubscription[] = json.data || json.items || json;
   return Array.isArray(items) ? items.map(mapApiToSubscriptionItem) : [];
 }
 
 export async function createStudentSubscription(token: string | null, payload: any): Promise<any> {
-  const res = await fetch(`${BASE_URL}/student-subscriptions`, {
+  return apiClient("/student-subscriptions", {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
-    },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) {
-    let msg = `Failed to create: ${res.status}`;
-    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
-    throw new Error(msg);
-  }
-  return res.json();
 }
 
 export async function updateStudentSubscription(token: string | null, id: string, payload: any): Promise<any> {
-  const res = await fetch(`${BASE_URL}/student-subscriptions/${id}`, {
+  return apiClient(`/student-subscriptions/${id}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
-    },
     body: JSON.stringify(payload),
   });
-  if (!res.ok) {
-    let msg = `Failed to update: ${res.status}`;
-    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
-    throw new Error(msg);
-  }
-  return res.json();
 }
 
 export async function cancelStudentSubscription(token: string | null, id: string): Promise<any> {
-  const res = await fetch(`${BASE_URL}/student-subscriptions/${id}/cancel`, {
+  return apiClient(`/student-subscriptions/${id}/cancel`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
-    },
   });
-  if (!res.ok) {
-    let msg = `Failed to cancel: ${res.status}`;
-    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
-    throw new Error(msg);
-  }
-  return res.json();
 }
 
 // WORKER SUBSCRIPTIONS
 export async function listWorkerSubscriptions(token: string | null): Promise<SubscriptionItem[]> {
-  const res = await fetch(`${BASE_URL}/workers`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
-    },
-  });
-  if (!res.ok) {
-    let msg = `Failed to fetch workers: ${res.status}`;
-    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
-    throw new Error(msg);
-  }
-  const json = await res.json();
+  const json = await apiClient<any>("/workers");
   const workers: any[] = json.data || json.items || json || [];
 
   const items: any[] = [];
@@ -266,26 +213,16 @@ export interface PaymentRow {
 
 export async function listPaymentsFromSubscriptions(token: string | null): Promise<PaymentRow[]> {
   // Fetch raw subscriptions to access payment_history
-  const [studentRes, workerRes] = await Promise.all([
-    fetch(`${BASE_URL}/student-subscriptions`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `${token}` } : {}),
-      },
-    }),
-    fetch(`${BASE_URL}/workers`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `${token}` } : {}),
-      },
-    })
+  const [studentRes, workerRes] = await Promise.allSettled([
+    apiClient<any>("/student-subscriptions"),
+    apiClient<any>("/workers")
   ]);
 
   const rows: PaymentRow[] = [];
 
   // Process Students
-  if (studentRes.ok) {
-    const json = await studentRes.json();
+  if (studentRes.status === 'fulfilled') {
+    const json = studentRes.value;
     const apiItems: ApiSubscription[] = json.data || json.items || json;
     if (Array.isArray(apiItems)) {
       apiItems.forEach((api) => {
@@ -311,23 +248,15 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
   }
 
   // Process Workers
-  if (workerRes.ok) {
-    const json = await workerRes.json();
+  if (workerRes.status === 'fulfilled') {
+    const json = workerRes.value;
     const workers: any[] = json.data || json.items || json || [];
     if (Array.isArray(workers)) {
       // Fetch wallets for all workers to get transactions
       const walletPromises = workers.map(async (w: any) => {
         try {
-          const res = await fetch(`${BASE_URL}/workers/${w.id}/wallet`, {
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `${token}` } : {}),
-            },
-          });
-          if (res.ok) {
-            const walletData = await res.json();
-            return { worker: w, wallet: walletData.data };
-          }
+          const walletData = await apiClient<any>(`/workers/${w.id}/wallet`);
+          return { worker: w, wallet: walletData.data };
         } catch (e) {
           // ignore error
         }
