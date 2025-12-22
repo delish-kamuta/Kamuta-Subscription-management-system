@@ -174,14 +174,14 @@ export const subscriptionStats = [
   },
   {
     id: "newSubscription",
-    title: "New Subscription",
+    title: "New Subscriptions",
     value: 35,
     currentDay: 33,
     lastDayCount: 35,
   },
   {
     id: "expiringThisWeek",
-    title: "Expiring This Week",
+    title: "Expiring Subscriptions",
     value: 12,
     currentDay: 12,
     lastDayCount: 12,
