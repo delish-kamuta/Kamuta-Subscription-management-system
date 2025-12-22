@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk,type PayloadAction } from '@reduxjs/toolkit'
 import { apiClient } from '~/lib/api'
+import type { Student } from '~/types/auth'
 
-export interface StudentInfo { reg_number?: string }
 export interface UserItem {
   id: string
   full_name: string
@@ -9,7 +9,7 @@ export interface UserItem {
   role: string
   branch_id: string
   created_at: string
-  student?: StudentInfo
+  student?: Student
 }
 
 interface UsersState {
