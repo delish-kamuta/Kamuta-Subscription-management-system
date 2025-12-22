@@ -2,7 +2,7 @@ import { useState } from "react"
 import { apiClient, ensureValidTokenOrMessage } from "~/lib/api"
 import { useAppDispatch } from "~/store/hooks"
 import { addUserOptimistic } from "~/store/usersSlice"
-import type { User, BranchOption } from "./useUsersPage"
+import type { User, BranchOption } from "~/types/users"
 
 export function useUserForm(
   branches: BranchOption[],

@@ -3,24 +3,10 @@ import { useAppSelector, useAppDispatch } from "~/store/hooks"
 import { fetchUsersThunk } from "~/store/usersSlice"
 import { apiClient, ensureValidTokenOrMessage } from "~/lib/api"
 import { type Student } from "~/types/auth"
+import type { User, BranchOption } from "~/types/users"
 import { useUserForm } from "./useUserForm"
 import { useBranchForm } from "./useBranchForm"
 import { useUserActions } from "./useUserActions"
-
-export interface User {
-  id: string
-  full_name: string
-  phone: string
-  role: string
-  branch_id: string
-  created_at: string
-  student?: Student
-}
-
-export interface BranchOption {
-  id: string
-  name: string
-}
 
 export function useUsersPage() {
   const dispatch = useAppDispatch()
