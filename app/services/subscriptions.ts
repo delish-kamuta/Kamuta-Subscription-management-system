@@ -1,203 +1,8 @@
-import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import { apiClient } from "~/lib/api";
+import type { ApiSubscription } from "./studentSubscriptions";
 
-export interface ApiSubscription {
-  id: string;
-  student_id?: string;
-  meal_type?: string;
-  total_meals?: number;
-  remaining_meals?: number;
-  amount_paid?: string | number;
-  start_date?: string;
-  status?: string;
-  created_at?: string;
-  updated_at?: string;
-  student?: {
-    id?: string;
-    user_id?: string;
-    reg_number?: string;
-    status?: string;
-    created_at?: string;
-    updated_at?: string;
-    user?: {
-      id?: string;
-      full_name?: string;
-      phone?: string;
-      branch_id?: string;
-    }
-  };
-  payment_history?: Array<{
-    id?: string;
-    subscription_id?: string;
-    amount?: string | number;
-    payment_method?: string;
-    created_at?: string;
-  }>;
-}
-
-function mapApiToSubscriptionItem(item: ApiSubscription): SubscriptionItem {
-  const clientName = item.student?.user?.full_name || "";
-  const regNumber = item.student?.reg_number || item.id || "";
-  const userId = item.student?.user_id || item.student?.user?.id || "";
-  const phone = item.student?.user?.phone || "";
-  const paymentMethod = (item.payment_history && item.payment_history.length > 0)
-    ? (item.payment_history[0]?.payment_method || "")
-    : "";
-  const branchName = item.student?.user?.branch_id ? String(item.student.user.branch_id) : "";
-  return {
-    id: regNumber,
-    subscriptionId: item.id,
-    userId: userId || undefined,
-    tel: phone,
-    clientName,
-    subscriptionType: item.meal_type || "",
-    // Customer Type: the endpoint represents student subscriptions, so default to Student
-    customerType: 'Student',
-    branch: branchName,
-    dateStarted: item.start_date || item.created_at || "",
-    totalMeals: Number(item.total_meals ?? 0),
-    mealsLeft: Number(item.remaining_meals ?? item.total_meals ?? 0),
-    payment: paymentMethod,
-    status: item.status,
-  };
-}
-
-export async function listStudentSubscriptions(token: string | null): Promise<SubscriptionItem[]> {
-  const json = await apiClient<any>("/student-subscriptions");
-  const items: ApiSubscription[] = json.data || json.items || json;
-  return Array.isArray(items) ? items.map(mapApiToSubscriptionItem) : [];
-}
-
-export async function createStudentSubscription(token: string | null, payload: any): Promise<any> {
-  return apiClient("/student-subscriptions", {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function updateStudentSubscription(token: string | null, id: string, payload: any): Promise<any> {
-  return apiClient(`/student-subscriptions/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(payload),
-  });
-}
-
-export async function cancelStudentSubscription(token: string | null, id: string): Promise<any> {
-  return apiClient(`/student-subscriptions/${id}/cancel`, {
-    method: 'POST',
-  });
-}
-
-// WORKER SUBSCRIPTIONS
-export async function listWorkerSubscriptions(token: string | null): Promise<SubscriptionItem[]> {
-  const json = await apiClient<any>("/workers");
-  const workers: any[] = json.data || json.items || json || [];
-
-  const items: any[] = [];
-  workers.forEach((w: any) => {
-    const clientName = w?.user?.full_name || w?.full_name || '';
-    const phone = String(w?.user?.phone || w?.phone || '');
-    const branchId = w?.user?.branch_id != null ? String(w.user.branch_id) : (w?.branch_id != null ? String(w.branch_id) : '');
-    const baseId = String(w?.reg_number || w?.id || '');
-    const userId = String(w?.user?.id || w?.user_id || '');
-    
-    // Helper to get wallet object
-    const walletObj = w?.wallet || w?.user?.wallet;
-    
-    const walletBalance = Number(
-      (walletObj && (
-        walletObj.remaining_amount ?? 
-        walletObj.balance ?? 
-        walletObj.amount ??
-        walletObj.current_balance
-      )) ??
-      w?.wallet_balance ?? 
-      w?.balance ?? 
-      w?.remaining_amount ??
-      0
-    ) || 0;
-
-    const prepaidBalance = Number(
-      (walletObj && (
-        walletObj.prepaid_amount ?? 
-        walletObj.prepaid ??
-        walletObj.prepaid_balance ?? 
-        walletObj.balance
-      )) ??
-      w?.prepaid_balance ?? 
-      w?.prepaid ?? 
-      w?.prepaid_amount ??
-      walletBalance
-    ) || 0;
-
-    const creditBalance = Number(
-      (walletObj && (
-        walletObj.credit_used ?? 
-        walletObj.credit ?? 
-        walletObj.credit_balance
-      )) ??
-      w?.credit_balance ?? 
-      w?.credit ?? 
-      w?.credit_used ??
-      0
-    ) || 0;
-    const lastTopUp = String(
-      (walletObj && (walletObj.lastTopUp ?? walletObj.last_topup)) ??
-      w?.last_topup ?? w?.lastTopUp ?? w?.updated_at ?? ''
-    );
-    const mealsThisMonth = Number(w?.meals_this_month ?? w?.stats?.meals_this_month ?? 0) || 0;
-    const lastMeal = String(w?.last_meal_at ?? w?.stats?.last_meal_at ?? '');
-    const subs = Array.isArray(w?.subscriptions) ? w.subscriptions : [];
-    if (subs.length > 0) {
-      subs.forEach((s: any) => {
-        const paymentMethod = Array.isArray(s?.payment_history) && s.payment_history.length > 0
-          ? (s.payment_history[0]?.payment_method || '')
-          : '';
-        items.push({
-          id:String(s?.id || baseId),
-          userId: userId || undefined,
-          tel: phone,
-          clientName,
-          subscriptionType: String(s?.meal_type || ''),
-          customerType: 'Worker',
-          branch: branchId,
-          dateStarted: String(s?.start_date || s?.created_at || w?.created_at || ''),
-          totalMeals: Number(s?.total_meals ?? 0),
-          mealsLeft: Number(s?.remaining_meals ?? s?.total_meals ?? 0),
-          payment: paymentMethod,
-          // extra fields (not in SubscriptionItem type) for worker view
-          walletBalance,
-          prepaidBalance,
-          creditBalance,
-          mealsThisMonth,
-          lastMeal,
-          lastTopUp,
-        });
-      });
-    } else {
-      items.push({
-        id: baseId,
-        userId: userId || undefined,
-        tel: phone,
-        clientName,
-        subscriptionType: '',
-        customerType: 'Worker',
-        branch: branchId,
-        dateStarted: String(w?.created_at || ''),
-        totalMeals: 0,
-        mealsLeft: 0,
-        payment: '',
-        walletBalance,
-        prepaidBalance,
-        creditBalance,
-        mealsThisMonth,
-        lastMeal,
-        lastTopUp,
-      });
-    }
-  });
-  return items as SubscriptionItem[];
-}
+export * from "./studentSubscriptions";
+export * from "./workerSubscriptions";
 
 export interface PaymentRow {
   id: number;
@@ -298,29 +103,23 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
               (t.method || '') + ' ' + 
               (t.category || '') + ' ' +
               (t.description || '') + ' ' +
-              (t.note || '')
+              (t.status || '')
             ).toLowerCase();
 
-            const isTopUp = combinedStr.includes('payment') || 
-                            combinedStr.includes('credit') || 
-                            combinedStr.includes('deposit') || 
-                            combinedStr.includes('top') ||
-                            combinedStr.includes('cash') ||
-                            combinedStr.includes('momo') ||
-                            combinedStr.includes('card') ||
-                            combinedStr.includes('mobile') ||
-                            combinedStr.includes('transfer') ||
-                            combinedStr.includes('fund') ||
-                            combinedStr.includes('admin');
-
-            if (isTopUp) {
+            // Only include if it looks like a top-up or credit
+            if (
+              combinedStr.includes('top') || 
+              combinedStr.includes('credit') || 
+              combinedStr.includes('deposit') ||
+              (t.amount && Number(t.amount) > 0 && !combinedStr.includes('debit') && !combinedStr.includes('payment'))
+            ) {
                rows.push({
                 id: rows.length + 1,
                 customerName,
-                regNumber, // Using worker reg number as ID
-                amount: String(t.amount ?? t.value ?? ''),
+                regNumber,
+                amount: String(t.amount || ''),
                 paymentMethod: t.payment_method || t.method || 'Wallet',
-                date: t.date || t.created_at || '',
+                date: t.created_at || t.date || '',
                 status: 'Completed',
                 branch: branchId,
                 cashier: 'N/A',
@@ -332,5 +131,5 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
     }
   }
 
-  return rows;
+  return rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
