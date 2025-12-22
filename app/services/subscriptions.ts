@@ -16,6 +16,13 @@ export interface PaymentRow {
   cashier: string;
 }
 
+function normalizePaymentMethod(method: string | undefined | null): string {
+  const lower = (method || '').toLowerCase();
+  if (lower.includes('cash')) return 'Cash';
+  if (lower.includes('momo') || lower.includes('mobile') || lower.includes('mtn') || lower.includes('airtel')) return 'Momo';
+  return 'Momo';
+}
+
 export async function listPaymentsFromSubscriptions(token: string | null): Promise<PaymentRow[]> {
   // Fetch raw subscriptions to access payment_history
   const [studentRes, workerRes] = await Promise.allSettled([
@@ -41,7 +48,7 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
             customerName,
             regNumber,
             amount: String(ph.amount ?? api.amount_paid ?? ''),
-            paymentMethod: ph.payment_method || '',
+            paymentMethod: normalizePaymentMethod(ph.payment_method),
             date: ph.created_at || api.created_at || api.start_date || '',
             status: 'Completed',
             branch: branchId,
@@ -50,6 +57,8 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
         });
       });
     }
+  } else {
+    console.error("Failed to fetch student subscriptions", studentRes.reason);
   }
 
   // Process Workers
@@ -61,8 +70,9 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
       const walletPromises = workers.map(async (w: any) => {
         try {
           const walletData = await apiClient<any>(`/workers/${w.id}/wallet`);
-          return { worker: w, wallet: walletData.data };
+          return { worker: w, wallet: walletData?.data || walletData };
         } catch (e) {
+          console.error("Failed to fetch wallet for worker", w?.id, e);
           // ignore error
         }
         return { worker: w, wallet: null };
@@ -85,7 +95,7 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
                 customerName,
                 regNumber,
                 amount: String(ph.amount ?? s.amount_paid ?? ''),
-                paymentMethod: ph.payment_method || '',
+                paymentMethod: normalizePaymentMethod(ph.payment_method),
                 date: ph.created_at || s.created_at || s.start_date || '',
                 status: 'Completed',
                 branch: branchId,
@@ -106,19 +116,20 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
               (t.status || '')
             ).toLowerCase();
 
-            // Only include if it looks like a top-up or credit
+            // Only include if it looks like a top-up or credit, or simply a positive amount transaction that isn't explicitly a debit
+            // We remove the check for 'payment' because some top-ups might be labeled as payment method 'payment' or similar.
             if (
               combinedStr.includes('top') || 
               combinedStr.includes('credit') || 
               combinedStr.includes('deposit') ||
-              (t.amount && Number(t.amount) > 0 && !combinedStr.includes('debit') && !combinedStr.includes('payment'))
+              (t.amount && Number(t.amount) > 0 && !combinedStr.includes('debit') && !combinedStr.includes('withdraw') && !combinedStr.includes('expense'))
             ) {
                rows.push({
                 id: rows.length + 1,
                 customerName,
                 regNumber,
                 amount: String(t.amount || ''),
-                paymentMethod: t.payment_method || t.method || 'Wallet',
+                paymentMethod: normalizePaymentMethod(t.payment_method || t.method),
                 date: t.created_at || t.date || '',
                 status: 'Completed',
                 branch: branchId,
@@ -129,6 +140,8 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
         }
       });
     }
+  } else {
+    console.error("Failed to fetch workers for payments", workerRes.reason);
   }
 
   return rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
