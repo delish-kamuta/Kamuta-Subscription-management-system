@@ -10,7 +10,7 @@ import { useAppSelector, useAppDispatch } from "~/store/hooks"
 import { fetchBranchesThunk, addBranchOptimistic, updateBranchOptimistic, removeBranchOptimistic } from "~/store/branchesSlice"
 import type { BranchItem } from "~/store/branchesSlice"
 import { createBranch, updateBranch, deleteBranch } from "~/services/branches"
-import { AddBranchSheet } from "../../components/components/AddBranchSheet"
+import { AddBranchSheet } from "~/components/branches/AddBranchSheet"
 import { UserRole } from "~/types/auth"
 
 export default function BranchesPage() {
