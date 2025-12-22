@@ -2,7 +2,7 @@ import { useState } from "react"
 import { apiClient, ensureValidTokenOrMessage } from "~/lib/api"
 import { useAppDispatch } from "~/store/hooks"
 import { updateUserOptimistic, removeUserOptimistic } from "~/store/usersSlice"
-import type { User } from "./useUsersPage"
+import type { User } from "~/types/users"
 
 export function useUserActions(
   selectedUser: User | null,
