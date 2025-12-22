@@ -30,7 +30,7 @@ const QuickAction = () => {
     vid?: string;
     pid?: string;
   }>({
-    type: 'network',
+    type: 'browser',
     ip: '192.168.1.100',
     port: 9100,
     vid: '',
@@ -102,6 +102,69 @@ const QuickAction = () => {
 
   // Print ticket content via thermal printer API
   const handlePrint = async () => {
+    // Handle Browser/System Print (Client-side) - Correctly formats for thermal printers
+    if (printerConfig.type === 'browser') {
+      const content = document.getElementById('ticket-content');
+      if (!content) {
+        alert('Ticket content not found to print.');
+        return;
+      }
+
+      const printWindow = window.open('', '_blank', 'width=300,height=500');
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Print Meal Ticket</title>
+              <style>
+                @page {
+                  margin: 2mm; /* Small margins for receipt paper */
+                }
+                body {
+                  font-family: 'Courier New', Courier, monospace;
+                  padding: 0;
+                  margin: 0;
+                }
+                .ticket {
+                  max-width: 57mm; /* Correct width for 58mm thermal printers */
+                  width: 100%;
+                  margin: 0 auto;
+                }
+                /* Basic mappings for Tailwind classes used in the ticket */
+                .text-center { text-align: center; }
+                .font-semibold { font-weight: 600; }
+                .tracking-wide { letter-spacing: 0.025em; }
+                .grid { display: grid; }
+                .grid-cols-2 { grid-template-columns: 1fr 1fr; }
+                .gap-1 { gap: 0.25rem; }
+                .mt-2 { margin-top: 0.5rem; }
+                .text-xs { font-size: 11px; line-height: 1.2; }
+                .text-\\[10px\\] { font-size: 9px; }
+                .break-all { word-break: break-all; }
+                .border-t { border-top: 1px dashed #000; }
+                .my-3 { margin-top: 0.75rem; margin-bottom: 0.75rem; }
+                .qr { display: flex; justify-content: center; margin: 0.5rem 0; }
+                /* Override fixed size for QR image to make it responsive */
+                .qr img, .w-44, .h-44 {
+                  max-width: 80% !important;
+                  height: auto !important;
+                }
+              </style>
+            </head>
+            <body>
+              ${content.outerHTML}
+              <script>
+                window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+      return; // Stop execution for browser print
+    }
+
     const dateStr = dayjs().format('D MMM YYYY, HH:mm');
     // Use generated ticket details if available, otherwise selected client
     const clientName = ticketGenerated ? payerName : (selectedClient?.clientName || 'Client');
@@ -385,6 +448,7 @@ const QuickAction = () => {
               onChange={(e) => setPrinterConfig({...printerConfig, type: e.target.value})}
               className="col-span-3 border rounded p-2 text-sm"
             >
+              <option value="browser">Browser (System Driver)</option>
               <option value="network">Network (Ethernet/WiFi)</option>
               <option value="usb">USB</option>
             </select>
