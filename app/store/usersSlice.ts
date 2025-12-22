@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk,type PayloadAction } from '@reduxjs/toolkit'
-import { authFetch, ensureValidTokenOrMessage } from '~/lib/api'
+import { apiClient } from '~/lib/api'
+import type { Student } from '~/types/auth'
 
-export interface StudentInfo { reg_number?: string }
 export interface UserItem {
   id: string
   full_name: string
@@ -9,7 +9,7 @@ export interface UserItem {
   role: string
   branch_id: string
   created_at: string
-  student?: StudentInfo
+  student?: Student
 }
 
 interface UsersState {
@@ -27,19 +27,12 @@ const initialState: UsersState = {
 }
 
 export const fetchUsersThunk = createAsyncThunk('users/fetch', async (_, { rejectWithValue }) => {
-  const tokenError = ensureValidTokenOrMessage()
-  if (tokenError) return rejectWithValue(tokenError)
-  const resp = await authFetch('https://restaurant-bn-api.onrender.com/api/users')
-  if (!resp.ok) {
-    try {
-      const j = await resp.json()
-      return rejectWithValue(j.message || j.error || 'Failed to fetch users')
-    } catch {
-      return rejectWithValue('Failed to fetch users')
-    }
+  try {
+    const data = await apiClient<any>('/users');
+    return (data?.data ?? []) as UserItem[];
+  } catch (e) {
+    return rejectWithValue(e instanceof Error ? e.message : 'Failed to fetch users');
   }
-  const data = await resp.json()
-  return (data?.data ?? []) as UserItem[]
 })
 
 const usersSlice = createSlice({

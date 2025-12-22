@@ -11,6 +11,10 @@ export enum CustomerType {
   CAMPUS_WORKER = "CAMPUS_WORKER",
 }
 
+export interface Student {
+  reg_number?: string;
+}
+
 // Maps backend role strings to frontend UserRole enum
 export function mapApiRoleToUserRole(role?: string | null): UserRole {
   const r = String(role || '').toLowerCase();

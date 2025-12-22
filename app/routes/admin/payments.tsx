@@ -1,191 +1,42 @@
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { Header } from "../../../components/Header";
-import { useState } from "react";
-import { exportToCsv, formatCurrency } from "~/lib/utils";
-import { toDateKey, isWithinRange } from "~/lib/date";
 import PaymentFilters from "~/components/payments/PaymentFilters";
 import FinancialStatsSection from "~/components/payments/FinancialStatsSection";
 import ChartsSection from "~/components/payments/ChartsSection";
 import PaymentModals from "~/components/payments/PaymentModals";
 import PaymentTable from "~/components/payments/PaymentTable";
-import { useAppDispatch, useAppSelector } from "~/store/hooks";
-import { fetchPaymentsThunk } from "~/store/paymentsSlice";
-import { fetchBranchesThunk } from "~/store/branchesSlice";
-import { useEffect } from "react";
-
-interface Payment {
-  paymentId: string;
-  clientName: string;
-  branch: string;
-  subscriptionType: string;
-  amountPaid: number;
-  totalMeals: number;
-  paymentDate: string;
-  addedNotes: string;
-  payment: string;
-}
+import { usePaymentStats } from "~/hooks/usePaymentStats";
 
 const Payments = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const dispatch = useAppDispatch();
-  const paymentsState = useAppSelector((s) => (s as any).payments);
-  const branchesState = useAppSelector((s) => (s as any).branches);
-  const apiPayments = (paymentsState?.items ?? []) as any[];
-  const loading = Boolean(paymentsState?.loading);
-  const error = paymentsState?.error as string | null;
-
-  useEffect(() => {
-    if (!paymentsState?.loaded && !paymentsState?.loading) {
-      dispatch(fetchPaymentsThunk());
-    }
-    if (!branchesState?.loaded && !branchesState?.loading) {
-      dispatch(fetchBranchesThunk());
-    }
-  }, [dispatch, paymentsState?.loaded, paymentsState?.loading, branchesState?.loaded, branchesState?.loading]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [branchFilter, setBranchFilter] = useState("All");
-  const [cashierFilter, setCashierFilter] = useState("All");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Payment | null>(null);
   const itemsPerPage = 8;
-
-  // Prepare data for charts
-  const today = new Date();
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    return {
-      display: date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-      key: date.toISOString().split('T')[0], // YYYY-MM-DD format for matching
-    };
-  }).reverse();
-
-  // Normalize data source to a common shape for charts/table
-  const sourceData = apiPayments.length
-    ? apiPayments.map((r) => ({
-        paymentId: r.regNumber,
-        clientName: r.customerName,
-        branch: r.branch,
-        subscriptionType: "",
-        amountPaid: Number(String(r.amount).replace(/[^0-9.]/g, "")) || 0,
-        totalMeals: 0,
-        paymentDate: r.date,
-        paymentDateKey: r.date ? new Date(r.date).toISOString().split('T')[0] : '', // Normalize to YYYY-MM-DD
-        addedNotes: "",
-        payment: r.paymentMethod,
-      }))
-    : [];
-
-  const dailyRevenue = last7Days.map((day) => ({
-    date: day.display,
-    amount: sourceData
-      .filter((p) => p.paymentDateKey === day.key)
-      .reduce((sum, p) => sum + p.amountPaid, 0),
-  }));
-
-  const totalRevenue = sourceData.reduce((sum, p) => sum + p.amountPaid, 0);
-
-  const paymentMethodsData = sourceData.reduce((acc, payment) => {
-    const method = payment.payment;
-    if (!acc[method]) {
-      acc[method] = { count: 0, amount: 0 };
-    }
-    acc[method].count++;
-    acc[method].amount += payment.amountPaid;
-    return acc;
-  }, {} as Record<string, { count: number; amount: number }>);
-
-  const paymentMethods = Object.entries(paymentMethodsData).map(([method, data]) => ({
-    method,
-    count: data.count,
-    percentage: (data.count / sourceData.length) * 100,
-  }));
-
-  const topPayments = [...sourceData]
-    .sort((a, b) => b.amountPaid - a.amountPaid)
-    .slice(0, 5)
-    .map((p) => ({
-      id: parseInt(String(p.paymentId).replace("PAY-", "")) || 0,
-      customerName: p.clientName,
-      regNumber: p.paymentId,
-      amount: formatCurrency(p.amountPaid),
-      paymentMethod: p.payment,
-      date: p.paymentDate,
-      status: "Completed",
-      branch: p.branch,
-      cashier: "N/A",
-    }));
-
-  // sourceData defined above
-
-  const filteredData = sourceData.filter((item) => {
-    const matchesSearch =
-      item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.paymentId.includes(searchTerm);
-    const matchesBranch = branchFilter === "All" || item.branch === branchFilter;
-    const matchesCashier = cashierFilter === "All" || true; // Cashier data not in payment object yet
-    const itemKey = toDateKey(item.paymentDate);
-    const fromKey = toDateKey(startDate);
-    const toKey = toDateKey(endDate);
-    const withinRange = isWithinRange(itemKey, fromKey, toKey);
-    return matchesSearch && matchesBranch && matchesCashier && withinRange;
-  }).sort((a, b) => {
-    const dateA = new Date(a.paymentDate).getTime();
-    const dateB = new Date(b.paymentDate).getTime();
-    return dateB - dateA;
-  });
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-
-  const handleExport = () => {
-    const headers = [
-      "Payment ID",
-      "Client Name",
-      "Branch",
-      "Subscription Type",
-      "Amount Paid",
-      "Total Meals",
-      "Payment Date",
-      "Notes",
-      "Payment Method",
-    ];
-    const rows = filteredData.map((item) => [
-      item.paymentId,
-      item.clientName,
-      item.branch,
-      item.subscriptionType,
-      item.amountPaid,
-      item.totalMeals,
-      item.paymentDate,
-      item.addedNotes,
-      item.payment,
-    ]);
-    exportToCsv(headers, rows, "payments");
-  };
-
-  const handleViewDetails = (payment: Payment) => {
-    setSelectedItem(payment);
-    setViewDetailsOpen(true);
-  };
-
-  // Convert filtered data to match PaymentTable component interface
-  const tableData = filteredData.map((p) => ({
-    id: parseInt(String(p.paymentId).replace("PAY-", "")) || 0,
-    customerName: p.clientName,
-    regNumber: p.paymentId,
-    amount: formatCurrency(p.amountPaid),
-    paymentMethod: p.payment,
-    date: p.paymentDate,
-    status: "Completed",
-    branch: p.branch,
-    cashier: "N/A",
-  }));
+  const {
+    loading,
+    error,
+    searchTerm,
+    setSearchTerm,
+    currentPage,
+    setCurrentPage,
+    branchFilter,
+    setBranchFilter,
+    cashierFilter,
+    setCashierFilter,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    viewDetailsOpen,
+    setViewDetailsOpen,
+    selectedItem,
+    setSelectedItem,
+    sourceData,
+    dailyRevenue,
+    totalRevenue,
+    paymentMethods,
+    tableData,
+    totalPages,
+    handleExport,
+    handleViewDetails,
+  } = usePaymentStats(itemsPerPage);
 
   return (
     <main className="dashboard wrapper">

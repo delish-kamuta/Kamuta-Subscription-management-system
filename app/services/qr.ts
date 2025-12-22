@@ -1,4 +1,4 @@
-import { authFetch, ensureValidTokenOrMessage } from "~/lib/api"
+import { apiClient, ensureValidTokenOrMessage } from "~/lib/api"
 
 export interface GenerateQrOtpResponse {
   success: boolean
@@ -13,32 +13,30 @@ export interface GenerateQrOtpResponse {
 export async function generateQrOtpForUser(userId: string): Promise<GenerateQrOtpResponse> {
   const tokenError = ensureValidTokenOrMessage()
   if (tokenError) return { success: false, message: tokenError }
-  const res = await authFetch("https://restaurant-bn-api.onrender.com/api/qr-otp/generate", {
-    method: "POST",
-    body: JSON.stringify({ user_id: userId }),
-  })
-  let data: any = null
-  try { data = await res.json() } catch {}
-  if (!res.ok) {
-    const msg = data?.message || data?.error || `QR generation failed: ${res.status}`
-    return { success: false, message: msg }
+  
+  try {
+    const data = await apiClient<any>("/qr-otp/generate", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId }),
+    })
+    return data as GenerateQrOtpResponse
+  } catch (e: any) {
+    return { success: false, message: e?.message || "QR generation failed" }
   }
-  return data as GenerateQrOtpResponse
 }
 
 export async function generateSelfQrOtp(): Promise<GenerateQrOtpResponse> {
   const tokenError = ensureValidTokenOrMessage()
   if (tokenError) return { success: false, message: tokenError }
-  const res = await authFetch("https://restaurant-bn-api.onrender.com/api/qr-otp/generate-self", {
-    method: "POST",
-  })
-  let data: any = null
-  try { data = await res.json() } catch {}
-  if (!res.ok) {
-    const msg = data?.message || data?.error || `QR self generation failed: ${res.status}`
-    return { success: false, message: msg }
+  
+  try {
+    const data = await apiClient<any>("/qr-otp/generate-self", {
+      method: "POST",
+    })
+    return data as GenerateQrOtpResponse
+  } catch (e: any) {
+    return { success: false, message: e?.message || "QR self generation failed" }
   }
-  return data as GenerateQrOtpResponse
 }
 
 export interface ScanQrOtpResponse {
@@ -55,15 +53,14 @@ export interface ScanQrOtpResponse {
 export async function scanQrOtp(qrCode: string): Promise<ScanQrOtpResponse> {
   const tokenError = ensureValidTokenOrMessage()
   if (tokenError) return { success: false, message: tokenError }
-  const res = await authFetch("https://restaurant-bn-api.onrender.com/api/qr-otp/scan", {
-    method: "POST",
-    body: JSON.stringify({ qr_code: qrCode }),
-  })
-  let data: any = null
-  try { data = await res.json() } catch {}
-  if (!res.ok) {
-    const msg = data?.message || data?.error || `QR scan failed: ${res.status}`
-    return { success: false, message: msg }
+  
+  try {
+    const data = await apiClient<any>("/qr-otp/scan", {
+      method: "POST",
+      body: JSON.stringify({ qr_code: qrCode }),
+    })
+    return data as ScanQrOtpResponse
+  } catch (e: any) {
+    return { success: false, message: e?.message || "QR scan failed" }
   }
-  return data as ScanQrOtpResponse
 }

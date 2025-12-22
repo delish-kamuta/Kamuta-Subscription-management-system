@@ -1,5 +1,7 @@
 import { store } from "~/store/store"
 
+export const API_BASE_URL = "https://restaurant-bn-api.onrender.com/api";
+
 export function getToken(): string | null {
   // Prefer Redux token
   const state = store.getState()
@@ -8,22 +10,75 @@ export function getToken(): string | null {
   if (reduxClean) return reduxClean
 
   // Fallback to localStorage
-  const raw = localStorage.getItem('authToken') || ''
-  const token = raw.trim()
-  return token || null
+  if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem('authToken') || ''
+      const token = raw.trim()
+      return token || null
+  }
+  return null;
 }
 
-export async function authFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+export interface ApiError {
+    message: string;
+    status: number;
+}
+
+export async function apiClient<T = any>(endpoint: string, init: RequestInit = {}): Promise<T> {
   const token = getToken()
   const headers = new Headers(init.headers || {})
+  
   if (token) {
-    // API expects the raw token without the 'Bearer ' prefix
     headers.set('Authorization', token)
   }
+  
   if (!headers.has('Content-Type') && init.method && init.method.toUpperCase() !== 'GET') {
     headers.set('Content-Type', 'application/json')
   }
-  return fetch(input, { ...init, headers })
+
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+
+  const response = await fetch(url, { ...init, headers })
+
+  let data: any;
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.indexOf("application/json") !== -1) {
+      try {
+        data = await response.json();
+      } catch (e) {
+        data = null;
+      }
+  } else {
+      data = await response.text();
+  }
+
+  if (!response.ok) {
+      const error: ApiError = {
+          message: data?.message || data?.error || `Request failed with status ${response.status}`,
+          status: response.status
+      };
+      throw error;
+  }
+
+  return data as T;
+}
+
+// Deprecated: Use apiClient instead
+export async function authFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+    const token = getToken()
+    const headers = new Headers(init.headers || {})
+    if (token) {
+      headers.set('Authorization', token)
+    }
+    if (!headers.has('Content-Type') && init.method && init.method.toUpperCase() !== 'GET') {
+      headers.set('Content-Type', 'application/json')
+    }
+    
+    let url = input.toString();
+    if (!url.startsWith('http')) {
+        url = `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
+    }
+
+    return fetch(url, { ...init, headers })
 }
 
 export function ensureValidTokenOrMessage(): string | null {

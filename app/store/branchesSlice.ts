@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getToken } from "~/lib/api";
+import { apiClient } from "~/lib/api";
 
 export interface BranchItem { 
   id: string; 
@@ -29,19 +29,7 @@ export const fetchBranchesThunk = createAsyncThunk(
   "branches/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const resp = await fetch("https://restaurant-bn-api.onrender.com/api/branches", {
-        headers: { Authorization: token || "" },
-      });
-      if (!resp.ok) {
-        let msg = `Failed to load branches (${resp.status})`;
-        try {
-          const j = await resp.json();
-          msg = j.message || j.error || msg;
-        } catch {}
-        return rejectWithValue(msg);
-      }
-      const data = await resp.json();
+      const data = await apiClient<any>("/branches");
       const list = Array.isArray(data?.data) ? data.data : [];
       return list.map((b: any) => ({ 
         id: String(b.id), 

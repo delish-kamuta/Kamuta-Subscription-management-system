@@ -1,4 +1,4 @@
-import { authFetch, ensureValidTokenOrMessage } from "~/lib/api"
+import { apiClient, ensureValidTokenOrMessage } from "~/lib/api"
 
 export interface MealLogItem {
   id: string
@@ -31,13 +31,12 @@ export async function listMealLogs(query: MealLogsQuery = {}): Promise<MealLogsR
   if (tokenError) return { success: false, message: tokenError }
   const params = new URLSearchParams()
   Object.entries(query).forEach(([k, v]) => { if (v) params.set(k, String(v)) })
-  const url = `https://restaurant-bn-api.onrender.com/api/meal-logs${params.toString() ? `?${params.toString()}` : ''}`
-  const res = await authFetch(url)
-  let data: any = null
-  try { data = await res.json() } catch {}
-  if (!res.ok) {
-    const msg = data?.message || data?.error || `Failed to fetch meal logs: ${res.status}`
-    return { success: false, message: msg }
+  const queryString = params.toString() ? `?${params.toString()}` : ''
+  
+  try {
+    const data = await apiClient<any>(`/meal-logs${queryString}`)
+    return data as MealLogsResponse
+  } catch (e: any) {
+    return { success: false, message: e?.message || "Network error" }
   }
-  return data as MealLogsResponse
 }

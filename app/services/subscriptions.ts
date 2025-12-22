@@ -1,256 +1,8 @@
-import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
+import { apiClient } from "~/lib/api";
+import type { ApiSubscription } from "./studentSubscriptions";
 
-const BASE_URL = "https://restaurant-bn-api.onrender.com/api";
-
-export interface ApiSubscription {
-  id: string;
-  student_id?: string;
-  meal_type?: string;
-  total_meals?: number;
-  remaining_meals?: number;
-  amount_paid?: string | number;
-  start_date?: string;
-  status?: string;
-  created_at?: string;
-  updated_at?: string;
-  student?: {
-    id?: string;
-    user_id?: string;
-    reg_number?: string;
-    status?: string;
-    created_at?: string;
-    updated_at?: string;
-    user?: {
-      id?: string;
-      full_name?: string;
-      phone?: string;
-      branch_id?: string;
-    }
-  };
-  payment_history?: Array<{
-    id?: string;
-    subscription_id?: string;
-    amount?: string | number;
-    payment_method?: string;
-    created_at?: string;
-  }>;
-}
-
-function mapApiToSubscriptionItem(item: ApiSubscription): SubscriptionItem {
-  const clientName = item.student?.user?.full_name || "";
-  const regNumber = item.student?.reg_number || item.id || "";
-  const userId = item.student?.user_id || item.student?.user?.id || "";
-  const phone = item.student?.user?.phone || "";
-  const paymentMethod = (item.payment_history && item.payment_history.length > 0)
-    ? (item.payment_history[0]?.payment_method || "")
-    : "";
-  const branchName = item.student?.user?.branch_id ? String(item.student.user.branch_id) : "";
-  return {
-    id: regNumber,
-    subscriptionId: item.id,
-    userId: userId || undefined,
-    tel: phone,
-    clientName,
-    subscriptionType: item.meal_type || "",
-    // Customer Type: the endpoint represents student subscriptions, so default to Student
-    customerType: 'Student',
-    branch: branchName,
-    dateStarted: item.start_date || item.created_at || "",
-    totalMeals: Number(item.total_meals ?? 0),
-    mealsLeft: Number(item.remaining_meals ?? item.total_meals ?? 0),
-    payment: paymentMethod,
-    status: item.status,
-  };
-}
-
-export async function listStudentSubscriptions(token: string | null): Promise<SubscriptionItem[]> {
-  const res = await fetch(`${BASE_URL}/student-subscriptions`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
-    },
-  });
-  if (!res.ok) {
-    let msg = `Failed to fetch: ${res.status}`;
-    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
-    throw new Error(msg);
-  }
-  const json = await res.json();
-  const items: ApiSubscription[] = json.data || json.items || json;
-  return Array.isArray(items) ? items.map(mapApiToSubscriptionItem) : [];
-}
-
-export async function createStudentSubscription(token: string | null, payload: any): Promise<any> {
-  const res = await fetch(`${BASE_URL}/student-subscriptions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    let msg = `Failed to create: ${res.status}`;
-    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
-    throw new Error(msg);
-  }
-  return res.json();
-}
-
-export async function updateStudentSubscription(token: string | null, id: string, payload: any): Promise<any> {
-  const res = await fetch(`${BASE_URL}/student-subscriptions/${id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    let msg = `Failed to update: ${res.status}`;
-    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
-    throw new Error(msg);
-  }
-  return res.json();
-}
-
-export async function cancelStudentSubscription(token: string | null, id: string): Promise<any> {
-  const res = await fetch(`${BASE_URL}/student-subscriptions/${id}/cancel`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
-    },
-  });
-  if (!res.ok) {
-    let msg = `Failed to cancel: ${res.status}`;
-    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
-    throw new Error(msg);
-  }
-  return res.json();
-}
-
-// WORKER SUBSCRIPTIONS
-export async function listWorkerSubscriptions(token: string | null): Promise<SubscriptionItem[]> {
-  const res = await fetch(`${BASE_URL}/workers`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `${token}` } : {}),
-    },
-  });
-  if (!res.ok) {
-    let msg = `Failed to fetch workers: ${res.status}`;
-    try { const data = await res.json(); msg = data.message || data.error || msg; } catch {}
-    throw new Error(msg);
-  }
-  const json = await res.json();
-  const workers: any[] = json.data || json.items || json || [];
-
-  const items: any[] = [];
-  workers.forEach((w: any) => {
-    const clientName = w?.user?.full_name || w?.full_name || '';
-    const phone = String(w?.user?.phone || w?.phone || '');
-    const branchId = w?.user?.branch_id != null ? String(w.user.branch_id) : (w?.branch_id != null ? String(w.branch_id) : '');
-    const baseId = String(w?.reg_number || w?.id || '');
-    const userId = String(w?.user?.id || w?.user_id || '');
-    
-    // Helper to get wallet object
-    const walletObj = w?.wallet || w?.user?.wallet;
-    
-    const walletBalance = Number(
-      (walletObj && (
-        walletObj.remaining_amount ?? 
-        walletObj.balance ?? 
-        walletObj.amount ??
-        walletObj.current_balance
-      )) ??
-      w?.wallet_balance ?? 
-      w?.balance ?? 
-      w?.remaining_amount ??
-      0
-    ) || 0;
-
-    const prepaidBalance = Number(
-      (walletObj && (
-        walletObj.prepaid_amount ?? 
-        walletObj.prepaid ??
-        walletObj.prepaid_balance ?? 
-        walletObj.balance
-      )) ??
-      w?.prepaid_balance ?? 
-      w?.prepaid ?? 
-      w?.prepaid_amount ??
-      walletBalance
-    ) || 0;
-
-    const creditBalance = Number(
-      (walletObj && (
-        walletObj.credit_used ?? 
-        walletObj.credit ?? 
-        walletObj.credit_balance
-      )) ??
-      w?.credit_balance ?? 
-      w?.credit ?? 
-      w?.credit_used ??
-      0
-    ) || 0;
-    const lastTopUp = String(
-      (walletObj && (walletObj.lastTopUp ?? walletObj.last_topup)) ??
-      w?.last_topup ?? w?.lastTopUp ?? w?.updated_at ?? ''
-    );
-    const mealsThisMonth = Number(w?.meals_this_month ?? w?.stats?.meals_this_month ?? 0) || 0;
-    const lastMeal = String(w?.last_meal_at ?? w?.stats?.last_meal_at ?? '');
-    const subs = Array.isArray(w?.subscriptions) ? w.subscriptions : [];
-    if (subs.length > 0) {
-      subs.forEach((s: any) => {
-        const paymentMethod = Array.isArray(s?.payment_history) && s.payment_history.length > 0
-          ? (s.payment_history[0]?.payment_method || '')
-          : '';
-        items.push({
-          id:String(s?.id || baseId),
-          userId: userId || undefined,
-          tel: phone,
-          clientName,
-          subscriptionType: String(s?.meal_type || ''),
-          customerType: 'Worker',
-          branch: branchId,
-          dateStarted: String(s?.start_date || s?.created_at || w?.created_at || ''),
-          totalMeals: Number(s?.total_meals ?? 0),
-          mealsLeft: Number(s?.remaining_meals ?? s?.total_meals ?? 0),
-          payment: paymentMethod,
-          // extra fields (not in SubscriptionItem type) for worker view
-          walletBalance,
-          prepaidBalance,
-          creditBalance,
-          mealsThisMonth,
-          lastMeal,
-          lastTopUp,
-        });
-      });
-    } else {
-      items.push({
-        id: baseId,
-        userId: userId || undefined,
-        tel: phone,
-        clientName,
-        subscriptionType: '',
-        customerType: 'Worker',
-        branch: branchId,
-        dateStarted: String(w?.created_at || ''),
-        totalMeals: 0,
-        mealsLeft: 0,
-        payment: '',
-        walletBalance,
-        prepaidBalance,
-        creditBalance,
-        mealsThisMonth,
-        lastMeal,
-        lastTopUp,
-      });
-    }
-  });
-  return items as SubscriptionItem[];
-}
+export * from "./studentSubscriptions";
+export * from "./workerSubscriptions";
 
 export interface PaymentRow {
   id: number;
@@ -264,28 +16,25 @@ export interface PaymentRow {
   cashier: string;
 }
 
+function normalizePaymentMethod(method: string | undefined | null): string {
+  const lower = (method || '').toLowerCase();
+  if (lower.includes('cash')) return 'Cash';
+  if (lower.includes('momo') || lower.includes('mobile') || lower.includes('mtn') || lower.includes('airtel')) return 'Momo';
+  return 'Momo';
+}
+
 export async function listPaymentsFromSubscriptions(token: string | null): Promise<PaymentRow[]> {
   // Fetch raw subscriptions to access payment_history
-  const [studentRes, workerRes] = await Promise.all([
-    fetch(`${BASE_URL}/student-subscriptions`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `${token}` } : {}),
-      },
-    }),
-    fetch(`${BASE_URL}/workers`, {
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `${token}` } : {}),
-      },
-    })
+  const [studentRes, workerRes] = await Promise.allSettled([
+    apiClient<any>("/student-subscriptions"),
+    apiClient<any>("/workers")
   ]);
 
   const rows: PaymentRow[] = [];
 
   // Process Students
-  if (studentRes.ok) {
-    const json = await studentRes.json();
+  if (studentRes.status === 'fulfilled') {
+    const json = studentRes.value;
     const apiItems: ApiSubscription[] = json.data || json.items || json;
     if (Array.isArray(apiItems)) {
       apiItems.forEach((api) => {
@@ -299,7 +48,7 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
             customerName,
             regNumber,
             amount: String(ph.amount ?? api.amount_paid ?? ''),
-            paymentMethod: ph.payment_method || '',
+            paymentMethod: normalizePaymentMethod(ph.payment_method),
             date: ph.created_at || api.created_at || api.start_date || '',
             status: 'Completed',
             branch: branchId,
@@ -308,27 +57,22 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
         });
       });
     }
+  } else {
+    console.error("Failed to fetch student subscriptions", studentRes.reason);
   }
 
   // Process Workers
-  if (workerRes.ok) {
-    const json = await workerRes.json();
+  if (workerRes.status === 'fulfilled') {
+    const json = workerRes.value;
     const workers: any[] = json.data || json.items || json || [];
     if (Array.isArray(workers)) {
       // Fetch wallets for all workers to get transactions
       const walletPromises = workers.map(async (w: any) => {
         try {
-          const res = await fetch(`${BASE_URL}/workers/${w.id}/wallet`, {
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { Authorization: `${token}` } : {}),
-            },
-          });
-          if (res.ok) {
-            const walletData = await res.json();
-            return { worker: w, wallet: walletData.data };
-          }
+          const walletData = await apiClient<any>(`/workers/${w.id}/wallet`);
+          return { worker: w, wallet: walletData?.data || walletData };
         } catch (e) {
+          console.error("Failed to fetch wallet for worker", w?.id, e);
           // ignore error
         }
         return { worker: w, wallet: null };
@@ -351,7 +95,7 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
                 customerName,
                 regNumber,
                 amount: String(ph.amount ?? s.amount_paid ?? ''),
-                paymentMethod: ph.payment_method || '',
+                paymentMethod: normalizePaymentMethod(ph.payment_method),
                 date: ph.created_at || s.created_at || s.start_date || '',
                 status: 'Completed',
                 branch: branchId,
@@ -369,29 +113,24 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
               (t.method || '') + ' ' + 
               (t.category || '') + ' ' +
               (t.description || '') + ' ' +
-              (t.note || '')
+              (t.status || '')
             ).toLowerCase();
 
-            const isTopUp = combinedStr.includes('payment') || 
-                            combinedStr.includes('credit') || 
-                            combinedStr.includes('deposit') || 
-                            combinedStr.includes('top') ||
-                            combinedStr.includes('cash') ||
-                            combinedStr.includes('momo') ||
-                            combinedStr.includes('card') ||
-                            combinedStr.includes('mobile') ||
-                            combinedStr.includes('transfer') ||
-                            combinedStr.includes('fund') ||
-                            combinedStr.includes('admin');
-
-            if (isTopUp) {
+            // Only include if it looks like a top-up or credit, or simply a positive amount transaction that isn't explicitly a debit
+            // We remove the check for 'payment' because some top-ups might be labeled as payment method 'payment' or similar.
+            if (
+              combinedStr.includes('top') || 
+              combinedStr.includes('credit') || 
+              combinedStr.includes('deposit') ||
+              (t.amount && Number(t.amount) > 0 && !combinedStr.includes('debit') && !combinedStr.includes('withdraw') && !combinedStr.includes('expense'))
+            ) {
                rows.push({
                 id: rows.length + 1,
                 customerName,
-                regNumber, // Using worker reg number as ID
-                amount: String(t.amount ?? t.value ?? ''),
-                paymentMethod: t.payment_method || t.method || 'Wallet',
-                date: t.date || t.created_at || '',
+                regNumber,
+                amount: String(t.amount || ''),
+                paymentMethod: normalizePaymentMethod(t.payment_method || t.method),
+                date: t.created_at || t.date || '',
                 status: 'Completed',
                 branch: branchId,
                 cashier: 'N/A',
@@ -401,7 +140,9 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
         }
       });
     }
+  } else {
+    console.error("Failed to fetch workers for payments", workerRes.reason);
   }
 
-  return rows;
+  return rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }

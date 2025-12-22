@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~
 import { Skeleton } from "~/components/ui/skeleton"
 import { Search } from "lucide-react"
 import { Input } from "~/components/ui/input"
+import type { Student } from "~/types/auth"
 
 export interface UserRow {
   id: string
@@ -12,9 +13,7 @@ export interface UserRow {
   created_at: string
   branch_id: string
   reg_number?: string
-  student?: {
-    reg_number?: string
-  }
+  student?: Student
 }
 
 type Props = {
