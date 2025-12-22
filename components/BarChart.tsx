@@ -16,7 +16,7 @@ import {
   ChartTooltipContent,
 } from "~/components/ui/chart"
 
-export const description = "A multiple bar chart"
+export const description = "A stacked bar chart"
 
 const chartData = [
   { month: "January", Subscription: 186, mobile: 80 },
@@ -28,13 +28,13 @@ const chartData = [
 ]
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--chart-1)",
+  Subscription: {
+    label: "Subscription",
+    color: "#256FF1",
   },
   mobile: {
     label: "Mobile",
-    color: "var(--chart-2)",
+    color: "#60a5fa",
   },
 } satisfies ChartConfig
 
@@ -57,10 +57,11 @@ export function ChartBarMultiple() {
               tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip
+              content={<ChartTooltipContent hideLabel />}
               cursor={false}
-              content={<ChartTooltipContent indicator="dashed" />}
             />
-            <Bar dataKey="Subscription" fill="#256FF1" radius={4} />
+            <Bar dataKey="Subscription" stackId="a" fill="var(--color-Subscription)" radius={[0, 0, 4, 4]} />
+            <Bar dataKey="mobile" stackId="a" fill="var(--color-mobile)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ChartContainer>
       </CardContent>
