@@ -28,7 +28,6 @@ export const fetchMealLogsThunk = createAsyncThunk(
       // Handle nested data structure if present (e.g. { data: { data: [...] } })
       const rawData = res.data;
       let list: MealLogItem[] = [];
-      
       if (Array.isArray(rawData)) {
         list = rawData;
       } else if (rawData && typeof rawData === 'object') {
@@ -41,7 +40,6 @@ export const fetchMealLogsThunk = createAsyncThunk(
           list = (rawData as any).results;
         }
       }
-      
       return list;
     } catch (e: any) {
       return rejectWithValue(e?.message || "Unable to fetch meal logs");
