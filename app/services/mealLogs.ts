@@ -8,6 +8,10 @@ export interface MealLogItem {
   branch_id?: string
   client_user_id?: string
   scanned_by?: string
+  scanner?: {
+    id: string
+    full_name: string
+  }
   created_at: string
 }
 

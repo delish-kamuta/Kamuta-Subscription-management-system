@@ -61,11 +61,29 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         let pricePerMeal = 0
         
         if (formData.meal_type === 'Regular') {
-          pricePerMeal = selectedBranch.regular_price || 0
+          if (formData.role === 'worker') {
+            pricePerMeal = selectedBranch.worker_regular_price || 0
+          } else if (formData.role === 'irregular') {
+            pricePerMeal = selectedBranch.irregular_regular_price || 0
+          } else {
+            pricePerMeal = selectedBranch.student_regular_price || 0
+          }
         } else if (formData.meal_type === 'VIP') {
-          pricePerMeal = selectedBranch.vip_price || 0
+          if (formData.role === 'worker') {
+            pricePerMeal = selectedBranch.worker_vip_price || 0
+          } else if (formData.role === 'irregular') {
+            pricePerMeal = selectedBranch.irregular_vip_price || 0
+          } else {
+            pricePerMeal = selectedBranch.student_vip_price || 0
+          }
         } else if (formData.meal_type === 'VVIP') {
-          pricePerMeal = selectedBranch.vvip_price || 0
+          if (formData.role === 'worker') {
+            pricePerMeal = selectedBranch.worker_vvip_price || 0
+          } else if (formData.role === 'irregular') {
+            pricePerMeal = selectedBranch.irregular_vvip_price || 0
+          } else {
+            pricePerMeal = selectedBranch.student_vvip_price || 0
+          }
         }
         
         const totalAmount = number_of_meal * pricePerMeal

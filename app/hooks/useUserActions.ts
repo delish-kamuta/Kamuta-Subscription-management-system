@@ -20,12 +20,10 @@ export function useUserActions(
       setError("")
       const tokenError = ensureValidTokenOrMessage()
       if (tokenError) { setError(tokenError); return }
-      
       const data = await apiClient<any>('/users/admin-reset-password', {
         method: 'POST',
         body: JSON.stringify({ user_id: user.id }),
       })
-      
       const newPwd = data?.data?.new_password
       setSuccessMessage(data?.message || 'Admin password reset successful')
       if (newPwd) {
@@ -42,9 +40,8 @@ export function useUserActions(
     try {
       const tokenError = ensureValidTokenOrMessage()
       if (tokenError) { setError(tokenError); return }
-      
+
       await apiClient(`/users/${user.id}`, { method: 'DELETE' })
-      
       setSuccessMessage('User deleted')
       dispatch(removeUserOptimistic(user.id))
       setTimeout(() => setSuccessMessage(''), 2000)
@@ -65,6 +62,9 @@ export function useUserActions(
         phone: selectedUser.phone,
         role: selectedUser.role,
         branch_id: selectedUser.branch_id,
+      }
+      if (selectedUser.password) {
+        body.password = selectedUser.password
       }
       if (selectedUser.role.toLowerCase() === 'student' && selectedUser.student?.reg_number) {
         body.reg_number = selectedUser.student.reg_number

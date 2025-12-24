@@ -32,9 +32,15 @@ export default function BranchesPage() {
   const [branchForm, setBranchForm] = useState({
     name: "",
     campus: "University of Rwanda",
-    regular_price: 800,
-    vip_price: 1200,
-    vvip_price: 1800,
+    student_regular_price: 0,
+    student_vip_price: 0,
+    student_vvip_price: 0,
+    worker_regular_price: 2000,
+    worker_vip_price: 2000,
+    worker_vvip_price: 2000,
+    irregular_regular_price: 1000,
+    irregular_vip_price: 1500,
+    irregular_vvip_price: 2000,
   })
 
   useEffect(() => {
@@ -57,18 +63,31 @@ export default function BranchesPage() {
       const payload = {
         name: branchForm.name,
         campus: branchForm.campus,
-        regular_price: Number(branchForm.regular_price),
-        vip_price: Number(branchForm.vip_price),
-        vvip_price: Number(branchForm.vvip_price),
+        student_regular_price: Number(branchForm.student_regular_price),
+        student_vip_price: Number(branchForm.student_vip_price),
+        student_vvip_price: Number(branchForm.student_vvip_price),
+        worker_regular_price: Number(branchForm.worker_regular_price),
+        worker_vip_price: Number(branchForm.worker_vip_price),
+        worker_vvip_price: Number(branchForm.worker_vvip_price),
+        irregular_regular_price: Number(branchForm.irregular_regular_price),
+        irregular_vip_price: Number(branchForm.irregular_vip_price),
+        irregular_vvip_price: Number(branchForm.irregular_vvip_price),
       }
       const res = await createBranch(payload)
       const newBranch = res.data || res
       dispatch(addBranchOptimistic({
         id: String(newBranch.id),
         name: newBranch.name,
-        regular_price: Number(newBranch.regular_price),
-        vip_price: Number(newBranch.vip_price),
-        vvip_price: Number(newBranch.vvip_price),
+        campus: newBranch.campus,
+        student_regular_price: Number(newBranch.student_regular_price),
+        student_vip_price: Number(newBranch.student_vip_price),
+        student_vvip_price: Number(newBranch.student_vvip_price),
+        worker_regular_price: Number(newBranch.worker_regular_price),
+        worker_vip_price: Number(newBranch.worker_vip_price),
+        worker_vvip_price: Number(newBranch.worker_vvip_price),
+        irregular_regular_price: Number(newBranch.irregular_regular_price),
+        irregular_vip_price: Number(newBranch.irregular_vip_price),
+        irregular_vvip_price: Number(newBranch.irregular_vvip_price),
       }))
       setSuccessMessage("Branch created successfully")
       setTimeout(() => {
@@ -77,9 +96,15 @@ export default function BranchesPage() {
         setBranchForm({
           name: "",
           campus: "University of Rwanda",
-          regular_price: 800,
-          vip_price: 1200,
-          vvip_price: 1800,
+          student_regular_price: 0,
+          student_vip_price: 0,
+          student_vvip_price: 0,
+          worker_regular_price: 2000,
+          worker_vip_price: 2000,
+          worker_vvip_price: 2000,
+          irregular_regular_price: 1000,
+          irregular_vip_price: 1500,
+          irregular_vvip_price: 2000,
         })
       }, 1500)
     } catch (e) {
@@ -99,18 +124,31 @@ export default function BranchesPage() {
       const payload = {
         name: branchForm.name,
         campus: branchForm.campus,
-        regular_price: Number(branchForm.regular_price),
-        vip_price: Number(branchForm.vip_price),
-        vvip_price: Number(branchForm.vvip_price),
+        student_regular_price: Number(branchForm.student_regular_price),
+        student_vip_price: Number(branchForm.student_vip_price),
+        student_vvip_price: Number(branchForm.student_vvip_price),
+        worker_regular_price: Number(branchForm.worker_regular_price),
+        worker_vip_price: Number(branchForm.worker_vip_price),
+        worker_vvip_price: Number(branchForm.worker_vvip_price),
+        irregular_regular_price: Number(branchForm.irregular_regular_price),
+        irregular_vip_price: Number(branchForm.irregular_vip_price),
+        irregular_vvip_price: Number(branchForm.irregular_vvip_price),
       }
       const res = await updateBranch(selectedBranch.id, payload)
       const updated = res.data || res
       dispatch(updateBranchOptimistic({
         id: selectedBranch.id,
         name: updated.name || branchForm.name,
-        regular_price: Number(updated.regular_price || branchForm.regular_price),
-        vip_price: Number(updated.vip_price || branchForm.vip_price),
-        vvip_price: Number(updated.vvip_price || branchForm.vvip_price),
+        campus: updated.campus || branchForm.campus,
+        student_regular_price: Number(updated.student_regular_price ?? branchForm.student_regular_price),
+        student_vip_price: Number(updated.student_vip_price ?? branchForm.student_vip_price),
+        student_vvip_price: Number(updated.student_vvip_price ?? branchForm.student_vvip_price),
+        worker_regular_price: Number(updated.worker_regular_price ?? branchForm.worker_regular_price),
+        worker_vip_price: Number(updated.worker_vip_price ?? branchForm.worker_vip_price),
+        worker_vvip_price: Number(updated.worker_vvip_price ?? branchForm.worker_vvip_price),
+        irregular_regular_price: Number(updated.irregular_regular_price ?? branchForm.irregular_regular_price),
+        irregular_vip_price: Number(updated.irregular_vip_price ?? branchForm.irregular_vip_price),
+        irregular_vvip_price: Number(updated.irregular_vvip_price ?? branchForm.irregular_vvip_price),
       }))
       setSuccessMessage("Branch updated successfully")
       setTimeout(() => {
@@ -140,9 +178,15 @@ export default function BranchesPage() {
     setBranchForm({
       name: branch.name || "",
       campus: branch.campus || "University of Rwanda",
-      regular_price: branch.regular_price || 0,
-      vip_price: branch.vip_price || 0,
-      vvip_price: branch.vvip_price || 0,
+      student_regular_price: branch.student_regular_price || 0,
+      student_vip_price: branch.student_vip_price || 0,
+      student_vvip_price: branch.student_vvip_price || 0,
+      worker_regular_price: branch.worker_regular_price || 0,
+      worker_vip_price: branch.worker_vip_price || 0,
+      worker_vvip_price: branch.worker_vvip_price || 0,
+      irregular_regular_price: branch.irregular_regular_price || 0,
+      irregular_vip_price: branch.irregular_vip_price || 0,
+      irregular_vvip_price: branch.irregular_vvip_price || 0,
     })
     setIsEditOpen(true)
   }
@@ -182,9 +226,15 @@ export default function BranchesPage() {
              setBranchForm({
               name: "",
               campus: "University of Rwanda",
-              regular_price: 800,
-              vip_price: 1200,
-              vvip_price: 1800,
+              student_regular_price: 0,
+              student_vip_price: 0,
+              student_vvip_price: 0,
+              worker_regular_price: 2000,
+              worker_vip_price: 2000,
+              worker_vvip_price: 2000,
+              irregular_regular_price: 1000,
+              irregular_vip_price: 1500,
+              irregular_vvip_price: 2000,
             })
             setIsAddOpen(true)
           }}>
@@ -197,9 +247,9 @@ export default function BranchesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Regular Price</TableHead>
-                <TableHead>VIP Price</TableHead>
-                <TableHead>VVIP Price</TableHead>
+                <TableHead>Student (Reg/VIP/VVIP)</TableHead>
+                <TableHead>Worker (Reg/VIP/VVIP)</TableHead>
+                <TableHead>Irregular (Reg/VIP/VVIP)</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -224,9 +274,15 @@ export default function BranchesPage() {
                 filteredBranches.map((branch) => (
                   <TableRow key={branch.id}>
                     <TableCell className="font-medium">{branch.name}</TableCell>
-                    <TableCell>{branch.regular_price?.toLocaleString()} RWF</TableCell>
-                    <TableCell>{branch.vip_price?.toLocaleString()} RWF</TableCell>
-                    <TableCell>{branch.vvip_price?.toLocaleString()} RWF</TableCell>
+                    <TableCell>
+                      {branch.student_regular_price?.toLocaleString()} / {branch.student_vip_price?.toLocaleString()} / {branch.student_vvip_price?.toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      {branch.worker_regular_price?.toLocaleString()} / {branch.worker_vip_price?.toLocaleString()} / {branch.worker_vvip_price?.toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      {branch.irregular_regular_price?.toLocaleString()} / {branch.irregular_vip_price?.toLocaleString()} / {branch.irregular_vvip_price?.toLocaleString()}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button variant="ghost" size="sm" onClick={() => openEdit(branch)}>

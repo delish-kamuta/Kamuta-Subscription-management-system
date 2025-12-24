@@ -2,10 +2,16 @@ import { apiClient, ensureValidTokenOrMessage } from "~/lib/api";
 
 export interface BranchPayload {
   name: string;
-  campus?: string;
-  regular_price?: string | number;
-  vip_price?: string | number;
-  vvip_price?: string | number;
+  campus: string;
+  student_regular_price: string | number;
+  student_vip_price: string | number;
+  student_vvip_price: string | number;
+  worker_regular_price: string | number;
+  worker_vip_price: string | number;
+  worker_vvip_price: string | number;
+  irregular_regular_price: string | number;
+  irregular_vip_price: string | number;
+  irregular_vvip_price: string | number;
 }
 
 export async function createBranch(payload: BranchPayload) {
