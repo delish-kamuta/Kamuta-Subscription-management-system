@@ -140,7 +140,7 @@ export default function UsersPage() {
             phone: selectedUser.phone,
             role: selectedUser.role,
             branch_id: selectedUser.branch_id,
-            password: '',
+            password: selectedUser.password || '',
             reg_number: selectedUser?.student?.reg_number || ''
           }}
           setFormData={(fd) => {
@@ -151,6 +151,7 @@ export default function UsersPage() {
               phone: fd.phone,
               role: fd.role,
               branch_id: fd.branch_id,
+              password: fd.password,
               student: { reg_number: fd.reg_number },
             })
           }}
