@@ -11,9 +11,15 @@ type Props = {
   branchForm: {
     name: string
     campus: string
-    regular_price: number
-    vip_price: number
-    vvip_price: number
+    student_regular_price: number
+    student_vip_price: number
+    student_vvip_price: number
+    worker_regular_price: number
+    worker_vip_price: number
+    worker_vvip_price: number
+    irregular_regular_price: number
+    irregular_vip_price: number
+    irregular_vvip_price: number
   }
   setBranchForm: (data: any) => void
   onSubmit: (e: React.FormEvent) => void
@@ -44,18 +50,57 @@ export function AddBranchSheet({ open, onOpenChange, error, successMessage, isLo
             <Input id="campus" type="text" value={branchForm.campus} onChange={(e) => setBranchForm({ ...branchForm, campus: e.target.value })} required placeholder="University of Rwanda" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="regular_price" className="text-sm font-medium">Regular Price *</label>
-              <Input id="regular_price" type="number" value={branchForm.regular_price} onChange={(e) => setBranchForm({ ...branchForm, regular_price: Number(e.target.value) })} required min={0} />
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold border-b pb-1">Student Prices</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="student_regular_price" className="text-sm font-medium">Regular *</label>
+                <Input id="student_regular_price" type="number" value={branchForm.student_regular_price} onChange={(e) => setBranchForm({ ...branchForm, student_regular_price: Number(e.target.value) })} required min={0} />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="student_vip_price" className="text-sm font-medium">VIP *</label>
+                <Input id="student_vip_price" type="number" value={branchForm.student_vip_price} onChange={(e) => setBranchForm({ ...branchForm, student_vip_price: Number(e.target.value) })} required min={0} />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="student_vvip_price" className="text-sm font-medium">VVIP *</label>
+                <Input id="student_vvip_price" type="number" value={branchForm.student_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, student_vvip_price: Number(e.target.value) })} required min={0} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <label htmlFor="vip_price" className="text-sm font-medium">VIP Price *</label>
-              <Input id="vip_price" type="number" value={branchForm.vip_price} onChange={(e) => setBranchForm({ ...branchForm, vip_price: Number(e.target.value) })} required min={0} />
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold border-b pb-1">Worker Prices</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="worker_regular_price" className="text-sm font-medium">Regular *</label>
+                <Input id="worker_regular_price" type="number" value={branchForm.worker_regular_price} onChange={(e) => setBranchForm({ ...branchForm, worker_regular_price: Number(e.target.value) })} required min={0} />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="worker_vip_price" className="text-sm font-medium">VIP *</label>
+                <Input id="worker_vip_price" type="number" value={branchForm.worker_vip_price} onChange={(e) => setBranchForm({ ...branchForm, worker_vip_price: Number(e.target.value) })} required min={0} />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="worker_vvip_price" className="text-sm font-medium">VVIP *</label>
+                <Input id="worker_vvip_price" type="number" value={branchForm.worker_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, worker_vvip_price: Number(e.target.value) })} required min={0} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <label htmlFor="vvip_price" className="text-sm font-medium">VVIP Price *</label>
-              <Input id="vvip_price" type="number" value={branchForm.vvip_price} onChange={(e) => setBranchForm({ ...branchForm, vvip_price: Number(e.target.value) })} required min={0} />
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold border-b pb-1">Irregular Prices</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="irregular_regular_price" className="text-sm font-medium">Regular *</label>
+                <Input id="irregular_regular_price" type="number" value={branchForm.irregular_regular_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_regular_price: Number(e.target.value) })} required min={0} />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="irregular_vip_price" className="text-sm font-medium">VIP *</label>
+                <Input id="irregular_vip_price" type="number" value={branchForm.irregular_vip_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_vip_price: Number(e.target.value) })} required min={0} />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="irregular_vvip_price" className="text-sm font-medium">VVIP *</label>
+                <Input id="irregular_vvip_price" type="number" value={branchForm.irregular_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_vvip_price: Number(e.target.value) })} required min={0} />
+              </div>
             </div>
           </div>
 

@@ -128,7 +128,6 @@ const Dashboard = () => {
 
       {/* Stats Cards Section */}
       <section className="flex flex-col gap-6">
-        
         {isAdmin && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
             {stats.map((stat) => (

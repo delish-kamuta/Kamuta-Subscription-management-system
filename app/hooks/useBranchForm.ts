@@ -10,9 +10,15 @@ export function useBranchForm(
   const [branchForm, setBranchForm] = useState({
     name: "",
     campus: "University of Rwanda",
-    regular_price: 800,
-    vip_price: 1200,
-    vvip_price: 1800,
+    student_regular_price: 0,
+    student_vip_price: 0,
+    student_vvip_price: 0,
+    worker_regular_price: 2000,
+    worker_vip_price: 2000,
+    worker_vvip_price: 2000,
+    irregular_regular_price: 1000,
+    irregular_vip_price: 1500,
+    irregular_vvip_price: 2000,
   })
 
   const handleAddBranch = async (e: React.FormEvent) => {
@@ -34,9 +40,15 @@ export function useBranchForm(
         body: JSON.stringify({
           name: branchForm.name,
           campus: branchForm.campus,
-          regular_price: String(Number(branchForm.regular_price)),
-          vip_price: String(Number(branchForm.vip_price)),
-          vvip_price: String(Number(branchForm.vvip_price)),
+          student_regular_price: String(Number(branchForm.student_regular_price)),
+          student_vip_price: String(Number(branchForm.student_vip_price)),
+          student_vvip_price: String(Number(branchForm.student_vvip_price)),
+          worker_regular_price: String(Number(branchForm.worker_regular_price)),
+          worker_vip_price: String(Number(branchForm.worker_vip_price)),
+          worker_vvip_price: String(Number(branchForm.worker_vvip_price)),
+          irregular_regular_price: String(Number(branchForm.irregular_regular_price)),
+          irregular_vip_price: String(Number(branchForm.irregular_vip_price)),
+          irregular_vvip_price: String(Number(branchForm.irregular_vvip_price)),
         }),
       })
 
@@ -45,9 +57,15 @@ export function useBranchForm(
       setBranchForm({
         name: "",
         campus: "University of Rwanda",
-        regular_price: 800,
-        vip_price: 1200,
-        vvip_price: 1800,
+        student_regular_price: 0,
+        student_vip_price: 0,
+        student_vvip_price: 0,
+        worker_regular_price: 2000,
+        worker_vip_price: 2000,
+        worker_vvip_price: 2000,
+        irregular_regular_price: 1000,
+        irregular_vip_price: 1500,
+        irregular_vvip_price: 2000,
       })
 
       setTimeout(() => {
