@@ -3,10 +3,23 @@ import { apiClient } from "~/lib/api";
 
 export async function listWorkerSubscriptions(token: string | null): Promise<SubscriptionItem[]> {
   const json = await apiClient<any>("/workers");
-  const workers: any[] = json.data || json.items || json || [];
+  
+  let workers: any[] = [];
+  if (Array.isArray(json)) {
+    workers = json;
+  } else if (Array.isArray(json?.data)) {
+    workers = json.data;
+  } else if (Array.isArray(json?.items)) {
+    workers = json.items;
+  } else if (Array.isArray(json?.data?.data)) {
+    workers = json.data.data;
+  } else if (Array.isArray(json?.data?.items)) {
+    workers = json.data.items;
+  }
 
   const items: any[] = [];
-  workers.forEach((w: any) => {
+  if (Array.isArray(workers)) {
+    workers.forEach((w: any) => {
     const clientName = w?.user?.full_name || w?.full_name || '';
     const phone = String(w?.user?.phone || w?.phone || '');
     const branchId = w?.user?.branch_id != null ? String(w.user.branch_id) : (w?.branch_id != null ? String(w.branch_id) : '');
@@ -108,5 +121,6 @@ export async function listWorkerSubscriptions(token: string | null): Promise<Sub
       });
     }
   });
+  }
   return items as SubscriptionItem[];
 }

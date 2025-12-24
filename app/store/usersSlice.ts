@@ -28,7 +28,8 @@ const initialState: UsersState = {
 
 export const fetchUsersThunk = createAsyncThunk('users/fetch', async (_, { rejectWithValue }) => {
   try {
-    let data = await apiClient<any>('/users');
+    // Try to fetch all users to ensure we can resolve names
+    let data = await apiClient<any>('/users?limit=1000');
     
     if (typeof data === 'string') {
       try {

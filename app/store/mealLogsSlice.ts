@@ -25,7 +25,24 @@ export const fetchMealLogsThunk = createAsyncThunk(
       if (!res.success) {
         return rejectWithValue(res.message || "Failed to fetch meal logs");
       }
-      return res.data || [];
+      // Handle nested data structure if present (e.g. { data: { data: [...] } })
+      const rawData = res.data;
+      let list: MealLogItem[] = [];
+      
+      if (Array.isArray(rawData)) {
+        list = rawData;
+      } else if (rawData && typeof rawData === 'object') {
+        // Check for common nested patterns
+        if (Array.isArray((rawData as any).data)) {
+          list = (rawData as any).data;
+        } else if (Array.isArray((rawData as any).logs)) {
+          list = (rawData as any).logs;
+        } else if (Array.isArray((rawData as any).results)) {
+          list = (rawData as any).results;
+        }
+      }
+      
+      return list;
     } catch (e: any) {
       return rejectWithValue(e?.message || "Unable to fetch meal logs");
     }

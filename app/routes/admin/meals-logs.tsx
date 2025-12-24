@@ -41,7 +41,7 @@ const MealsLogs = () => {
   const dispatch = useAppDispatch();
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const mealLogsState = useAppSelector((state) => state.mealLogs);
-  const mealLogs = mealLogsState.items;
+  const mealLogs = Array.isArray(mealLogsState.items) ? mealLogsState.items : [];
   const mealLogsLoading = mealLogsState.loading;
   const mealLogsLoaded = mealLogsState.loaded;
   const branches = useAppSelector((state) => state.branches.items);
@@ -328,7 +328,9 @@ const MealsLogs = () => {
                     <TableCell className="text-sm">{item.meal_type}</TableCell>
                     <TableCell className="text-sm">{item.deduction_source}</TableCell>
                     <TableCell className="whitespace-nowrap hidden lg:table-cell text-sm">{new Date(item.created_at).toLocaleString()}</TableCell>
-                    <TableCell className="whitespace-nowrap hidden md:table-cell text-sm">{resolveUserName(item.scanned_by) || (item.scanned_by ? String(item.scanned_by) : "")}</TableCell>
+                    <TableCell className="whitespace-nowrap hidden md:table-cell text-sm">
+                      {item.scanner?.full_name || resolveUserName(item.scanned_by) || (item.scanned_by ? String(item.scanned_by) : "")}
+                    </TableCell>
                     {!isCashier && (
                       <TableCell className="whitespace-nowrap hidden xl:table-cell text-sm">{resolveBranchName(item.branch_id)}</TableCell>
                     )}
