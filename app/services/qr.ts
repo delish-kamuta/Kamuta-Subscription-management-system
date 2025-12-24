@@ -45,6 +45,7 @@ export interface ScanQrOtpResponse {
     user_name: string
     payment_result: {
       remaining_meals: number
+      meal_type?: string
     }
   }
   message?: string

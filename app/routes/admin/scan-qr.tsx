@@ -15,6 +15,7 @@ interface ScanResult {
   timestamp?: string;
   userName?: string;
   remainingMeals?: number;
+  mealType?: string;
 }
 
 const ScanQR = () => {
@@ -81,6 +82,7 @@ const ScanQR = () => {
         timestamp: new Date().toLocaleString(),
         userName: res.data?.user_name,
         remainingMeals: res.data?.payment_result?.remaining_meals,
+        mealType: res.data?.payment_result?.meal_type,
       });
       setRecentScans(prev => [{
         success: res.success,
@@ -88,6 +90,7 @@ const ScanQR = () => {
         timestamp: new Date().toLocaleString(),
         userName: res.data?.user_name,
         remainingMeals: res.data?.payment_result?.remaining_meals,
+        mealType: res.data?.payment_result?.meal_type,
       }, ...prev.slice(0, 4)]);
       setScanError(res.success ? null : (res.message || 'Failed to process QR-OTP'));
     } catch (error) {
@@ -288,6 +291,9 @@ const ScanQR = () => {
                           {scanResult.remainingMeals !== undefined && (
                             <p><strong>Remaining Meals:</strong> {scanResult.remainingMeals}</p>
                           )}
+                          {scanResult.mealType && (
+                            <p><strong>Meal Type:</strong> {scanResult.mealType}</p>
+                          )}
                           <p className="text-xs text-green-600 mt-2">
                             {scanResult.timestamp}
                           </p>
@@ -354,6 +360,9 @@ const ScanQR = () => {
                         <div className="text-xs text-gray-600 space-y-0.5">
                           {scan.remainingMeals !== undefined && (
                             <p>Remaining: {scan.remainingMeals} meals</p>
+                          )}
+                          {scan.mealType && (
+                            <p>Type: {scan.mealType}</p>
                           )}
                           <p className="text-gray-400">{scan.timestamp}</p>
                         </div>
