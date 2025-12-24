@@ -28,9 +28,31 @@ const initialState: UsersState = {
 
 export const fetchUsersThunk = createAsyncThunk('users/fetch', async (_, { rejectWithValue }) => {
   try {
-    const data = await apiClient<any>('/users');
-    const items = data?.data;
-    return (Array.isArray(items) ? items : []) as UserItem[];
+    let data = await apiClient<any>('/users');
+    
+    if (typeof data === 'string') {
+      try {
+        data = JSON.parse(data);
+      } catch (e) {
+        console.error('Failed to parse users API response:', e);
+      }
+    }
+
+    // Handle { data: [...] }, { users: [...] }, { results: [...] } and [...] formats
+    let items: any[] = [];
+    if (Array.isArray(data)) {
+      items = data;
+    } else if (Array.isArray(data?.data)) {
+      items = data.data;
+    } else if (data?.data?.data && Array.isArray(data.data.data)) {
+      items = data.data.data;
+    } else if (Array.isArray(data?.users)) {
+      items = data.users;
+    } else if (Array.isArray(data?.results)) {
+      items = data.results;
+    }
+    
+    return items as UserItem[];
   } catch (e) {
     return rejectWithValue(e instanceof Error ? e.message : 'Failed to fetch users');
   }

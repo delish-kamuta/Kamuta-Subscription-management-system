@@ -30,7 +30,7 @@ type Props = {
 export function AddUserSheet({ open, onOpenChange, error, successMessage, isLoading, formData, setFormData, branches,action, staticBranches, roles, onSubmit }: Props) {
   const branchOptions = branches.length > 0 ? branches : staticBranches
   const user = useAppSelector((state)=>state.auth.user)
-  
+  console.log()
   const roleOptions = (roles && roles.length > 0)
     ? roles
     : [
@@ -102,27 +102,13 @@ export function AddUserSheet({ open, onOpenChange, error, successMessage, isLoad
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password {action.includes("Edit") ? "(Leave blank to keep unchanged)" : "*"}
-            </label>
-            <Input 
-              id="password" 
-              type="password" 
-              value={formData.password} 
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })} 
-              required={!action.includes("Edit") && !action.includes("View")} 
-              placeholder="••••••••" 
-              minLength={6} 
-            />
+            <label htmlFor="password" className="text-sm font-medium">Password *</label>
+            <Input id="password" type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required placeholder="••••••••" minLength={6} />
           </div>
 
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={isLoading}>Cancel</Button>
-            {!action.includes("View") && (
-              <Button type="submit" className="flex-1 bg-primary-100 hover:bg-primary-100/90" disabled={isLoading}>
-                {isLoading ? "Saving..." : action.includes("Edit") ? "Update User" : "Add User"}
-              </Button>
-            )}
+            <Button type="submit" className="flex-1 bg-primary-100 hover:bg-primary-100/90" disabled={isLoading}>{isLoading ? "Adding..." : "Add User"}</Button>
           </div>
         </form>
       </SheetContent>
