@@ -7,6 +7,7 @@ import { ChartBarMultiple} from "../../../components/BarChart";
 import { useEffect, useState, useMemo } from "react";
 import Client from "components/client";
 import { listMealLogs, type MealLogItem } from "~/services/mealLogs";
+import { getOverviewStats } from "~/services/overview";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { useAppDispatch, useAppSelector } from "~/store/hooks";
 import { UserRole } from "~/types/auth";
@@ -26,6 +27,49 @@ const Dashboard = () => {
   const userRole = user?.role;
   const isCashier = userRole === UserRole.CASHIER;
   const isAdmin = userRole === UserRole.ADMIN;
+
+  const [stats, setStats] = useState(dashboardStats);
+
+  useEffect(() => {
+    if (isAdmin) {
+      getOverviewStats({ time_range: 'today' })
+        .then((res) => {
+          if (res.success && res.data) {
+            const apiData = res.data;
+            const newStats = dashboardStats.map(stat => {
+              if (stat.id === 'totalIncome') {
+                return { 
+                  ...stat, 
+                  value: apiData.summary.total_revenue.current,
+                  currentDay: apiData.summary.total_revenue.current,
+                  lastDayCount: apiData.summary.total_revenue.previous
+                };
+              }
+              if (stat.id === 'totalCredit') {
+                return { 
+                  ...stat, 
+                  value: apiData.summary.total_credit_used,
+                  // API doesn't provide previous for credit, so we assume no change for trend
+                  currentDay: apiData.summary.total_credit_used,
+                  lastDayCount: apiData.summary.total_credit_used
+                };
+              }
+              if (stat.id === 'mealsServedToday') {
+                return { 
+                  ...stat, 
+                  value: apiData.summary.total_meals.current,
+                  currentDay: apiData.summary.total_meals.current,
+                  lastDayCount: apiData.summary.total_meals.previous
+                };
+              }
+              return stat;
+            });
+            setStats(newStats);
+          }
+        })
+        .catch(err => console.error("Failed to fetch overview stats", err));
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
     if (isCashier && token) {
@@ -87,7 +131,7 @@ const Dashboard = () => {
         
         {isAdmin && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-            {dashboardStats.map((stat) => (
+            {stats.map((stat) => (
               <StatsCard
                 key={stat.id}
                 title={stat.title}
