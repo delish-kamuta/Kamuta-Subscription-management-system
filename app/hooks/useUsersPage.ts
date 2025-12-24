@@ -13,7 +13,7 @@ export function useUsersPage() {
   const { user: currentUser } = useAppSelector((state) => state.auth)
   const roleState = useAppSelector((state) => state.roles)
   const usersState = useAppSelector((state) => state.users)
-  const users = usersState.items as User[]
+  const users = (Array.isArray(usersState.items) ? usersState.items : []) as User[]
   const usersLoading = usersState.loading
 
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)

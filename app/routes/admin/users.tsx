@@ -151,6 +151,7 @@ export default function UsersPage() {
               phone: fd.phone,
               role: fd.role,
               branch_id: fd.branch_id,
+              password: fd.password,
               student: { reg_number: fd.reg_number },
             })
           }}

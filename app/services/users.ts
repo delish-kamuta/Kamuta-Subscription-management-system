@@ -18,7 +18,7 @@ export async function createUser(payload: UserPayload) {
 
 export async function updateUser(id: string | number, payload: Partial<UserPayload>) {
   return apiClient(`/users/${id}`, {
-    method: 'PUT',
+    method: 'PATCH',
     body: JSON.stringify(payload),
   });
 }

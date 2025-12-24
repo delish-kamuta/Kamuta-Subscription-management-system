@@ -29,7 +29,8 @@ const initialState: UsersState = {
 export const fetchUsersThunk = createAsyncThunk('users/fetch', async (_, { rejectWithValue }) => {
   try {
     const data = await apiClient<any>('/users');
-    return (data?.data ?? []) as UserItem[];
+    const items = data?.data;
+    return (Array.isArray(items) ? items : []) as UserItem[];
   } catch (e) {
     return rejectWithValue(e instanceof Error ? e.message : 'Failed to fetch users');
   }

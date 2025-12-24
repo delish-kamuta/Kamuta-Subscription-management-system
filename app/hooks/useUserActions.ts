@@ -63,6 +63,9 @@ export function useUserActions(
         role: selectedUser.role,
         branch_id: selectedUser.branch_id,
       }
+      if (selectedUser.password) {
+        body.password = selectedUser.password
+      }
       if (selectedUser.role.toLowerCase() === 'student' && selectedUser.student?.reg_number) {
         body.reg_number = selectedUser.student.reg_number
       }
