@@ -140,23 +140,23 @@ export const dashboardStats = [
   {
     id: "totalIncome",
     title: "Total Revenue",
-    value: 12450,
-    currentDay: 1320, // 12% increase
-    lastDayCount: 1200,
+    value: 0,
+    currentDay: 0, // 12% increase
+    lastDayCount: 0,
   },
   {
     id: "totalCredit",
     title: "Total Credit",
-    value: 3210,
-    currentDay: 2940, // 2% decrease
-    lastDayCount: 3000,
+    value: 0,
+    currentDay: 0, // 2% decrease
+    lastDayCount: 0,
   },
   {
     id: "mealsServedToday",
     title: "Meals Served Today",
-    value: 520,
-    currentDay: 530, // 2% increase
-    lastDayCount: 520,
+    value: 0,
+    currentDay: 0, // 2% increase
+    lastDayCount: 0,
   },
 ];
 export const user = {
