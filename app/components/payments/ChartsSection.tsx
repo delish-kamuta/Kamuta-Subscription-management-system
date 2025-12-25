@@ -38,7 +38,7 @@ export default function ChartsSection({ dailyRevenue, paymentMethods, totalReven
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 md:p-6">
       {/* Daily Revenue Chart */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold mb-6">Daily Revenue (Last 7 Days)</h3>
+        <h3 className="text-lg font-semibold mb-6">Daily Revenue (This Week)</h3>
         <div className="space-y-4">
           {dailyRevenue.map((day, index) => (
             <div key={index}>

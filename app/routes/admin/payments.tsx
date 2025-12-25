@@ -6,6 +6,7 @@ import ChartsSection from "~/components/payments/ChartsSection";
 import PaymentModals from "~/components/payments/PaymentModals";
 import PaymentTable from "~/components/payments/PaymentTable";
 import { usePaymentStats } from "~/hooks/usePaymentStats";
+import { usePaymentOverview } from "~/hooks/usePaymentOverview";
 
 const Payments = () => {
   const itemsPerPage = 8;
@@ -29,14 +30,20 @@ const Payments = () => {
     selectedItem,
     setSelectedItem,
     sourceData,
-    dailyRevenue,
-    totalRevenue,
-    paymentMethods,
     tableData,
     totalPages,
     handleExport,
     handleViewDetails,
   } = usePaymentStats(itemsPerPage);
+
+  const { data: overviewData } = usePaymentOverview({ time_range: 'week' });
+
+  const paymentMethods = overviewData ? [
+    { method: "Cash", count: overviewData.by_payment_method.cash.count, percentage: overviewData.by_payment_method.cash.percentage },
+    { method: "MoMo", count: overviewData.by_payment_method.momo.count, percentage: overviewData.by_payment_method.momo.percentage }
+  ] : [];
+
+  const dailyRevenue = overviewData?.daily_trends || [];
 
   return (
     <main className="dashboard wrapper">
@@ -49,13 +56,13 @@ const Payments = () => {
       />
 
       {/* Financial Summary */}
-      <FinancialStatsSection paymentsData={sourceData} />
+      <FinancialStatsSection summary={overviewData?.summary || null} />
 
       {/* Charts Section */}
       <ChartsSection
         dailyRevenue={dailyRevenue}
         paymentMethods={paymentMethods}
-        totalRevenue={totalRevenue}
+        totalRevenue={overviewData?.summary.total_revenue || 0}
       />
 
 

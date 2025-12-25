@@ -119,3 +119,42 @@ export const getSubscriptionOverview = async (params: OverviewParams = {}) => {
   
   return apiClient<{ success: boolean; data: SubscriptionStatistics }>(`/overview/subscriptions?${query.toString()}`);
 };
+
+export interface PaymentMethodStats {
+  count: number;
+  amount: number;
+  percentage: number;
+}
+
+export interface PaymentTypeStats {
+  count: number;
+  amount: number;
+}
+
+export interface PaymentSummary {
+  total_revenue: number;
+  total_payments: number;
+  weekly_revenue: number;
+  avg_payment_amount: number;
+}
+
+export interface PaymentStatistics {
+  summary: PaymentSummary;
+  by_payment_method: {
+    cash: PaymentMethodStats;
+    momo: PaymentMethodStats;
+  };
+  by_payment_type: {
+    subscription: PaymentTypeStats;
+    wallet: PaymentTypeStats;
+  };
+  daily_trends: any[];
+}
+
+export const getPaymentOverview = async (params: OverviewParams = {}) => {
+  const query = new URLSearchParams();
+  if (params.time_range) query.append('time_range', params.time_range);
+  if (params.branch_id) query.append('branch_id', params.branch_id);
+  
+  return apiClient<{ success: boolean; data: PaymentStatistics }>(`/overview/payments?${query.toString()}`);
+};
