@@ -9,9 +9,9 @@ export default function FinancialStatsSection({ summary }: FinancialStatsSection
   if (!summary) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 md:p-6">
-        <StatsCard title="Total Revenue" value={0} currentDay={0} lastDayCount={0} />
-        <StatsCard title="Weekly Revenue" value={0} currentDay={0} lastDayCount={0} />
-        <StatsCard title="Total Payments" value={0} currentDay={0} lastDayCount={0} />
+        <StatsCard title="Total Revenue" value={'-'} currentDay={0} lastDayCount={0} />
+        <StatsCard title="Weekly Revenue" value={'-'} currentDay={0} lastDayCount={0} />
+        <StatsCard title="Total Payments" value={'-'} currentDay={0} lastDayCount={0} />
       </div>
     );
   }

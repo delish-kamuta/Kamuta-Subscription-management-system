@@ -1,6 +1,6 @@
 interface StatsCard {
   title: string;
-  value: number;
+  value: number | string;
   currentDay: number;
   lastDayCount: number;
 }
