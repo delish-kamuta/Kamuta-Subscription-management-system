@@ -52,13 +52,39 @@ const QuickAction = () => {
 
   // Branches from Redux (needed for ticket generation)
   const { items: branches, loading: branchesLoading, error: branchesError, loaded: branchesLoaded } = useAppSelector((s) => s.branches);
-  const currentRole = useAppSelector((s) => s.auth.user?.role)
+  const { user } = useAppSelector((state) => state.auth);
+  const currentRole = user?.role;
+  const [selectedBranchId, setSelectedBranchId] = useState<string>('');
 
   useEffect(() => {
     if (!branchesLoaded && !branchesLoading) {
       dispatch(fetchBranchesThunk());
     }
   }, [branchesLoaded, branchesLoading, dispatch]);
+
+  // Set default branch for non-admins
+  useEffect(() => {
+    if (currentRole !== UserRole.ADMIN && user?.branch_id) {
+      setSelectedBranchId(user.branch_id);
+    }
+  }, [currentRole, user?.branch_id]);
+
+  // Auto-calculate price based on branch and meal type
+  useEffect(() => {
+    if (!selectedBranchId || !mealType) return;
+    
+    const branch = branches.find(b => b.id === selectedBranchId);
+    if (branch) {
+      let price = 0;
+      switch (mealType) {
+        case 'Regular': price = branch.irregular_regular_price || 0; break;
+        case 'VIP': price = branch.irregular_vip_price || 0; break;
+        case 'VVIP': price = branch.irregular_vvip_price || 0; break;
+        default: price = branch.irregular_regular_price || 0;
+      }
+      setAmountPaid(price);
+    }
+  }, [selectedBranchId, mealType, branches]);
 
   // Generate QR-OTP when the sheet opens for a selected client
   useEffect(() => {
@@ -270,6 +296,23 @@ const QuickAction = () => {
         </SheetHeader>
         <form className='mt-6 space-y-6' onSubmit={(e) => e.preventDefault()}>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            {/* Branch Selection for Admin */}
+            {currentRole === UserRole.ADMIN && (
+              <div className='space-y-2 md:col-span-2'>
+                <label className='text-sm font-medium text-gray-700'>Branch</label>
+                <select 
+                  className='w-full border rounded-md px-3 py-2' 
+                  value={selectedBranchId} 
+                  onChange={(e) => setSelectedBranchId(e.target.value)}
+                >
+                  <option value="">Select Branch</option>
+                  {branches.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className='space-y-2 md:col-span-2'>
               <label className='text-sm font-medium text-gray-700'>Payer name</label>
               <input className='w-full border rounded-md px-3 py-2' placeholder='e.g., John Walk-in' value={payerName} onChange={(e) => setPayerName(e.target.value)} />
@@ -292,13 +335,20 @@ const QuickAction = () => {
             </div>
             <div className='space-y-2'>
               <label className='text-sm font-medium text-gray-700'>Amount Paid (RWF)</label>
-              <input type='number' min={0} className='w-full border rounded-md px-3 py-2' placeholder='e.g., 1000' value={amountPaid} onChange={(e) => setAmountPaid(Number(e.target.value) || 0)} />
+              <input 
+                type='number' 
+                min={0} 
+                className='w-full border rounded-md px-3 py-2 bg-gray-50' 
+                placeholder='Auto-calculated' 
+                value={amountPaid} 
+                readOnly
+              />
             </div>
           </div>
           <div className='flex justify-end'>
             <Button
               className='bg-blue-600 text-white px-6 disabled:opacity-60'
-              disabled={isGenerating || !payerName.trim() || (currentRole === UserRole.CASHIER && (!paymentMethod || amountPaid <= 0))}
+              disabled={isGenerating || !payerName.trim() || !selectedBranchId || (currentRole === UserRole.CASHIER && (!paymentMethod || amountPaid <= 0))}
               onClick={async () => {
                 try {
                   setIsGenerating(true)
@@ -306,7 +356,8 @@ const QuickAction = () => {
                     payer_name: payerName.trim(),
                     meal_type: mealType,
                     payment_method: paymentMethod,
-                    amount_paid: amountPaid
+                    amount_paid: amountPaid,
+                    branch_id: selectedBranchId // Include branch_id if API supports it, otherwise backend might infer from user
                   }
                   const res = await generateIrregularTicket(payload)
                   if (!res.success) throw new Error(res.message || 'Failed to generate ticket')
