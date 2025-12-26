@@ -34,8 +34,8 @@ const Subscription = () => {
       id: "totalActiveSubscriptions",
       title: "Total Active Subscriptions",
       value: overviewData.summary.total_active,
-      currentDay: overviewData.summary.total_active.current,
-      lastDayCount: overviewData.summary.total_active.previous,
+      currentDay: overviewData.summary.total_active,
+      lastDayCount: overviewData.summary.total_active, // No previous data available
     },
     {
       id: "newSubscription",
@@ -48,8 +48,8 @@ const Subscription = () => {
       id: "expiringThisWeek",
       title: "Expiring Subscriptions",
       value: overviewData.summary.expiring_soon,
-      currentDay: overviewData.summary.expiring_soon.current,
-      lastDayCount: overviewData.summary.expiring_soon.previous,
+      currentDay: overviewData.summary.expiring_soon,
+      lastDayCount: overviewData.summary.expiring_soon, // No previous data available
     },
   ] : subscriptionStats;
 

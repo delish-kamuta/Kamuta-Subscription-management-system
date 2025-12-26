@@ -94,10 +94,11 @@ export const getOverviewStats = async (params: OverviewParams = {}) => {
 };
 
 export interface SubscriptionSummary {
-  total_active: StatComparison;
+  total_active: number;
+  total_expired: number;
   new_subscriptions: StatComparison;
-  expiring_soon: StatComparison;
-  total_revenue: StatComparison;
+  expiring_soon: number;
+  revenue: StatComparison;
 }
 
 export interface SubscriptionTrends {

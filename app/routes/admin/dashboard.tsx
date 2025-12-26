@@ -28,7 +28,13 @@ const Dashboard = () => {
   const isCashier = userRole === UserRole.CASHIER;
   const isAdmin = userRole === UserRole.ADMIN;
 
-  const [stats, setStats] = useState(dashboardStats);
+  const [stats, setStats] = useState<{
+    id: string;
+    title: string;
+    value: string | number;
+    currentDay: string | number;
+    lastDayCount: string | number;
+  }[]>(dashboardStats);
 
   useEffect(() => {
     if (isAdmin) {

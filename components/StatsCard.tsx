@@ -1,12 +1,14 @@
 interface StatsCard {
   title: string;
   value: number | string;
-  currentDay: number;
-  lastDayCount: number;
+  currentDay: number | string;
+  lastDayCount: number | string;
 }
 import { calculateTrendPercentage, cn } from "app/lib/utils";
 const StatsCard = ({ title, value, currentDay, lastDayCount }: StatsCard) => {
-  const { trend, percentage } = calculateTrendPercentage(currentDay, lastDayCount);
+  const current = typeof currentDay === 'number' ? currentDay : Number(currentDay) || 0;
+  const last = typeof lastDayCount === 'number' ? lastDayCount : Number(lastDayCount) || 0;
+  const { trend, percentage } = calculateTrendPercentage(current, last);
   const isDecrement = trend === "decrement";
   return (
     <article className="stats-card">
