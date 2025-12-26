@@ -35,8 +35,13 @@ export async function addWorkerWalletPayment(workerId: string, payload: { amount
 
 export async function getWorkerWalletTransactions(workerId: string): Promise<{ success: boolean; data: any[]; message?: string }> {
   try {
-    const data = await apiClient<{ success: boolean; data: any[] }>(`/workers/${workerId}/wallet/transactions`);
-    return data;
+    const res = await apiClient<any>(`/workers/${workerId}/wallet/transactions`);
+    // Handle nested data structure where transactions are in data.data
+    const transactions = res.data?.data && Array.isArray(res.data.data) 
+      ? res.data.data 
+      : (Array.isArray(res.data) ? res.data : []);
+      
+    return { success: res.success, data: transactions, message: res.message };
   } catch (e) {
     return { success: false, data: [], message: e instanceof Error ? e.message : 'Failed to fetch transactions' };
   }
