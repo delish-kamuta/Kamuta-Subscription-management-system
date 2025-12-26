@@ -9,6 +9,7 @@ import RegisterSubscriptionSheet from '~/components/subscriptions/RegisterSubscr
 import { generateIrregularTicket } from '~/services/irregularTickets'
 import { UserRole } from '~/types/auth'
 import { fetchSubscriptions } from '~/store/subscriptionsSlice'
+import { handleGenerateQr, printQrTicket } from '~/lib/qr-utils'
 
 // QR code generated via public API to avoid extra deps
 
@@ -21,6 +22,14 @@ const QuickAction = () => {
   const { items: subscriptions, hydrated: subscriptionsHydrated } = useAppSelector((state) => state.subscriptions);
   const { token } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
+
+  // QR State for Subscription Ticket
+  const [qrState, setQrState] = useState<{
+    loading: boolean;
+    error: string;
+    data: { qr_code: string; user_name: string; expires_in_seconds: number } | null;
+    image: string;
+  }>({ loading: false, error: '', data: null, image: '' });
 
   useEffect(() => {
     if (openFind && !subscriptionsHydrated && token) {
@@ -50,6 +59,14 @@ const QuickAction = () => {
       dispatch(fetchBranchesThunk());
     }
   }, [branchesLoaded, branchesLoading, dispatch]);
+
+  // Generate QR-OTP when the sheet opens for a selected client
+  useEffect(() => {
+    if (openTicket && selectedClient) {
+      const uid = selectedClient.userId || String(selectedClient.id);
+      handleGenerateQr(uid, (newState) => setQrState(prev => ({ ...prev, ...newState })));
+    }
+  }, [openTicket, selectedClient]);
 
   // Auto-refresh QR every 20s while ticket sheet is open and generated (cache-bust only)
   useEffect(() => {
@@ -221,7 +238,6 @@ const QuickAction = () => {
                     <span className='hidden md:block'>{item.subscriptionType}</span>
                     <span className='hidden md:block'>{item.mealsLeft}</span>
                     <span className='flex justify-end gap-2'>
-                      <Button size='sm' variant='outline' onClick={() => setOpenFind(false)}>View</Button>
                       <Button
                         size='sm'
                         className='bg-blue-600 text-white'
@@ -246,7 +262,7 @@ const QuickAction = () => {
       </SheetContent>
     </Sheet>
     {/* Generate Ticket Sheet */}
-    <Sheet open={openTicket} onOpenChange={(o) => { setOpenTicket(o); if (!o) setTicketGenerated(false); }}>
+    <Sheet open={openTicket} onOpenChange={(o) => { setOpenTicket(o); if (!o) { setTicketGenerated(false); setSelectedClient(null); } }}>
       <SheetContent side='right' className='w-full sm:max-w-lg bg-white p-6 border-none h-screen max-h-screen overflow-y-auto'>
         <SheetHeader>
           <SheetTitle>Generate Walk-in Ticket</SheetTitle>
