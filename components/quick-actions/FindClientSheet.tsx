@@ -2,7 +2,7 @@ import { Button } from '~/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '~/components/ui/sheet'
 import { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '~/store/hooks'
-import { fetchSubscriptions } from '~/store/subscriptionsSlice'
+import { fetchAllSubscriptions } from '~/store/allSubscriptionsSlice'
 import { handleGenerateQr, printQrTicket } from '~/lib/qr-utils'
 
 interface FindClientSheetProps {
@@ -15,7 +15,8 @@ export function FindClientSheet({ open, onOpenChange }: FindClientSheetProps) {
   const [findResults, setFindResults] = useState<any[]>([]);
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
   
-  const { items: subscriptions, hydrated: subscriptionsHydrated } = useAppSelector((state) => state.subscriptions);
+  // Use the new allSubscriptions slice which contains both students and workers
+  const { items: subscriptions, hydrated: subscriptionsHydrated } = useAppSelector((state) => state.allSubscriptions);
   const { token } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
 
@@ -29,7 +30,7 @@ export function FindClientSheet({ open, onOpenChange }: FindClientSheetProps) {
 
   useEffect(() => {
     if (open && !subscriptionsHydrated && token) {
-      dispatch(fetchSubscriptions({ token }));
+      dispatch(fetchAllSubscriptions({ token }));
     }
   }, [open, subscriptionsHydrated, token, dispatch]);
 
