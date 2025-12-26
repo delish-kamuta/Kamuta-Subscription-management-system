@@ -89,3 +89,33 @@ export const printQrTicket = (contentId: string) => {
     printWindow.document.close();
   }
 };
+
+export const downloadQrTicket = (contentId: string, ticketId?: string) => {
+  const content = document.getElementById(contentId);
+  if (!content) return;
+  const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Meal Ticket ${ticketId ? `- ${ticketId}` : ''}</title>
+    <style>
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding: 24px; }
+      .ticket { max-width: 420px; margin: 0 auto; border: 1px solid #e5e7eb; padding: 16px; }
+      pre { white-space: pre-wrap; margin: 0; }
+      .qr { display: flex; align-items: center; justify-content: center; padding: 16px 0; }
+    </style>
+  </head>
+  <body>
+    ${content.outerHTML}
+  </body>
+</html>`;
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ticket-${ticketId || 'meal'}.html`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
