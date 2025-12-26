@@ -32,3 +32,12 @@ export async function addWorkerWalletPayment(workerId: string, payload: { amount
     return { success: false, message: e instanceof Error ? e.message : 'Add payment failed' };
   }
 }
+
+export async function getWorkerWalletTransactions(workerId: string): Promise<{ success: boolean; data: any[]; message?: string }> {
+  try {
+    const data = await apiClient<{ success: boolean; data: any[] }>(`/workers/${workerId}/wallet/transactions`);
+    return data;
+  } catch (e) {
+    return { success: false, data: [], message: e instanceof Error ? e.message : 'Failed to fetch transactions' };
+  }
+}

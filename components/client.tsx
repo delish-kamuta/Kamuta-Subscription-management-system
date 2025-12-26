@@ -20,7 +20,7 @@ import { fetchUsersThunk } from '~/store/usersSlice'
 import { fetchBranchesThunk } from '~/store/branchesSlice'
 import { listMealLogs, type MealLogItem } from '~/services/mealLogs'
 import { listStudentSubscriptions } from '~/services/subscriptions'
-import { getWorkerWallet } from '~/services/wallet'
+import { getWorkerWallet, getWorkerWalletTransactions } from '~/services/wallet'
 
 interface props {
     userName: string
@@ -60,7 +60,21 @@ const Client = ({userName}:props) => {
         const res = await listMealLogs({ client_user_id: String(user.id) })
         if (!mounted) return
         if (!res.success) { setLogsError(res.message || 'Failed to fetch meal logs'); setMyLogs([]); return }
-        setMyLogs(res.data || [])
+        
+        let list: MealLogItem[] = [];
+        const rawData = res.data;
+        if (Array.isArray(rawData)) {
+          list = rawData;
+        } else if (rawData && typeof rawData === 'object') {
+           if (Array.isArray((rawData as any).data)) {
+             list = (rawData as any).data;
+           } else if (Array.isArray((rawData as any).logs)) {
+             list = (rawData as any).logs;
+           } else if (Array.isArray((rawData as any).results)) {
+             list = (rawData as any).results;
+           }
+        }
+        setMyLogs(list)
       } catch (e: any) {
         if (!mounted) return
         setLogsError(e?.message || 'Failed to fetch meal logs')
@@ -104,7 +118,7 @@ const Client = ({userName}:props) => {
   }, [user?.id, user?.role])
 
   const logs = useMemo(() => {
-    const base = [...myLogs]
+    const base = Array.isArray(myLogs) ? [...myLogs] : []
     if (!startDate && !endDate) return base.sort((a,b) => +new Date(b.created_at) - +new Date(a.created_at))
     const start = startDate ? dayjs(startDate).startOf('day') : null
     const end = endDate ? dayjs(endDate).endOf('day') : null
@@ -149,10 +163,17 @@ const Client = ({userName}:props) => {
     const run = async () => {
       try {
         setWalletLoading(true); setWalletError('')
-        const resp = await getWorkerWallet(String(user.id))
+        const [walletResp, txResp] = await Promise.all([
+          getWorkerWallet(String(user.id)),
+          getWorkerWalletTransactions(String(user.id))
+        ])
         if (!mounted) return
-        if (!resp.success) { setWalletError(resp.message || 'Failed to fetch wallet'); return }
-        setWallet(resp.data || null)
+        if (!walletResp.success) { setWalletError(walletResp.message || 'Failed to fetch wallet'); return }
+        
+        const walletData = walletResp.data || { prepaid_amount: 0, remaining_amount: 0, credit_limit: 0, credit_used: 0, transactions: [] }
+        const transactions = txResp.success ? txResp.data : (walletData.transactions || [])
+        
+        setWallet({ ...walletData, transactions })
       } catch (e) {
         if (!mounted) return
         setWalletError(e instanceof Error ? e.message : 'Wallet error')
