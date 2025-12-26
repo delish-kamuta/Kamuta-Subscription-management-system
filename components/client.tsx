@@ -268,7 +268,7 @@ const Client = ({userName}:props) => {
                     {wallet.transactions.slice(0, 10).map((t: any, idx: number) => (
                       <TableRow key={idx}>
                         <TableCell className="font-mono text-xs">{t.date || t.created_at || '-'}</TableCell>
-                        <TableCell>{t.type || '-'}</TableCell>
+                        <TableCell>{t.transaction_type === "credit" ? "Top Up" : (t.transaction_type ? "Charge" : "-")}</TableCell>
                         <TableCell>{t.amount ?? t.value ?? '-'}</TableCell>
                         <TableCell className="hidden md:table-cell">{t.reference || t.id || '-'}</TableCell>
                       </TableRow>
