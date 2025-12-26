@@ -20,8 +20,8 @@ export const fetchSubscriptions = createAsyncThunk<SubscriptionItem[], { token: 
   'subscriptions/fetch',
   async ({ token }, { rejectWithValue }) => {
     try {
-      const data = await listStudentSubscriptions(token);
-      return data;
+      const response = await listStudentSubscriptions(token);
+      return response;
     } catch (e: any) {
       return rejectWithValue(e.message || String(e));
     }

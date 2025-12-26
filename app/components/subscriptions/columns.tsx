@@ -24,6 +24,8 @@ import { generateQrOtpForUser } from "~/services/qr";
 import { cancelSubscription, updateSubscription } from "~/store/subscriptionsSlice";
 import { fetchBranchesThunk } from "~/store/branchesSlice";
 import { UserRole } from "~/types/auth";
+import { handleGenerateQr, printQrTicket } from "~/lib/qr-utils";
+
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -31,10 +33,15 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [qrOpen, setQrOpen] = useState(false);
   const [editForm, setEditForm] = useState<SubscriptionItem>(item);
   const [topUpForm, setTopUpForm] = useState({ days: 0, mealsToAdd: 0, paymentMethod: 'Cash', amountPaid: 0 });
-  const [qrLoading, setQrLoading] = useState(false);
-  const [qrError, setQrError] = useState('');
-  const [qrData, setQrData] = useState<{ qr_code: string; user_name: string; expires_in_seconds: number } | null>(null);
-  const [qrImage, setQrImage] = useState<string>('');
+  
+  // QR State
+  const [qrState, setQrState] = useState<{
+    loading: boolean;
+    error: string;
+    data: { qr_code: string; user_name: string; expires_in_seconds: number } | null;
+    image: string;
+  }>({ loading: false, error: '', data: null, image: '' });
+
   const { token, user } = useAppSelector((state) => state.auth);
   const isAdmin = user?.role === UserRole.ADMIN;
   const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
@@ -72,76 +79,14 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
 
   // Generate QR-OTP when the sheet opens
   useEffect(() => {
-    let mounted = true;
-    const run = async () => {
-      if (!qrOpen) return;
-      try {
-        setQrLoading(true); setQrError(''); setQrData(null);
-        const uid = (item as any).userId || String(item.id);
-        const resp = await generateQrOtpForUser(uid);
-        if (!mounted) return;
-        if (!resp.success) { setQrError(resp.message || 'Failed to generate QR-OTP'); return; }
-        setQrData(resp.data || null);
-        // generate QR image
-        try {
-          const QRCode = (await import('qrcode')).default;
-          const url = await QRCode.toDataURL(resp.data?.qr_code || '', { width: 256, margin: 1 });
-          setQrImage(url);
-        } catch { setQrImage(''); }
-      } catch (e) {
-        if (!mounted) return;
-        setQrError(e instanceof Error ? e.message : 'QR-OTP error');
-      } finally {
-        if (mounted) setQrLoading(false);
-      }
-    };
-    run();
-    return () => { mounted = false; };
-  }, [qrOpen, item.id]);
-
-  const handlePrint = async () => {
-    const content = document.getElementById(`ticket-content-${item.id}`);
-    if (!content) {
-      alert('Ticket content not found to print.');
-      return;
+    if (qrOpen) {
+      const uid = (item as any).userId || String(item.id);
+      handleGenerateQr(uid, (newState) => setQrState(prev => ({ ...prev, ...newState })));
     }
+  }, [qrOpen, item.id, item]);
 
-    const printWindow = window.open('', '_blank', 'width=300,height=500');
-    if (printWindow) {
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Print Meal Ticket</title>
-            <style>
-              @page { margin: 2mm; }
-              body { font-family: 'Courier New', Courier, monospace; padding: 0; margin: 0; }
-              .ticket { max-width: 57mm; width: 100%; margin: 0 auto; }
-              .text-center { text-align: center; }
-              .font-semibold { font-weight: 600; }
-              .tracking-wide { letter-spacing: 0.025em; }
-              .grid { display: grid; }
-              .grid-cols-2 { grid-template-columns: 1fr 1fr; }
-              .gap-1 { gap: 0.25rem; }
-              .mt-2 { margin-top: 0.5rem; }
-              .text-xs { font-size: 11px; line-height: 1.2; }
-              .break-all { word-break: break-all; }
-              .border-t { border-top: 1px dashed #000; }
-              .my-3 { margin-top: 0.75rem; margin-bottom: 0.75rem; }
-              .qr { display: flex; justify-content: center; margin: 0.5rem 0; }
-              .qr img { max-width: 80% !important; height: auto !important; }
-            </style>
-          </head>
-          <body>
-            ${content.outerHTML}
-            <script>
-              window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); };
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
+  const handlePrint = () => {
+    printQrTicket(`ticket-content-${item.id}`);
   };
 
   const handleCancel = async () => {
@@ -444,48 +389,60 @@ const handleTopUpSave = async () => {
               </div>
             </div>
 
-            {/* QR-OTP Details */}
-            {qrLoading && (
-              <div className="w-full bg-gray-100 animate-pulse rounded-lg p-6 text-center text-gray-500">Generating QR-OTP…</div>
+            {/* QR Content */}
+            {qrState.loading && (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
             )}
-            {qrError && (
-              <div className="w-full rounded-lg p-3 bg-red-50 text-red-700 text-sm">{qrError}</div>
+            {qrState.error && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+                {qrState.error}
+              </div>
             )}
-            {qrData && (
-              <div className="space-y-4">
-                <div className="flex flex-col items-center justify-between bg-white border rounded p-4">
-                  <div>
-                    <p className="text-sm"><span className="text-gray-500">User:</span> {qrData.user_name}</p>
-                    <p className="text-sm"><span className="text-gray-500">Expires:</span> {qrData.expires_in_seconds}s</p>
+            {qrState.data && (
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <div id={`ticket-content-${item.id}`} className="ticket">
+                  <div className="text-center font-semibold tracking-wide">MEAL TICKET</div>
+                  <div className="grid grid-cols-2 gap-1 mt-2 text-xs">
+                    <div><span className="font-semibold">Name:</span> {qrState.data.user_name}</div>
+                    <div><span className="font-semibold">Reg #:</span> {item.id}</div>
+                    <div><span className="font-semibold">Type:</span> {item.subscriptionType}</div>
+                    <div><span className="font-semibold">Meals:</span> {item.mealsLeft}</div>
+                    <div><span className="font-semibold">Date:</span> {new Date().toLocaleDateString()}</div>
+                    <div><span className="font-semibold">Time:</span> {new Date().toLocaleTimeString()}</div>
                   </div>
-                  {qrImage ? (
-                    <img src={qrImage} alt="QR-OTP" className="w-40 h-40" />
-                  ) : (
-                    <div className="font-mono text-xs break-all p-2 bg-gray-50 border rounded">
-                      {qrData.qr_code}
-                    </div>
-                  )}
+                  
+                  <div className="my-3 border-t border-dashed border-gray-400"></div>
+                  
+                  <div className="qr flex justify-center items-center">
+                    {qrState.image ? (
+                      <img src={qrState.image} alt="QR Code" className="w-48 h-48" />
+                    ) : (
+                      <div className="w-48 h-48 bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
+                        Generating QR...
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="my-3 border-t border-dashed border-gray-400"></div>
+                  <div className="text-center text-xs text-gray-500">
+                    Scan at point of service<br/>
+                    Valid for {Math.floor(qrState.data.expires_in_seconds / 60)} minutes
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500">Use this code to generate a scannable QR or print it. It expires automatically.</p>
               </div>
             )}
 
-            {/* Hidden Ticket Content for Printing */}
-            {qrData && (
-              <div className="hidden">
-                <div id={`ticket-content-${item.id}`} className="ticket">
-                  <div className="text-center font-semibold tracking-wide">MEAL TICKET</div>
-                  <div className="grid grid-cols-1 gap-1 mt-2 text-xs">
-                    <div><span className="font-semibold">Date:</span> {new Date().toLocaleDateString()}</div>
-                    <div><span className="font-semibold">Client:</span> {item.clientName}</div>
-                  </div>
-                  <div className="my-3 border-t border-dashed border-black" />
-                  <div className="qr flex items-center justify-center">
-                    {qrImage && <img src={qrImage} alt="QR Code" className="w-44 h-44" />}
-                  </div>
-                  <div className="my-3 border-t border-dashed border-black" />
-                  <div className="text-center text-xs">Scan at point of service</div>
-                </div>
+            {/* Instructions */}
+            {qrState.data && (
+              <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded border border-blue-100">
+                <p className="font-medium text-blue-800 mb-1">Instructions:</p>
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>This QR code is temporary and expires in {Math.floor(qrState.data.expires_in_seconds / 60)} minutes.</li>
+                  <li>Print this ticket or show it on screen to the scanner.</li>
+                  <li>Once scanned, one meal will be deducted from the subscription.</li>
+                </ul>
               </div>
             )}
           </div>
@@ -494,23 +451,9 @@ const handleTopUpSave = async () => {
           <SheetFooter className="p-6 border-t bg-gray-50">
             <div className="flex gap-2 w-full">
               <Button 
-                onClick={async () => {
-                  try {
-                    setQrLoading(true); setQrError('');
-                    const uid = (item as any).userId || String(item.id);
-                    const resp = await generateQrOtpForUser(uid);
-                    if (!resp.success) { setQrError(resp.message || 'Failed to generate QR-OTP'); return }
-                    setQrData(resp.data || null)
-                    try {
-                      const QRCode = (await import('qrcode')).default;
-                      const url = await QRCode.toDataURL(resp.data?.qr_code || '', { width: 256, margin: 1 });
-                      setQrImage(url);
-                    } catch { setQrImage(''); }
-                  } catch (e) {
-                    setQrError(e instanceof Error ? e.message : 'QR-OTP error')
-                  } finally {
-                    setQrLoading(false)
-                  }
+                onClick={() => {
+                  const uid = (item as any).userId || String(item.id);
+                  handleGenerateQr(uid, (newState) => setQrState(prev => ({ ...prev, ...newState })));
                 }}
                 variant="outline"
                 className="flex-1"
@@ -518,8 +461,8 @@ const handleTopUpSave = async () => {
                 Regenerate
               </Button>
               <Button
-                disabled={!qrImage}
-                onClick={handlePrint}
+                disabled={!qrState.image}
+                onClick={() => printQrTicket(`ticket-content-${item.id}`)}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Print QR

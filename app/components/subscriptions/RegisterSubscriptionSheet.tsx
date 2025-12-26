@@ -36,6 +36,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
+  const [createdWorkerId, setCreatedWorkerId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!branchesLoaded && !branchesLoading) {
@@ -149,9 +150,15 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
       const genPwd = result?.data?.generated_password
       setGeneratedPassword(genPwd ?? null)
       setSuccess('Subscription registered successfully!')
+      
+      const created = result?.data || result
+      if (created && formData.role === 'worker') {
+        setCreatedWorkerId(String(created.id || created.user_id || ''))
+      } else {
+        setCreatedWorkerId(null)
+      }
 
       // Optimistically add new subscription and user to Redux store
-      const created = result?.data || result
       if (created) {
         const selectedBranchId = (currentUser?.role === 'ADMIN' ? formData.branch_id : (userBranchId || '')) || ''
         const selectedBranch = Array.isArray(branches) ? branches.find((b) => b.id === selectedBranchId) : null
@@ -182,10 +189,11 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         }))
 
         if (formData.role === 'worker') {
-          const userId = String(created.id || created.user_id || newSubscription.id)
-          onOpenChange(false)
-          navigate(`/wallet?userId=${userId}`)
-          return
+          // Don't navigate automatically, let user choose
+          // const userId = String(created.id || created.user_id || newSubscription.id)
+          // onOpenChange(false)
+          // navigate(`/wallet?userId=${userId}`)
+          // return
         }
       }
 
@@ -201,10 +209,11 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         payment_method: '',
         amount_paid: ''
       })
-      setTimeout(() => {
-        setSuccess('')
-        onOpenChange(false)
-      }, 10000)
+      // Don't auto-close if we want to show success message with button
+      // setTimeout(() => {
+      //   setSuccess('')
+      //   onOpenChange(false)
+      // }, 10000)
     } catch (err: any) {
       setError(err?.message || 'Request failed')
     } finally {
@@ -248,6 +257,21 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
                     }}
                   >
                     Copy
+                  </Button>
+                </div>
+              )}
+              {createdWorkerId && (
+                <div className="pt-2">
+                  <Button 
+                    type="button" 
+                    variant="default" 
+                    className="bg-green-600 hover:bg-green-700 text-white w-full"
+                    onClick={() => {
+                      onOpenChange(false)
+                      navigate(`/wallet?userId=${createdWorkerId}`)
+                    }}
+                  >
+                    Go to Worker Wallet
                   </Button>
                 </div>
               )}

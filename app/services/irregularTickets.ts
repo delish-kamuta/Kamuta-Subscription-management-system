@@ -5,6 +5,7 @@ export interface GenerateIrregularTicketPayload {
   meal_type: string; // e.g., "Regular" | "VIP" | "VVIP"
   payment_method?: string; // required for CASHIER
   amount_paid?: number; // required for CASHIER
+  branch_id?: string; // Optional, for Admin to specify branch
 }
 
 export interface IrregularTicketResponseData {
