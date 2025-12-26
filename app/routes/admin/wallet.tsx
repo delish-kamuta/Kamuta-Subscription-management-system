@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter
 import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
 import { useAppSelector } from "~/store/hooks"
-import { getWorkerWallet, addWorkerWalletPayment } from "~/services/wallet"
+import { getWorkerWallet, addWorkerWalletPayment, getWorkerWalletTransactions } from "~/services/wallet"
 import { UserRole } from "~/types/auth"
 import {
   Table,
@@ -38,10 +38,17 @@ export default function WalletPage() {
     const run = async () => {
       try {
         setLoading(true); setError('')
-        const resp = await getWorkerWallet(targetId)
+        const [walletResp, txResp] = await Promise.all([
+          getWorkerWallet(targetId),
+          getWorkerWalletTransactions(targetId)
+        ])
         if (!mounted) return
-        if (!resp.success) { setError(resp.message || 'Failed to fetch wallet'); return }
-        setData(resp.data || null)
+        if (!walletResp.success) { setError(walletResp.message || 'Failed to fetch wallet'); return }
+        
+        const walletData = walletResp.data || { prepaid_amount: 0, remaining_amount: 0, credit_limit: 0, credit_used: 0, transactions: [] }
+        const transactions = txResp.success ? txResp.data : (walletData.transactions || [])
+        
+        setData({ ...walletData, transactions })
       } catch (e) {
         if (!mounted) return
         setError(e instanceof Error ? e.message : 'Wallet error')
@@ -105,8 +112,15 @@ export default function WalletPage() {
                         const resp = await addWorkerWalletPayment(targetId, { amount: Number(amount), payment_method: method, note })
                         if (!resp.success) { setError(resp.message || 'Failed to add payment'); return }
                         // refresh wallet
-                        const w = await getWorkerWallet(targetId)
-                        if (w.success) setData(w.data || null)
+                        const [w, t] = await Promise.all([
+                          getWorkerWallet(targetId),
+                          getWorkerWalletTransactions(targetId)
+                        ])
+                        if (w.success) {
+                           const walletData = w.data || { prepaid_amount: 0, remaining_amount: 0, credit_limit: 0, credit_used: 0, transactions: [] }
+                           const transactions = t.success ? t.data : (walletData.transactions || [])
+                           setData({ ...walletData, transactions })
+                        }
                         setAmount(''); setNote(''); setOpen(false)
                       } catch (e) {
                         setError(e instanceof Error ? e.message : 'Payment error')

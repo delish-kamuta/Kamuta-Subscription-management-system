@@ -1,5 +1,6 @@
 import { apiClient } from "~/lib/api";
 import type { ApiSubscription } from "./studentSubscriptions";
+import { getWorkerWalletTransactions } from "./wallet";
 
 export * from "./studentSubscriptions";
 export * from "./workerSubscriptions";
@@ -23,6 +24,16 @@ function normalizePaymentMethod(method: string | undefined | null): string {
   return 'Momo';
 }
 
+function extractArray(json: any): any[] {
+  if (!json) return [];
+  if (Array.isArray(json)) return json;
+  if (Array.isArray(json?.data)) return json.data;
+  if (Array.isArray(json?.items)) return json.items;
+  if (Array.isArray(json?.data?.data)) return json.data.data;
+  if (Array.isArray(json?.data?.items)) return json.data.items;
+  return [];
+}
+
 export async function listPaymentsFromSubscriptions(token: string | null): Promise<PaymentRow[]> {
   // Fetch raw subscriptions to access payment_history
   const [studentRes, workerRes] = await Promise.allSettled([
@@ -35,7 +46,8 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
   // Process Students
   if (studentRes.status === 'fulfilled') {
     const json = studentRes.value;
-    const apiItems: ApiSubscription[] = json.data || json.items || json;
+    const apiItems: ApiSubscription[] = extractArray(json);
+    
     if (Array.isArray(apiItems)) {
       apiItems.forEach((api) => {
         const regNumber = api.student?.reg_number || api.id || '';
@@ -64,23 +76,24 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
   // Process Workers
   if (workerRes.status === 'fulfilled') {
     const json = workerRes.value;
-    const workers: any[] = json.data || json.items || json || [];
+    const workers: any[] = extractArray(json);
+    
     if (Array.isArray(workers)) {
       // Fetch wallets for all workers to get transactions
       const walletPromises = workers.map(async (w: any) => {
         try {
-          const walletData = await apiClient<any>(`/workers/${w.id}/wallet`);
-          return { worker: w, wallet: walletData?.data || walletData };
+          const txRes = await getWorkerWalletTransactions(w.id);
+          return { worker: w, transactions: txRes.success ? txRes.data : [] };
         } catch (e) {
           console.error("Failed to fetch wallet for worker", w?.id, e);
           // ignore error
         }
-        return { worker: w, wallet: null };
+        return { worker: w, transactions: [] };
       });
 
       const results = await Promise.all(walletPromises);
 
-      results.forEach(({ worker: w, wallet }) => {
+      results.forEach(({ worker: w, transactions }) => {
         const customerName = w?.user?.full_name || w?.full_name || '';
         const regNumber = w?.reg_number || w?.id || '';
         const branchId = w?.user?.branch_id != null ? String(w.user.branch_id) : (w?.branch_id != null ? String(w.branch_id) : '');
@@ -105,25 +118,27 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
         });
 
         // 2. Process Wallet Transactions (Top Ups)
-        if (wallet && Array.isArray(wallet.transactions)) {
-          wallet.transactions.forEach((t: any) => {
+        if (Array.isArray(transactions)) {
+          transactions.forEach((t: any) => {
             const combinedStr = (
               (t.type || '') + ' ' + 
+              (t.transaction_type || '') + ' ' + 
               (t.payment_method || '') + ' ' + 
               (t.method || '') + ' ' + 
               (t.category || '') + ' ' +
               (t.description || '') + ' ' +
               (t.status || '')
             ).toLowerCase();
-
+            
             // Only include if it looks like a top-up or credit, or simply a positive amount transaction that isn't explicitly a debit
             // We remove the check for 'payment' because some top-ups might be labeled as payment method 'payment' or similar.
-            if (
-              combinedStr.includes('top') || 
+            const isTopUp = combinedStr.includes('top') || 
               combinedStr.includes('credit') || 
               combinedStr.includes('deposit') ||
-              (t.amount && Number(t.amount) > 0 && !combinedStr.includes('debit') && !combinedStr.includes('withdraw') && !combinedStr.includes('expense'))
-            ) {
+              combinedStr.includes('topup') ||
+              (t.amount && Number(t.amount) > 0 && !combinedStr.includes('debit') && !combinedStr.includes('withdraw') && !combinedStr.includes('expense'));
+
+            if (isTopUp) {
                rows.push({
                 id: rows.length + 1,
                 customerName,

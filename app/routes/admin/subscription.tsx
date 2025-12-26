@@ -10,6 +10,7 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~/lib/utils";
 import { useSubscriptionFilters } from "~/hooks/useSubscriptionFilters";
+import { useSubscriptionOverview } from "~/hooks/useSubscriptionOverview";
 import { useStudentSubscriptions } from "~/hooks/useStudentSubscriptions";
 import { useWorkerSubscriptions } from "~/hooks/useWorkerSubscriptions";
 import SubscriptionTable from "~/components/subscriptions/SubscriptionTable";
@@ -26,6 +27,32 @@ const Subscription = () => {
   const isCashier = role === UserRole.CASHIER;
   const { items: studentItems, loading: studentLoading, error: studentError } = useStudentSubscriptions();
   const { items: workerItems, loading: workerLoading, error: workerError } = useWorkerSubscriptions();
+  const { data: overviewData, loading: overviewLoading } = useSubscriptionOverview({ time_range: 'month' });
+  
+  const stats = overviewData ? [
+    {
+      id: "totalActiveSubscriptions",
+      title: "Total Active Subscriptions",
+      value: overviewData.summary.total_active,
+      currentDay: overviewData.summary.total_active,
+      lastDayCount: overviewData.summary.total_active, // No previous data available
+    },
+    {
+      id: "newSubscription",
+      title: "New Subscriptions",
+      value: overviewData.summary.new_subscriptions.current,
+      currentDay: overviewData.summary.new_subscriptions.current,
+      lastDayCount: overviewData.summary.new_subscriptions.previous,
+    },
+    {
+      id: "expiringThisWeek",
+      title: "Expiring Subscriptions",
+      value: overviewData.summary.expiring_soon,
+      currentDay: overviewData.summary.expiring_soon,
+      lastDayCount: overviewData.summary.expiring_soon, // No previous data available
+    },
+  ] : subscriptionStats;
+
   const [activeTab, setActiveTab] = useState<'students' | 'workers'>("students");
   const activeItems = activeTab === 'students' ? studentItems : workerItems;
   const {
@@ -67,7 +94,7 @@ const Subscription = () => {
       {!isCashier&&(
         <section className="flex flex-col gap-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-          {subscriptionStats.map((stat) => (
+          {stats.map((stat) => (
             <StatsCard
               key={stat.id}
               title={stat.title}

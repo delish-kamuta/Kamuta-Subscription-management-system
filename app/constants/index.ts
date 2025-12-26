@@ -140,23 +140,23 @@ export const dashboardStats = [
   {
     id: "totalIncome",
     title: "Total Revenue",
-    value: 12450,
-    currentDay: 1320, // 12% increase
-    lastDayCount: 1200,
+    value: '-',
+    currentDay: '-', // 12% increase
+    lastDayCount: '-',
   },
   {
     id: "totalCredit",
     title: "Total Credit",
-    value: 3210,
-    currentDay: 2940, // 2% decrease
-    lastDayCount: 3000,
+    value: '-',
+    currentDay: '-', // 2% decrease
+    lastDayCount: '-',
   },
   {
     id: "mealsServedToday",
     title: "Meals Served Today",
-    value: 520,
-    currentDay: 530, // 2% increase
-    lastDayCount: 520,
+    value: '-',
+    currentDay: '-', // 2% increase
+    lastDayCount: '-',
   },
 ];
 export const user = {
@@ -168,23 +168,23 @@ export const subscriptionStats = [
   {
     id: "totalActiveSubscriptions",
     title: "Total Active Subscriptions",
-    value: 1200,
-    currentDay: 1200,
-    lastDayCount: 1000,
+    value: '-',
+    currentDay: '-',
+    lastDayCount: '-',
   },
   {
     id: "newSubscription",
     title: "New Subscriptions",
-    value: 35,
-    currentDay: 33,
-    lastDayCount: 35,
+    value: '-',
+    currentDay: '-',
+    lastDayCount: '-',
   },
   {
     id: "expiringThisWeek",
     title: "Expiring Subscriptions",
-    value: 12,
-    currentDay: 12,
-    lastDayCount: 12,
+    value: '-',
+    currentDay: '-',
+    lastDayCount: '-',
   },
 ];
 
