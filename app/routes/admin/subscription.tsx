@@ -28,6 +28,7 @@ const Subscription = () => {
   const { items: studentItems, loading: studentLoading, error: studentError } = useStudentSubscriptions();
   const { items: workerItems, loading: workerLoading, error: workerError } = useWorkerSubscriptions();
   const { data: overviewData, loading: overviewLoading } = useSubscriptionOverview({ time_range: 'month' });
+  const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
   
   const stats = overviewData ? [
     {
@@ -56,8 +57,8 @@ const Subscription = () => {
   const [activeTab, setActiveTab] = useState<'students' | 'workers'>("students");
   const activeItems = activeTab === 'students' ? studentItems : workerItems;
   const {
-    state: { searchTerm, subscriptionTypeFilter, customerTypeFilter, startDate, endDate, currentPage },
-    setters: { setSearchTerm, setSubscriptionTypeFilter, setCustomerTypeFilter, setStartDate, setEndDate, setCurrentPage, clearDates },
+    state: { searchTerm, subscriptionTypeFilter, customerTypeFilter, branchFilter, startDate, endDate, currentPage },
+    setters: { setSearchTerm, setSubscriptionTypeFilter, setCustomerTypeFilter, setBranchFilter, setStartDate, setEndDate, setCurrentPage, clearDates },
     filteredData,
     paginatedData,
     totalPages,
@@ -129,17 +130,20 @@ const Subscription = () => {
           searchTerm={searchTerm}
           subscriptionTypeFilter={subscriptionTypeFilter}
           customerTypeFilter={customerTypeFilter}
+          branchFilter={branchFilter}
           startDate={startDate}
           endDate={endDate}
           setSearchTerm={setSearchTerm}
           setSubscriptionTypeFilter={setSubscriptionTypeFilter}
           setCustomerTypeFilter={setCustomerTypeFilter}
+          setBranchFilter={setBranchFilter}
           setStartDate={setStartDate}
           setEndDate={setEndDate}
           clearDates={clearDates}
           isAdminOrCashier={isAdminOrCashier}
           isCashier={isCashier}
           onExport={handleExport}
+          branches={branches}
         />
         {/* Loading / Error / Table */}
         {(activeTab === 'students' ? studentLoading : workerLoading) && (

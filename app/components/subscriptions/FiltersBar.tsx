@@ -9,12 +9,14 @@ interface FiltersBarProps {
   searchTerm: string;
   subscriptionTypeFilter: string;
   customerTypeFilter: string;
+  branchFilter: string;
   startDate: string;
   endDate: string;
   // setters
   setSearchTerm: (v: string) => void;
   setSubscriptionTypeFilter: (v: string) => void;
   setCustomerTypeFilter: (v: string) => void;
+  setBranchFilter: (v: string) => void;
   setStartDate: (v: string) => void;
   setEndDate: (v: string) => void;
   clearDates: () => void;
@@ -23,23 +25,28 @@ interface FiltersBarProps {
   isCashier: boolean;
   // actions
   onExport: () => void;
+  // data
+  branches?: Array<{ id: string; name: string }>;
 }
 
 export default function FiltersBar({
   searchTerm,
   subscriptionTypeFilter,
   customerTypeFilter,
+  branchFilter,
   startDate,
   endDate,
   setSearchTerm,
   setSubscriptionTypeFilter,
   setCustomerTypeFilter,
+  setBranchFilter,
   setStartDate,
   setEndDate,
   clearDates,
   isAdminOrCashier,
   isCashier,
   onExport,
+  branches = [],
 }: FiltersBarProps) {
   const [openAddSubscription, setOpenAddSubscription] = useState(false);
 
@@ -76,14 +83,23 @@ export default function FiltersBar({
               >
                 <option value="All">Customer Type: All</option>
                 <option value="Student">Student</option>
-                <option value="Campus Worker">Campus Worker</option>
+                <option value="Worker">Campus Worker</option>
                 <option value="Regular">Regular</option>
               </select>
             </div>
             {!isCashier && (
-              <Button variant="outline" className="text-sm border-gray-300">
-                Branch <ChevronDown className="w-4 h-4 ml-2" />
-              </Button>
+              <select
+                className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white w-full md:w-auto"
+                value={branchFilter}
+                onChange={(e) => setBranchFilter(e.target.value)}
+              >
+                <option value="All">Branch: All</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
             )}
             <div className="flex items-center gap-2 w-full md:w-auto">
               <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1 w-full md:w-auto">

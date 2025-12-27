@@ -33,10 +33,12 @@ export function toDateKey(value: string | undefined | null): number | null {
     return monDayYearToKey(cleanedDate);
   }
 
-  // ISO yyyy-mm-dd
-  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
-    const [y, m, d] = v.split("-").map(Number);
-    if (!y || !m || !d) return null;
+  // ISO yyyy-mm-dd (start)
+  const isoMatch = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    const y = Number(isoMatch[1]);
+    const m = Number(isoMatch[2]);
+    const d = Number(isoMatch[3]);
     return y * 10000 + m * 100 + d;
   }
 
