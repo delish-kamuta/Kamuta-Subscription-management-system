@@ -28,6 +28,7 @@ export interface SubscriptionFiltersState {
   searchTerm: string;
   subscriptionTypeFilter: string;
   customerTypeFilter: string;
+  branchFilter: string;
   startDate: string; // ISO yyyy-mm-dd or ''
   endDate: string;   // ISO yyyy-mm-dd or ''
   currentPage: number;
@@ -37,6 +38,7 @@ export interface SubscriptionFiltersSetters {
   setSearchTerm: (v: string) => void;
   setSubscriptionTypeFilter: (v: string) => void;
   setCustomerTypeFilter: (v: string) => void;
+  setBranchFilter: (v: string) => void;
   setStartDate: (v: string) => void;
   setEndDate: (v: string) => void;
   setCurrentPage: (v: number) => void;
@@ -56,6 +58,7 @@ export function useSubscriptionFilters({ data, pageSize = 8 }: UseSubscriptionFi
   const [searchTerm, setSearchTerm] = useState("");
   const [subscriptionTypeFilter, setSubscriptionTypeFilter] = useState("All");
   const [customerTypeFilter, setCustomerTypeFilter] = useState("All");
+  const [branchFilter, setBranchFilter] = useState("All");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,29 +67,29 @@ export function useSubscriptionFilters({ data, pageSize = 8 }: UseSubscriptionFi
   const filteredData = useMemo(() => {
     return data.filter(item => {
       const sTerm = searchTerm.toLowerCase().trim();
-      if (!sTerm) return true;
 
       const name = (item.clientName || "").toLowerCase();
       const tel = (item.tel || "").toLowerCase();
       const id = (item.id || "").toLowerCase();
       const branch = (item.branch || "").toLowerCase();
 
-      const matchesSearch = name.includes(sTerm) || tel.includes(sTerm) || id.includes(sTerm) || branch.includes(sTerm);
+      const matchesSearch = !sTerm || name.includes(sTerm) || tel.includes(sTerm) || id.includes(sTerm) || branch.includes(sTerm);
       
-      const matchesCustomerType = customerTypeFilter === "All" || item.customerType === customerTypeFilter;
-      const matchesSubscriptionType = subscriptionTypeFilter === "All" || item.subscriptionType === subscriptionTypeFilter;
+      const matchesCustomerType = customerTypeFilter === "All" || (item.customerType || "").toLowerCase() === customerTypeFilter.toLowerCase();
+      const matchesSubscriptionType = subscriptionTypeFilter === "All" || (item.subscriptionType || "").toLowerCase() === subscriptionTypeFilter.toLowerCase();
+      const matchesBranch = branchFilter === "All" || (item.branch || "") === branchFilter;
       const itemKey = toDateKey(item.dateStarted);
       const fromKey = toDateKey(startDate);
       const toKey = toDateKey(endDate);
       const withinRange = isWithinRange(itemKey, fromKey, toKey);
       
-      return matchesSearch && matchesCustomerType && matchesSubscriptionType && withinRange;
+      return matchesSearch && matchesCustomerType && matchesSubscriptionType && matchesBranch && withinRange;
     }).sort((a, b) => {
       const dateA = new Date(a.dateStarted).getTime();
       const dateB = new Date(b.dateStarted).getTime();
       return dateB - dateA;
     });
-  }, [data, searchTerm, customerTypeFilter, subscriptionTypeFilter, startDate, endDate]);
+  }, [data, searchTerm, customerTypeFilter, subscriptionTypeFilter, branchFilter, startDate, endDate]);
 
   const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
 
@@ -124,6 +127,7 @@ export function useSubscriptionFilters({ data, pageSize = 8 }: UseSubscriptionFi
       searchTerm,
       subscriptionTypeFilter,
       customerTypeFilter,
+      branchFilter,
       startDate,
       endDate,
       currentPage,
@@ -132,6 +136,7 @@ export function useSubscriptionFilters({ data, pageSize = 8 }: UseSubscriptionFi
       setSearchTerm,
       setSubscriptionTypeFilter,
       setCustomerTypeFilter,
+      setBranchFilter,
       setStartDate,
       setEndDate,
       setCurrentPage,
