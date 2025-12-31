@@ -64,7 +64,9 @@ export interface FeedbackItem {
 export interface ListFeedbackResponse {
   success: boolean;
   message?: string;
-  data?: FeedbackItem[];
+  data?:{
+    data?: FeedbackItem[]
+  };
 }
 
 export async function listFeedbacks(filters: FeedbackFilters = {}): Promise<ListFeedbackResponse> {

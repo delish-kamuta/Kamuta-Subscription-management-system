@@ -70,7 +70,7 @@ export default function FeedbackPage() {
       setLoading(true); setError('')
       const res = await listFeedbacks({ type, status, rating })
       if (!res.success) { setError(res.message || 'Failed to load feedback'); setItems([]); return }
-      const data = Array.isArray(res.data) ? res.data : []
+      const data = Array.isArray(res.data?.data) ? res.data.data : []
       data.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
       setItems(data)
     } catch (e: any) {
