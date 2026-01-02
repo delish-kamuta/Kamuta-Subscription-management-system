@@ -89,7 +89,6 @@ export default function WalletPage() {
                     <select className="mt-1 w-full border rounded p-2" value={method} onChange={(e) => setMethod(e.target.value)}>
                       <option value="cash">Cash</option>
                       <option value="momo">Mobile Money</option>
-                      <option value="card">Card</option>
                     </select>
                   </div>
                   <div>
