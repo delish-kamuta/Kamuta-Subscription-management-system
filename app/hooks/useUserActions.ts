@@ -66,12 +66,12 @@ export function useUserActions(
       if (selectedUser.password) {
         body.password = selectedUser.password
       }
-      if (selectedUser.role.toLowerCase() === 'student' && selectedUser.student?.reg_number) {
-        body.reg_number = selectedUser.student.reg_number
-      }
+      // if (selectedUser.role.toLowerCase() === 'student' && selectedUser.student?.reg_number) {
+      //   body.reg_number = selectedUser.student.reg_number
+      // }
       
       await apiClient(`/users/${selectedUser.id}`, {
-        method: 'PATCH',
+        method: 'PUT',
         body: JSON.stringify(body),
       })
       
