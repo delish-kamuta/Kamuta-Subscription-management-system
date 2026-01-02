@@ -58,6 +58,7 @@ export function mapApiToSubscriptionItem(item: ApiSubscription): SubscriptionIte
     totalMeals: Number(item.total_meals ?? 0),
     mealsLeft: Number(item.remaining_meals ?? item.total_meals ?? 0),
     payment: paymentMethod,
+    amountPaid: item.amount_paid,
     status: item.status,
   };
 }

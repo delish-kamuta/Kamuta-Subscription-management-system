@@ -104,12 +104,28 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
     }
   };
 
-  const handleEditSave = () => {
-    // TODO: Dispatch Redux action to update subscription
-    console.log('Updating subscription:', editForm);
-    alert(`Subscription for ${editForm.clientName} has been updated`);
-    // Example: dispatch(updateSubscription(editForm));
-    setEditOpen(false);
+  const handleEditSave = async () => {
+    if (!item.subscriptionId) {
+      alert("Cannot update: Missing subscription ID");
+      return;
+    }
+    try {
+      await dispatch(updateSubscription({
+        token,
+        id: item.subscriptionId,
+        payload: {
+          student_reg_number: editForm.id,
+          meal_type: editForm.subscriptionType,
+          total_meals: editForm.totalMeals,
+          amount_paid: editForm.amountPaid,
+          payment_method: editForm.payment.toLowerCase()
+        }
+      })).unwrap();
+      alert(`Subscription for ${editForm.clientName} has been updated`);
+      setEditOpen(false);
+    } catch (e) {
+      alert(`Failed to update: ${e}`);
+    }
   };
 const handleTopUpSave = async () => {
     if (!item.subscriptionId) {
@@ -257,10 +273,9 @@ const handleTopUpSave = async () => {
                 onChange={(e) => setEditForm({ ...editForm, subscriptionType: e.target.value })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               >
-                <option>Daily (Lunch)</option>
-                <option>Daily (Lunch + Dinner)</option>
-                <option>Weekly (Lunch)</option>
-                <option>Monthly (Lunch)</option>
+                <option value="Regular">Regular</option>
+                <option value="VIP">VIP</option>
+                <option value="VVIP">VVIP</option>
               </select>
             </div>
             <div>
@@ -296,6 +311,14 @@ const handleTopUpSave = async () => {
                   onChange={(e) => setEditForm({ ...editForm, mealsLeft: parseInt(e.target.value) })}
                 />
               </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Amount Paid</label>
+              <Input
+                type="number"
+                value={editForm.amountPaid || ''}
+                onChange={(e) => setEditForm({ ...editForm, amountPaid: e.target.value })}
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Payment Method</label>

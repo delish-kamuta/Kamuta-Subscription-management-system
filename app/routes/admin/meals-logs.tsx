@@ -364,8 +364,7 @@ const MealsLogs = () => {
                   <Button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    variant={currentPage === page ? "default" : "outline"}
-                    className="w-8 h-8 p-0"
+                    className={currentPage === page ? "bg-blue-600 w-8 h-8 p-0 text-white" : "outline w-8 h-8 p-0"}
                   >
                     {page}
                   </Button>
