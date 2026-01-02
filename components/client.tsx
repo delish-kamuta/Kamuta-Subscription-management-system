@@ -230,19 +230,15 @@ const Client = ({userName}:props) => {
               <p className="text-sm text-red-600 mt-2">{walletError}</p>
             ) : wallet ? (
               <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 border rounded">
-                  <p className="text-xs text-gray-500">Prepaid Amount</p>
+                <div className="p-4 border border-gray-200 rounded">
+                  <p className="text-xs text-gray-500">Remaining Amount</p>
                   <p className="text-lg font-semibold">{wallet.prepaid_amount}</p>
                 </div>
-                <div className="p-4 border rounded">
-                  <p className="text-xs text-gray-500">Remaining Amount</p>
-                  <p className="text-lg font-semibold">{wallet.remaining_amount}</p>
-                </div>
-                <div className="p-4 border rounded">
+                <div className="p-4 border border-gray-200 rounded">
                   <p className="text-xs text-gray-500">Credit Limit</p>
                   <p className="text-lg font-semibold">{wallet.credit_limit}</p>
                 </div>
-                <div className="p-4 border rounded">
+                <div className="p-4 border border-gray-200 rounded">
                   <p className="text-xs text-gray-500">Credit Used</p>
                   <p className="text-lg font-semibold">{wallet.credit_used}</p>
                 </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAppDispatch, useAppSelector } from '~/store/hooks'
 import { fetchAllSubscriptions } from '~/store/allSubscriptionsSlice'
 import { handleGenerateQr, printQrTicket } from '~/lib/qr-utils'
+import { Loader2 } from 'lucide-react'
 
 interface FindClientSheetProps {
   open: boolean;
@@ -14,9 +15,10 @@ export function FindClientSheet({ open, onOpenChange }: FindClientSheetProps) {
   const [findQuery, setFindQuery] = useState('');
   const [findResults, setFindResults] = useState<any[]>([]);
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   
   // Use the new allSubscriptions slice which contains both students and workers
-  const { items: subscriptions, hydrated: subscriptionsHydrated } = useAppSelector((state) => state.allSubscriptions);
+  const { items: subscriptions, hydrated: subscriptionsHydrated, loading: subscriptionsLoading } = useAppSelector((state) => state.allSubscriptions);
   const { token } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
 
@@ -172,15 +174,29 @@ export function FindClientSheet({ open, onOpenChange }: FindClientSheetProps) {
                   onChange={(e) => setFindQuery(e.target.value)}
                 />
                 <Button
+                  disabled={subscriptionsLoading || isSearching}
+                  className='bg-blue-600 text-white'
                   onClick={() => {
-                    const q = findQuery.trim().toLowerCase();
-                    const results = subscriptions.filter((s) =>
-                      s.clientName.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
-                    );
-                    setFindResults(results);
+                    setIsSearching(true);
+                    // Simulate a small delay for better UX or just to show the loading state
+                    setTimeout(() => {
+                      const q = findQuery.trim().toLowerCase();
+                      const results = subscriptions.filter((s) =>
+                        s.clientName.toLowerCase().includes(q) || s.id.toLowerCase().includes(q)
+                      );
+                      setFindResults(results);
+                      setIsSearching(false);
+                    }, 500);
                   }}
                 >
-                  Search
+                  {subscriptionsLoading || isSearching ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Searching...
+                    </>
+                  ) : (
+                    'Search'
+                  )}
                 </Button>
               </div>
               {/* Results */}
@@ -193,7 +209,12 @@ export function FindClientSheet({ open, onOpenChange }: FindClientSheetProps) {
                   <span className='text-right'>Action</span>
                 </div>
                 <div className='max-h-64 overflow-y-auto'>
-                  {findResults.length === 0 ? (
+                  {subscriptionsLoading || isSearching ? (
+                    <div className="flex justify-center items-center py-8 text-gray-500">
+                      <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                      <span>Searching...</span>
+                    </div>
+                  ) : findResults.length === 0 ? (
                     <div className='px-3 py-4 text-sm text-gray-500'>No results</div>
                   ) : (
                     findResults.map((item) => (

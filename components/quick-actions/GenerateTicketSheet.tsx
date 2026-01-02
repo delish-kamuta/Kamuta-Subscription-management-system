@@ -135,7 +135,6 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
               <select className='w-full border rounded-md px-3 py-2' value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                 <option value='cash'>Cash</option>
                 <option value='momo'>Mobile Money</option>
-                <option value='card'>Card/POS</option>
               </select>
             </div>
             <div className='space-y-2'>

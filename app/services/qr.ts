@@ -47,6 +47,9 @@ export interface ScanQrOtpResponse {
       remaining_meals: number
       meal_type?: string
     }
+    meal_log?: {
+      client_type?: string
+    }
   }
   message?: string
 }
