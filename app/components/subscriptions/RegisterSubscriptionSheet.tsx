@@ -125,8 +125,6 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         payload.reg_number = formData.reg_number.trim()
       }
 
-      console.log('Sending payload:', JSON.stringify(payload, null, 2))
-
       const resp = await fetch('https://restaurant-bn-api.onrender.com/api/users', {
         method: 'POST',
         headers: {

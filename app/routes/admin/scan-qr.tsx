@@ -16,6 +16,7 @@ interface ScanResult {
   userName?: string;
   remainingMeals?: number;
   mealType?: string;
+  userRole?: string;
 }
 
 const ScanQR = () => {
@@ -83,6 +84,7 @@ const ScanQR = () => {
         userName: res.data?.user_name,
         remainingMeals: res.data?.payment_result?.remaining_meals,
         mealType: res.data?.payment_result?.meal_type,
+        userRole: res.data?.meal_log?.client_type,
       });
       setRecentScans(prev => [{
         success: res.success,
@@ -91,6 +93,7 @@ const ScanQR = () => {
         userName: res.data?.user_name,
         remainingMeals: res.data?.payment_result?.remaining_meals,
         mealType: res.data?.payment_result?.meal_type,
+        userRole: res.data?.meal_log?.client_type,
       }, ...prev.slice(0, 4)]);
       setScanError(res.success ? null : (res.message || 'Failed to process QR-OTP'));
     } catch (error) {
@@ -288,6 +291,9 @@ const ScanQR = () => {
                           {scanResult.userName && (
                             <p><strong>User:</strong> {scanResult.userName}</p>
                           )}
+                          {scanResult.userRole && (
+                            <p><strong>Role:</strong> <span className="capitalize">{scanResult.userRole}</span></p>
+                          )}
                           {scanResult.remainingMeals !== undefined && (
                             <p><strong>Remaining Meals:</strong> {scanResult.remainingMeals}</p>
                           )}
@@ -358,6 +364,9 @@ const ScanQR = () => {
                           </span>
                         </div>
                         <div className="text-xs text-gray-600 space-y-0.5">
+                          {scan.userRole && (
+                            <p className="capitalize font-medium text-green-600">{scan.userRole}</p>
+                          )}
                           {scan.remainingMeals !== undefined && (
                             <p>Remaining: {scan.remainingMeals} meals</p>
                           )}
