@@ -16,6 +16,7 @@ export interface SubscriptionItem {
   totalMeals: number;
   mealsLeft: number;
   payment: string;
+  amountPaid?: string | number;
   status?: string;
 }
 
