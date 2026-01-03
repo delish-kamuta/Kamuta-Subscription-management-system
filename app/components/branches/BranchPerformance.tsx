@@ -39,17 +39,28 @@ export function BranchPerformance({ branchId, timeRange }: BranchPerformanceProp
   }, [branchId, timeRange])
 
   if (loading) {
-    return <div className="p-4 space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Skeleton className="h-32" />
-        <Skeleton className="h-32" />
-        <Skeleton className="h-32" />
+    return (
+      <div className="space-y-6">
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Skeleton className="h-[140px] rounded-xl" />
+          <Skeleton className="h-[140px] rounded-xl" />
+          <Skeleton className="h-[140px] rounded-xl" />
+        </div>
+
+        {/* Tables Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-[300px] rounded-xl" />
+          <Skeleton className="h-[300px] rounded-xl" />
+        </div>
+
+        {/* Charts & Insights Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-[300px] rounded-xl" />
+          <Skeleton className="h-[300px] rounded-xl" />
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Skeleton className="h-64" />
-        <Skeleton className="h-64" />
-      </div>
-    </div>
+    )
   }
 
   if (!data) return <div>Failed to load data</div>
