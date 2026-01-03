@@ -251,12 +251,12 @@ export default function BranchesPage() {
             <div className="flex gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="bg-white h-9 gap-2 min-w-[120px] justify-between">
+                  <Button variant="outline" className="bg-white border-gray-200 h-9 gap-2 min-w-[120px] justify-between">
                     {selectedBranchFilter?.name || "All Branch"} 
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuContent align="end" className="w-[200px] bg-white border-gray-200">
                   <DropdownMenuItem onClick={() => setSelectedBranchFilter(null)}>
                     All Branch
                   </DropdownMenuItem>
@@ -270,12 +270,12 @@ export default function BranchesPage() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="bg-white h-9 gap-2 min-w-[120px] justify-between">
+                  <Button variant="outline" className="bg-white border-gray-200 h-9 gap-2 min-w-[120px] justify-between">
                     {timeRange} 
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[150px]">
+                <DropdownMenuContent align="end" className="w-[150px] bg-white border-gray-200">
                   <DropdownMenuItem onClick={() => setTimeRange("Today")}>
                     <div className="flex justify-between w-full items-center">
                       <span>Day</span>
@@ -338,7 +338,7 @@ export default function BranchesPage() {
                   irregular_vvip_price: 2000,
                 })
                 setIsAddOpen(true)
-              }}>
+              }} className="bg-blue-600 text-white">
                 <Plus className="mr-2 h-4 w-4" /> Add Branch
               </Button>
             </div>

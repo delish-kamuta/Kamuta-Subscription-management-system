@@ -139,7 +139,7 @@ export function BranchPerformance({ branchId, timeRange }: BranchPerformanceProp
       {/* Tables Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* People Served By Branch */}
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm bg-white">
           <CardHeader>
             <CardTitle>People Served By Branch</CardTitle>
           </CardHeader>
@@ -171,7 +171,7 @@ export function BranchPerformance({ branchId, timeRange }: BranchPerformanceProp
         </Card>
 
         {/* Revenue By Branch */}
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm bg-white">
           <CardHeader>
             <CardTitle>Revenue By Branch</CardTitle>
           </CardHeader>
@@ -208,7 +208,7 @@ export function BranchPerformance({ branchId, timeRange }: BranchPerformanceProp
 
       {/* Charts & Insights */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm bg-white">
            <CardContent className="h-[300px] flex items-center justify-center">
              <ResponsiveContainer width="100%" height="100%">
                <PieChart>
@@ -262,7 +262,7 @@ export function BranchPerformance({ branchId, timeRange }: BranchPerformanceProp
            </CardContent>
         </Card>
 
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-sm bg-white">
           <CardContent className="flex flex-col justify-center h-full space-y-6 p-6">
              <div className="flex items-center gap-3">
                <div className="p-2 bg-blue-100 rounded-full text-blue-600">
