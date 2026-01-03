@@ -64,18 +64,26 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
         const meals = topUpForm.days * 2;
         let price = 0;
         const type = item.subscriptionType || 'Regular';
+        const isWorker = item.customerType?.toLowerCase() === 'worker';
         
-        // Handle case-insensitive comparison if needed, though usually exact match
-        if (type === 'Regular') price = branch.regular_price || 0;
-        else if (type === 'VIP') price = branch.vip_price || 0;
-        else if (type === 'VVIP') price = branch.vvip_price || 0;
-        else price = branch.regular_price || 0; // Fallback
+        if (isWorker) {
+          if (type === 'Regular') price = branch.worker_regular_price || 0;
+          else if (type === 'VIP') price = branch.worker_vip_price || 0;
+          else if (type === 'VVIP') price = branch.worker_vvip_price || 0;
+          else price = branch.worker_regular_price || 0;
+        } else {
+          // Default to student
+          if (type === 'Regular') price = branch.student_regular_price || 0;
+          else if (type === 'VIP') price = branch.student_vip_price || 0;
+          else if (type === 'VVIP') price = branch.student_vvip_price || 0;
+          else price = branch.student_regular_price || 0;
+        }
 
         const amount = meals * price;
         setTopUpForm(prev => ({ ...prev, mealsToAdd: meals, amountPaid: amount }));
       }
     }
-  }, [topUpForm.days, item.branch, item.subscriptionType, branches, topUpOpen]);
+  }, [topUpForm.days, item.branch, item.subscriptionType, item.customerType, branches, topUpOpen]);
 
   // Generate QR-OTP when the sheet opens
   useEffect(() => {
@@ -116,9 +124,9 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
         payload: {
           student_reg_number: editForm.id,
           meal_type: editForm.subscriptionType,
-          total_meals: editForm.totalMeals,
-          amount_paid: editForm.amountPaid,
-          payment_method: editForm.payment.toLowerCase()
+          total_meals: Number(editForm.totalMeals),
+          amount_paid: Number(editForm.amountPaid),
+          payment_method: editForm.payment
         }
       })).unwrap();
       alert(`Subscription for ${editForm.clientName} has been updated`);
@@ -327,9 +335,9 @@ const handleTopUpSave = async () => {
                 onChange={(e) => setEditForm({ ...editForm, payment: e.target.value })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               >
-                <option>Cash</option>
-                <option>Mobile Money</option>
-                <option>Bank Transfer</option>
+                <option value="cash">Cash</option>
+                <option value="momo">Mobile Money</option>
+                <option value="bank_transfer">Bank Transfer</option>
               </select>
             </div>
             <div className="flex gap-2 pt-4">

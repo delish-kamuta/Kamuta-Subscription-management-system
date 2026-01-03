@@ -1,64 +1,42 @@
 import { Header } from "../../../components/Header"
 import { SidebarTrigger } from "~/components/ui/sidebar"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter, SheetClose } from "~/components/ui/sheet"
-import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router-dom"
-import { useAppSelector } from "~/store/hooks"
-import { getWorkerWallet, addWorkerWalletPayment, getWorkerWalletTransactions } from "~/services/wallet"
+import { useAppSelector, useAppDispatch } from "~/store/hooks"
 import { UserRole } from "~/types/auth"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table"
+import { Download } from "lucide-react"
+import { useWorkerWallet } from "~/hooks/useWorkerWallet"
+import { exportWalletTransactionsToPDF } from "~/lib/export-utils"
+import { AddWalletPaymentSheet } from "~/components/wallet/AddWalletPaymentSheet"
+import { WalletStats } from "~/components/wallet/WalletStats"
+import { WalletTransactionsTable } from "~/components/wallet/WalletTransactionsTable"
+import { fetchUsersThunk } from "~/store/usersSlice"
+import { useEffect } from "react"
 
 export default function WalletPage() {
   const { user } = useAppSelector((s) => s.auth)
+  const dispatch = useAppDispatch()
+  const { items: users, loaded: usersLoaded } = useAppSelector((s) => (s as any).users || { items: [] })
   const [searchParams] = useSearchParams()
   const selectedUserId = searchParams.get('userId') || undefined
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [data, setData] = useState<{ prepaid_amount: number; remaining_amount: number; credit_limit: number; credit_used: number; transactions: any[] } | null>(null)
-  const [amount, setAmount] = useState<string>('')
-  const [method, setMethod] = useState<string>('cash')
-  const [note, setNote] = useState<string>('')
-  const [saving, setSaving] = useState<boolean>(false)
-  const [open, setOpen] = useState<boolean>(false)
+  
+  const { data, loading, error, refreshWallet } = useWorkerWallet(user, selectedUserId)
 
   useEffect(() => {
-    const role = user?.role
-    const targetId = selectedUserId || String(user?.id || '')
-    if (!targetId) return
-    // Allow admins/cashiers to open any user's wallet via userId; workers can open their own
-    if (!selectedUserId && role !== UserRole.WORKER && role !== UserRole.ADMIN) { return }
-    let mounted = true
-    const run = async () => {
-      try {
-        setLoading(true); setError('')
-        const [walletResp, txResp] = await Promise.all([
-          getWorkerWallet(targetId),
-          getWorkerWalletTransactions(targetId)
-        ])
-        if (!mounted) return
-        if (!walletResp.success) { setError(walletResp.message || 'Failed to fetch wallet'); return }
-        
-        const walletData = walletResp.data || { prepaid_amount: 0, remaining_amount: 0, credit_limit: 0, credit_used: 0, transactions: [] }
-        const transactions = txResp.success ? txResp.data : (walletData.transactions || [])
-        
-        setData({ ...walletData, transactions })
-      } catch (e) {
-        if (!mounted) return
-        setError(e instanceof Error ? e.message : 'Wallet error')
-      } finally {
-        if (mounted) setLoading(false)
-      }
+    if (!usersLoaded && (user?.role === UserRole.ADMIN || (UserRole as any)?.CASHIER === user?.role)) {
+      dispatch(fetchUsersThunk())
     }
-    run()
-    return () => { mounted = false }
-  }, [user?.id, user?.role, selectedUserId])
+  }, [usersLoaded, dispatch, user?.role])
+
+  const handleExport = () => {
+    if (data?.transactions) {
+      const targetId = selectedUserId || user?.id;
+      const targetUser = users.find((u: any) => String(u.id) === String(targetId));
+      const userName = targetUser?.full_name || targetUser?.name || user?.name || 'Unknown User';
+      const userPhone = targetUser?.phone || targetUser?.tel || '';
+      
+      exportWalletTransactionsToPDF(data.transactions, targetId, userName, userPhone)
+    }
+  }
 
   return (
     <main className="dashboard wrapper">
@@ -70,67 +48,15 @@ export default function WalletPage() {
 
       <section className="bg-white p-6 rounded-lg shadow mt-6">
         {(user?.role === UserRole.ADMIN || (UserRole as any)?.CASHIER === user?.role) && (
-          <div className="mb-6">
-            <Sheet open={open} onOpenChange={setOpen}>
-              <SheetTrigger asChild>
-                <button className="px-3 py-2 rounded bg-blue-600 text-white">Add Wallet Payment</button>
-              </SheetTrigger>
-              <SheetContent className="bg-white p-6">
-                <SheetHeader>
-                  <SheetTitle>Add Wallet Payment</SheetTitle>
-                </SheetHeader>
-                <div className="mt-4 space-y-4">
-                  <div>
-                    <label className="text-xs text-gray-500">Amount</label>
-                    <input type="number" className="mt-1 w-full border rounded p-2" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 5000" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500">Method</label>
-                    <select className="mt-1 w-full border rounded p-2" value={method} onChange={(e) => setMethod(e.target.value)}>
-                      <option value="cash">Cash</option>
-                      <option value="momo">Mobile Money</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-500">Note</label>
-                    <input className="mt-1 w-full border rounded p-2" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note" />
-                  </div>
-                </div>
-                <SheetFooter className="mt-6 flex gap-2 px-0">
-                  <SheetClose asChild>
-                    <button className="px-3 py-2 rounded border">Cancel</button>
-                  </SheetClose>
-                  <button
-                    className="px-3 py-2 rounded bg-blue-600 text-white disabled:opacity-50"
-                    disabled={saving || !amount || Number(amount) <= 0}
-                    onClick={async () => {
-                      const targetId = selectedUserId || String(user?.id || '')
-                      if (!targetId) return
-                      try {
-                        setSaving(true)
-                        const resp = await addWorkerWalletPayment(targetId, { amount: Number(amount), payment_method: method, note })
-                        if (!resp.success) { setError(resp.message || 'Failed to add payment'); return }
-                        // refresh wallet
-                        const [w, t] = await Promise.all([
-                          getWorkerWallet(targetId),
-                          getWorkerWalletTransactions(targetId)
-                        ])
-                        if (w.success) {
-                           const walletData = w.data || { prepaid_amount: 0, remaining_amount: 0, credit_limit: 0, credit_used: 0, transactions: [] }
-                           const transactions = t.success ? t.data : (walletData.transactions || [])
-                           setData({ ...walletData, transactions })
-                        }
-                        setAmount(''); setNote(''); setOpen(false)
-                      } catch (e) {
-                        setError(e instanceof Error ? e.message : 'Payment error')
-                      } finally {
-                        setSaving(false)
-                      }
-                    }}
-                  >{saving ? 'Saving…' : 'Save Payment'}</button>
-                </SheetFooter>
-              </SheetContent>
-            </Sheet>
+          <div className="mb-6 flex gap-2">
+            <AddWalletPaymentSheet 
+              userId={selectedUserId || String(user?.id || '')} 
+              onPaymentSuccess={refreshWallet} 
+            />
+            <button onClick={handleExport} className="px-3 py-2 rounded bg-green-600 text-white flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export Transactions
+            </button>
           </div>
         )}
         {loading ? (
@@ -139,94 +65,8 @@ export default function WalletPage() {
           <p className="text-sm text-red-600">{error}</p>
         ) : data ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 border rounded">
-                <p className="text-xs text-gray-500">Prepaid Amount</p>
-                <p className="text-lg font-semibold">{data.prepaid_amount}</p>
-              </div>
-              <div className="p-4 border rounded">
-                <p className="text-xs text-gray-500">Credit Limit</p>
-                <p className="text-lg font-semibold">{data.credit_limit}</p>
-              </div>
-              <div className="p-4 border rounded">
-                <p className="text-xs text-gray-500">Credit Used</p>
-                <p className="text-lg font-semibold">{data.credit_used}</p>
-              </div>
-            </div>
-
-            {data.transactions && data.transactions.length > 0 ? (
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-2">Recent Transactions</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead>Date</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead className="hidden md:table-cell">Reference</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.transactions
-                      .slice() // Create a copy to avoid mutating the original array
-                      .sort((a: any, b: any) => {
-                        const dateA = new Date(a.date || a.created_at).getTime();
-                        const dateB = new Date(b.date || b.created_at).getTime();
-                        return dateB - dateA;
-                      })
-                      .slice(0, 20)
-                      .map((t: any, idx: number) => {
-                      const combinedStr = (
-                        (t.type || '') + ' ' + 
-                        (t.payment_method || '') + ' ' + 
-                        (t.method || '') + ' ' + 
-                        (t.category || '') + ' ' +
-                        (t.description || '') + ' ' +
-                        (t.note || '')
-                      ).toLowerCase();
-
-                      const isTopUp = combinedStr.includes('payment') ||
-                                      combinedStr.includes('credit') ||
-                                      combinedStr.includes('deposit') ||
-                                      combinedStr.includes('top') ||
-                                      combinedStr.includes('cash') ||
-                                      combinedStr.includes('momo') ||
-                                      combinedStr.includes('card') ||
-                                      combinedStr.includes('mobile') ||
-                                      combinedStr.includes('transfer') ||
-                                      combinedStr.includes('fund') ||
-                                      combinedStr.includes('admin');
-                      
-                      const dateStr = t.date || t.created_at;
-                      const formattedDate = dateStr ? new Date(dateStr).toLocaleString() : '-';
-
-                      return (
-                        <TableRow key={idx}>
-                          <TableCell className="font-mono text-xs">{formattedDate}</TableCell>
-                          <TableCell>{t.type || '-'}</TableCell>
-                          <TableCell>
-                            {isTopUp ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                Top Up
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                Charge
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>{t.amount ?? t.value ?? '-'}</TableCell>
-                          <TableCell className="hidden md:table-cell">{t.reference || t.id || '-'}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 mt-4">No transactions found.</p>
-            )}
+            <WalletStats data={data} />
+            <WalletTransactionsTable transactions={data.transactions} />
           </>
         ) : (
           <p className="text-sm text-gray-500">No wallet data</p>
