@@ -77,10 +77,13 @@ export async function createStudentSubscription(token: string | null, payload: a
 }
 
 export async function updateStudentSubscription(token: string | null, id: string, payload: any): Promise<any> {
-  return apiClient(`/student-subscriptions/${id}`, {
+  console.log('Updating subscription:', { id, payload });
+  const response = await apiClient(`/student-subscriptions/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
+  console.log('Update response:', response);
+  return response;
 }
 
 export async function cancelStudentSubscription(token: string | null, id: string): Promise<any> {

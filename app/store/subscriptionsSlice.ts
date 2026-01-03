@@ -33,7 +33,7 @@ export const updateSubscription = createAsyncThunk<any, { token: string | null, 
   async ({ token, id, payload }, { rejectWithValue }) => {
     try {
       const response = await updateStudentSubscription(token, id, payload);
-      return response.data;
+      return response.data || response;
     } catch (e: any) {
       return rejectWithValue(e.message || String(e));
     }
@@ -61,7 +61,10 @@ const subscriptionsSlice = createSlice({
       state.hydrated = true;
     },
     upsertSubscription: (state, action: PayloadAction<SubscriptionItem>) => {
-      const idx = state.items.findIndex((s) => s.id === action.payload.id);
+      const idx = state.items.findIndex((s) => 
+        (s.subscriptionId && action.payload.subscriptionId && s.subscriptionId === action.payload.subscriptionId) ||
+        s.id === action.payload.id
+      );
       if (idx >= 0) state.items[idx] = action.payload; else state.items.unshift(action.payload);
     },
     clearSubscriptions: (state) => {
