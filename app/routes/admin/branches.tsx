@@ -5,13 +5,20 @@ import { Input } from "~/components/ui/input"
 import { useState, useEffect } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table"
 import { Skeleton } from "~/components/ui/skeleton"
-import { Search, Plus, Edit, Trash2 } from "lucide-react"
+import { Search, Plus, Edit, Trash2, ChevronDown } from "lucide-react"
 import { useAppSelector, useAppDispatch } from "~/store/hooks"
 import { fetchBranchesThunk, addBranchOptimistic, updateBranchOptimistic, removeBranchOptimistic } from "~/store/branchesSlice"
 import type { BranchItem } from "~/store/branchesSlice"
 import { createBranch, updateBranch, deleteBranch } from "~/services/branches"
 import { AddBranchSheet } from "~/components/branches/AddBranchSheet"
+import { BranchPerformance } from "~/components/branches/BranchPerformance"
 import { UserRole } from "~/types/auth"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu"
 
 export default function BranchesPage() {
   const dispatch = useAppDispatch()
@@ -20,10 +27,13 @@ export default function BranchesPage() {
   const branches = branchesState.items
   const loading = branchesState.loading
 
+  const [activeTab, setActiveTab] = useState<'performance' | 'pricing'>('performance')
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [selectedBranch, setSelectedBranch] = useState<BranchItem | null>(null)
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState<BranchItem | null>(null)
+  const [timeRange, setTimeRange] = useState("This Week")
   
   const [formLoading, setFormLoading] = useState(false)
   const [error, setError] = useState("")
@@ -212,93 +222,186 @@ export default function BranchesPage() {
       />
 
       <div className="mt-6 space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <div className="relative w-full sm:max-w-sm">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder="Search branches..."
-              className="pl-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex space-x-0 rounded-lg border border-slate-200 bg-white p-0 overflow-hidden">
+            <button
+              onClick={() => setActiveTab('performance')}
+              className={`px-6 py-2 text-sm font-medium transition-colors ${
+                activeTab === 'performance'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Performance
+            </button>
+            <div className="w-px bg-slate-200"></div>
+            <button
+              onClick={() => setActiveTab('pricing')}
+              className={`px-6 py-2 text-sm font-medium transition-colors ${
+                activeTab === 'pricing'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Pricing
+            </button>
           </div>
-          <Button onClick={() => {
-             setBranchForm({
-              name: "",
-              campus: "University of Rwanda",
-              student_regular_price: 0,
-              student_vip_price: 0,
-              student_vvip_price: 0,
-              worker_regular_price: 2000,
-              worker_vip_price: 2000,
-              worker_vvip_price: 2000,
-              irregular_regular_price: 1000,
-              irregular_vip_price: 1500,
-              irregular_vvip_price: 2000,
-            })
-            setIsAddOpen(true)
-          }}>
-            <Plus className="mr-2 h-4 w-4" /> Add Branch
-          </Button>
+
+          {activeTab === 'performance' && (
+            <div className="flex gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="bg-white h-9 gap-2 min-w-[120px] justify-between">
+                    {selectedBranchFilter?.name || "All Branch"} 
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[200px]">
+                  <DropdownMenuItem onClick={() => setSelectedBranchFilter(null)}>
+                    All Branch
+                  </DropdownMenuItem>
+                  {branches.map((branch) => (
+                    <DropdownMenuItem key={branch.id} onClick={() => setSelectedBranchFilter(branch)}>
+                      {branch.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="bg-white h-9 gap-2 min-w-[120px] justify-between">
+                    {timeRange} 
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[150px]">
+                  <DropdownMenuItem onClick={() => setTimeRange("Today")}>
+                    <div className="flex justify-between w-full items-center">
+                      <span>Day</span>
+                      <span className="text-xs text-muted-foreground">D</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTimeRange("This Week")}>
+                    <div className="flex justify-between w-full items-center">
+                      <span>Week</span>
+                      <span className="text-xs text-muted-foreground">W</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTimeRange("This Month")}>
+                    <div className="flex justify-between w-full items-center">
+                      <span>Month</span>
+                      <span className="text-xs text-muted-foreground">M</span>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setTimeRange("This Year")}>
+                    <div className="flex justify-between w-full items-center">
+                      <span>Year</span>
+                      <span className="text-xs text-muted-foreground">Y</span>
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Student (Reg/VIP/VVIP)</TableHead>
-                <TableHead>Worker (Reg/VIP/VVIP)</TableHead>
-                <TableHead>Irregular (Reg/VIP/VVIP)</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading && branches.length === 0 ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+        {activeTab === 'performance' ? (
+          <BranchPerformance 
+            branchId={selectedBranchFilter?.id} 
+            timeRange={timeRange} 
+          />
+        ) : (
+          <>
+            <div className="flex flex-col sm:flex-row justify-between gap-4 mt-6">
+              <div className="relative w-full sm:max-w-sm">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="Search branches..."
+                  className="pl-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Button onClick={() => {
+                setBranchForm({
+                  name: "",
+                  campus: "University of Rwanda",
+                  student_regular_price: 0,
+                  student_vip_price: 0,
+                  student_vvip_price: 0,
+                  worker_regular_price: 2000,
+                  worker_vip_price: 2000,
+                  worker_vvip_price: 2000,
+                  irregular_regular_price: 1000,
+                  irregular_vip_price: 1500,
+                  irregular_vvip_price: 2000,
+                })
+                setIsAddOpen(true)
+              }}>
+                <Plus className="mr-2 h-4 w-4" /> Add Branch
+              </Button>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Student (Reg/VIP/VVIP)</TableHead>
+                    <TableHead>Worker (Reg/VIP/VVIP)</TableHead>
+                    <TableHead>Irregular (Reg/VIP/VVIP)</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))
-              ) : filteredBranches.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    No branches found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredBranches.map((branch) => (
-                  <TableRow key={branch.id}>
-                    <TableCell className="font-medium">{branch.name}</TableCell>
-                    <TableCell>
-                      {branch.student_regular_price?.toLocaleString()} / {branch.student_vip_price?.toLocaleString()} / {branch.student_vvip_price?.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      {branch.worker_regular_price?.toLocaleString()} / {branch.worker_vip_price?.toLocaleString()} / {branch.worker_vvip_price?.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      {branch.irregular_regular_price?.toLocaleString()} / {branch.irregular_vip_price?.toLocaleString()} / {branch.irregular_vvip_price?.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(branch)}>
-                          <Edit className="h-4 w-4 text-blue-600" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDelete(branch)}>
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                </TableHeader>
+                <TableBody>
+                  {loading && branches.length === 0 ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : filteredBranches.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                        No branches found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredBranches.map((branch) => (
+                      <TableRow key={branch.id}>
+                        <TableCell className="font-medium">{branch.name}</TableCell>
+                        <TableCell>
+                          {branch.student_regular_price?.toLocaleString()} / {branch.student_vip_price?.toLocaleString()} / {branch.student_vvip_price?.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          {branch.worker_regular_price?.toLocaleString()} / {branch.worker_vip_price?.toLocaleString()} / {branch.worker_vvip_price?.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          {branch.irregular_regular_price?.toLocaleString()} / {branch.irregular_vip_price?.toLocaleString()} / {branch.irregular_vvip_price?.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => openEdit(branch)}>
+                              <Edit className="h-4 w-4 text-blue-600" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(branch)}>
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        )}
       </div>
 
       <AddBranchSheet
