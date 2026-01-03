@@ -28,7 +28,9 @@ const StatsCard = ({ title, value, currentDay, lastDayCount }: StatsCard) => {
             <p className="text-sm font-medium text-gray-100 truncate">vs yesterday</p>
           </div>
         </div>
-        <img src={`/assets/icons/${isDecrement ?"decrement.svg":"increment.svg"}`} alt="trend graph" className="xl:w-32 w-full h-full md:h-32 xl:h-full" />
+        <div className="w-full">
+          <img src={`/assets/icons/${isDecrement ?"decrement.svg":"increment.svg"}`} alt="trend graph" className="xl:w-32 w-full h-full md:h-32 xl:h-full" />
+        </div>
       </div>
     </article>
   )
