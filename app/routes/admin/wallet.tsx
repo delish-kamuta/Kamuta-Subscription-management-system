@@ -6,6 +6,9 @@ import { useSearchParams } from "react-router-dom"
 import { useAppSelector } from "~/store/hooks"
 import { getWorkerWallet, addWorkerWalletPayment, getWorkerWalletTransactions } from "~/services/wallet"
 import { UserRole } from "~/types/auth"
+import { Download } from "lucide-react"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 import {
   Table,
   TableBody,
@@ -60,6 +63,80 @@ export default function WalletPage() {
     return () => { mounted = false }
   }, [user?.id, user?.role, selectedUserId])
 
+  const handleExport = () => {
+    if (!data?.transactions || data.transactions.length === 0) {
+      alert("No transactions to export");
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.text("Wallet Transactions", 14, 22);
+    
+    // Add user info if available
+    doc.setFontSize(11);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 14, 36);
+
+    const tableColumn = ["Date", "Type", "Category", "Amount", "Reference", "Payment Method", "Description"];
+    const tableRows: any[] = [];
+
+    data.transactions.forEach((t: any) => {
+      const dateStr = t.date || t.created_at;
+      const formattedDate = dateStr ? new Date(dateStr).toLocaleString() : '-';
+      
+      const combinedStr = (
+        (t.type || '') + ' ' + 
+        (t.payment_method || '') + ' ' + 
+        (t.method || '') + ' ' + 
+        (t.category || '') + ' ' +
+        (t.description || '') + ' ' +
+        (t.note || '')
+      ).toLowerCase();
+
+      const isTopUp = combinedStr.includes('payment') ||
+                      combinedStr.includes('credit') ||
+                      combinedStr.includes('deposit') ||
+                      combinedStr.includes('top') ||
+                      combinedStr.includes('cash') ||
+                      combinedStr.includes('momo') ||
+                      combinedStr.includes('card') ||
+                      combinedStr.includes('mobile') ||
+                      combinedStr.includes('transfer') ||
+                      combinedStr.includes('fund') ||
+                      combinedStr.includes('admin');
+
+      const category = isTopUp ? "Top Up" : "Charge";
+      const amount = t.amount ?? t.value ?? 0;
+      const reference = t.reference || t.id || '';
+      const paymentMethod = t.payment_method || t.method || '';
+      const description = t.description || t.note || '';
+
+      const rowData = [
+        formattedDate,
+        t.type || 'VVIP',
+        category,
+        amount,
+        reference,
+        paymentMethod,
+        description
+      ];
+      tableRows.push(rowData);
+    });
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 45,
+      theme: 'grid',
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [66, 133, 244] }
+    });
+
+    doc.save(`wallet_transactions_${selectedUserId || 'user'}_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <main className="dashboard wrapper">
       <Header
@@ -70,7 +147,7 @@ export default function WalletPage() {
 
       <section className="bg-white p-6 rounded-lg shadow mt-6">
         {(user?.role === UserRole.ADMIN || (UserRole as any)?.CASHIER === user?.role) && (
-          <div className="mb-6">
+          <div className="mb-6 flex gap-2">
             <Sheet open={open} onOpenChange={setOpen}>
               <SheetTrigger asChild>
                 <button className="px-3 py-2 rounded bg-blue-600 text-white">Add Wallet Payment</button>
@@ -131,6 +208,10 @@ export default function WalletPage() {
                 </SheetFooter>
               </SheetContent>
             </Sheet>
+            <button onClick={handleExport} className="px-3 py-2 rounded bg-green-600 text-white flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export Transactions
+            </button>
           </div>
         )}
         {loading ? (
