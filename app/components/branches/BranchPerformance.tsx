@@ -269,14 +269,14 @@ export function BranchPerformance({ branchId, timeRange }: BranchPerformanceProp
                  {/* Icon placeholder */}
                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4 8 4v14"/><path d="M17 21v-8.5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0-.5.5V21"/></svg>
                </div>
-               <span className="font-medium">CAVM served the most customer this week</span>
+               <span className="font-medium"><b>CAVM</b> served the most customer this week</span>
              </div>
              <div className="flex items-center gap-3">
                <div className="p-2 bg-yellow-100 rounded-full text-yellow-600">
                  {/* Icon placeholder */}
                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                </div>
-               <span className="font-medium">Subscription contributed 68% of total revenue</span>
+               <span className="font-medium">Subscription contributed <b>68%</b> of total revenue</span>
              </div>
              <div className="flex items-center gap-3">
                <div className="p-2 bg-gray-100 rounded-full text-gray-600">
