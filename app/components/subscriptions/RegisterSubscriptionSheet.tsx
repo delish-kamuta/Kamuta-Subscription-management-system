@@ -54,44 +54,52 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
 
   // Auto-calculate amount based on branch prices
   useEffect(() => {
-    if (formData.branch_id && formData.days && formData.meal_type) {
-      const selectedBranch = branches.find((b) => b.id === formData.branch_id)
-      if (selectedBranch) {
-        const days = Number(formData.days) || 0
-        const number_of_meal = days*2;
-        let pricePerMeal = 0
-        
-        if (formData.meal_type === 'Regular') {
-          if (formData.role === 'worker') {
-            pricePerMeal = selectedBranch.worker_regular_price || 0
-          } else if (formData.role === 'irregular') {
-            pricePerMeal = selectedBranch.irregular_regular_price || 0
-          } else {
-            pricePerMeal = selectedBranch.student_regular_price || 0
-          }
-        } else if (formData.meal_type === 'VIP') {
-          if (formData.role === 'worker') {
-            pricePerMeal = selectedBranch.worker_vip_price || 0
-          } else if (formData.role === 'irregular') {
-            pricePerMeal = selectedBranch.irregular_vip_price || 0
-          } else {
-            pricePerMeal = selectedBranch.student_vip_price || 0
-          }
-        } else if (formData.meal_type === 'VVIP') {
-          if (formData.role === 'worker') {
-            pricePerMeal = selectedBranch.worker_vvip_price || 0
-          } else if (formData.role === 'irregular') {
-            pricePerMeal = selectedBranch.irregular_vvip_price || 0
-          } else {
-            pricePerMeal = selectedBranch.student_vvip_price || 0
-          }
-        }
-        
-        const totalAmount = number_of_meal * pricePerMeal
-        setFormData((fd) => ({ ...fd, amount_paid: String(totalAmount) }))
+    const selectedBranch = branches.find((b) => b.id === formData.branch_id)
+    
+    if (selectedBranch && formData.meal_type) {
+      const days = Number(formData.days)
+      
+      if (!days) {
+        setFormData(fd => fd.amount_paid === '' ? fd : { ...fd, amount_paid: '' })
+        return
       }
+
+      const number_of_meal = days * 2;
+      let pricePerMeal = 0
+      
+      if (formData.meal_type === 'Regular') {
+        if (formData.role === 'worker') {
+          pricePerMeal = selectedBranch.worker_regular_price || 0
+        } else if (formData.role === 'irregular') {
+          pricePerMeal = selectedBranch.irregular_regular_price || 0
+        } else {
+          pricePerMeal = selectedBranch.student_regular_price || 0
+        }
+      } else if (formData.meal_type === 'VIP') {
+        if (formData.role === 'worker') {
+          pricePerMeal = selectedBranch.worker_vip_price || 0
+        } else if (formData.role === 'irregular') {
+          pricePerMeal = selectedBranch.irregular_vip_price || 0
+        } else {
+          pricePerMeal = selectedBranch.student_vip_price || 0
+        }
+      } else if (formData.meal_type === 'VVIP') {
+        if (formData.role === 'worker') {
+          pricePerMeal = selectedBranch.worker_vvip_price || 0
+        } else if (formData.role === 'irregular') {
+          pricePerMeal = selectedBranch.irregular_vvip_price || 0
+        } else {
+          pricePerMeal = selectedBranch.student_vvip_price || 0
+        }
+      }
+      
+      const totalAmount = number_of_meal * pricePerMeal
+      setFormData((fd) => {
+        const newAmount = String(totalAmount)
+        return fd.amount_paid === newAmount ? fd : { ...fd, amount_paid: newAmount }
+      })
     }
-  }, [formData.branch_id, formData.days, formData.meal_type, branches])
+  }, [formData.branch_id, formData.days, formData.meal_type, branches, formData.role])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
