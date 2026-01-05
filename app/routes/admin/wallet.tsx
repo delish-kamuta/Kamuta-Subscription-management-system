@@ -10,7 +10,7 @@ import { AddWalletPaymentSheet } from "~/components/wallet/AddWalletPaymentSheet
 import { WalletStats } from "~/components/wallet/WalletStats"
 import { WalletTransactionsTable } from "~/components/wallet/WalletTransactionsTable"
 import { fetchUsersThunk } from "~/store/usersSlice"
-import { useEffect } from "react"
+import { useEffect, useState, useMemo } from "react"
 
 export default function WalletPage() {
   const { user } = useAppSelector((s) => s.auth)
@@ -21,6 +21,22 @@ export default function WalletPage() {
   
   const { data, loading, error, refreshWallet } = useWorkerWallet(user, selectedUserId)
 
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
+
+  const filteredTransactions = useMemo(() => {
+    if (!data?.transactions) return [];
+    return data.transactions.filter((t: any) => {
+      if (!startDate && !endDate) return true
+      const dateStr = t.date || t.created_at
+      if (!dateStr) return false
+      const tDate = new Date(dateStr).getTime()
+      const start = startDate ? new Date(startDate).getTime() : 0
+      const end = endDate ? new Date(endDate).setHours(23, 59, 59, 999) : Infinity
+      return tDate >= start && tDate <= end
+    })
+  }, [data?.transactions, startDate, endDate]);
+
   useEffect(() => {
     if (!usersLoaded && (user?.role === UserRole.ADMIN || (UserRole as any)?.CASHIER === user?.role)) {
       dispatch(fetchUsersThunk())
@@ -28,13 +44,13 @@ export default function WalletPage() {
   }, [usersLoaded, dispatch, user?.role])
 
   const handleExport = () => {
-    if (data?.transactions) {
+    if (filteredTransactions.length > 0) {
       const targetId = selectedUserId || user?.id;
       const targetUser = users.find((u: any) => String(u.id) === String(targetId));
       const userName = targetUser?.full_name || targetUser?.name || user?.name || 'Unknown User';
       const userPhone = targetUser?.phone || targetUser?.tel || '';
       
-      exportWalletTransactionsToPDF(data.transactions, targetId, userName, userPhone)
+      exportWalletTransactionsToPDF(filteredTransactions, targetId, userName, userPhone)
     }
   }
 
@@ -66,7 +82,13 @@ export default function WalletPage() {
         ) : data ? (
           <>
             <WalletStats data={data} />
-            <WalletTransactionsTable transactions={data.transactions} />
+            <WalletTransactionsTable 
+              transactions={filteredTransactions} 
+              startDate={startDate}
+              endDate={endDate}
+              onStartDateChange={setStartDate}
+              onEndDateChange={setEndDate}
+            />
           </>
         ) : (
           <p className="text-sm text-gray-500">No wallet data</p>
