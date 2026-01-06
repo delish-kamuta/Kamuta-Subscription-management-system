@@ -42,7 +42,16 @@ export function BranchPerformance({ branchId, timeRange }: BranchPerformanceProp
 
   const { branchPerformance, totalServed, totalRevenue, pieData } = processedData;
 
-  const COLORS = ['#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE']
+  const COLORS = [
+    '#3B82F6', // Blue
+    '#10B981', // Emerald
+    '#F59E0B', // Amber
+    '#EF4444', // Red
+    '#8B5CF6', // Violet
+    '#EC4899', // Pink
+    '#6366F1', // Indigo
+    '#14B8A6'  // Teal
+  ];
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
