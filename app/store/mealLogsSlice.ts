@@ -21,26 +21,43 @@ export const fetchMealLogsThunk = createAsyncThunk(
   "mealLogs/fetch",
   async (query: MealLogsQuery, { rejectWithValue }) => {
     try {
-      const res = await listMealLogs(query);
+      // 1. Fetch first page with large limit request
+      const initialQuery = { ...query, page: 1, per_page: 100 };
+      const res = await listMealLogs(initialQuery);
+      
       if (!res.success) {
         return rejectWithValue(res.message || "Failed to fetch meal logs");
       }
-      // Handle nested data structure if present (e.g. { data: { data: [...] } })
-      const rawData = res.data;
-      let list: MealLogItem[] = [];
-      if (Array.isArray(rawData)) {
-        list = rawData;
-      } else if (rawData && typeof rawData === 'object') {
-        // Check for common nested patterns
-        if (Array.isArray((rawData as any).data)) {
-          list = (rawData as any).data;
-        } else if (Array.isArray((rawData as any).logs)) {
-          list = (rawData as any).logs;
-        } else if (Array.isArray((rawData as any).results)) {
-          list = (rawData as any).results;
-        }
+
+      let allItems: MealLogItem[] = [];
+      const firstPageData = res.data || [];
+      
+      // Normalize data
+      if (Array.isArray(firstPageData)) {
+        allItems = firstPageData;
+      } else if (typeof firstPageData === 'object' && (firstPageData as any).data) {
+         // handle nested data key case if API returns { data: { data: [] } }
+         allItems = (firstPageData as any).data || [];
       }
-      return list;
+
+      // 2. Check pagination and fetch remaining if needed
+      const pagination = res.pagination || (res.data as any)?.pagination;
+      if (pagination && pagination.total_pages > 1) {
+        const promises = [];
+        for (let p = 2; p <= pagination.total_pages; p++) {
+          promises.push(listMealLogs({ ...query, page: p, per_page: 100 }));
+        }
+        
+        const results = await Promise.all(promises);
+        results.forEach(r => {
+          if (r.success && r.data) {
+             const items = Array.isArray(r.data) ? r.data : (r.data as any).data || [];
+             allItems = [...allItems, ...items];
+          }
+        });
+      }
+
+      return allItems;
     } catch (e: any) {
       return rejectWithValue(e?.message || "Unable to fetch meal logs");
     }

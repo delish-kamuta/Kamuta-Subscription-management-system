@@ -71,12 +71,11 @@ const MealsLogs = () => {
     const userRole = user?.role || UserRole.CASHIER;
     const isCashier = userRole === UserRole.CASHIER;
 
-  // Build role-aware query from filters
+  // Build role-aware query for API (Broad fetch for local filtering)
   const query: MealLogsQuery = useMemo(() => {
     const base: MealLogsQuery = {
-      client_type: clientTypeFilter || undefined,
-      meal_type: mealTypeFilter || undefined,
-      deduction_source: sourceFilter || undefined,
+      // Don't include local filters (client_type, etc) here to allow client-side filtering on full dataset
+      per_page: 1000, 
     };
     if (userRole === UserRole.ADMIN) {
       if (branchFilter) base.branch_id = branchFilter;
@@ -88,21 +87,21 @@ const MealsLogs = () => {
       base.client_user_id = String(user?.id || "");
     }
     return base;
-  }, [clientTypeFilter, mealTypeFilter, sourceFilter, branchFilter, userRole, user]);
+  }, [branchFilter, userRole, user]); // Removed local filter dependencies
 
   useEffect(() => {
-    // Preload data on mount if not loaded
-    if (!mealLogsLoaded && !mealLogsLoading) {
-      dispatch(fetchMealLogsThunk(query));
-    }
+    // Fetch data on mount or when core query constraints change
+    // Removed !mealLogsLoaded check to ensure we get fresh data with new per_page limit
+    dispatch(fetchMealLogsThunk(query));
+    
     if (!usersLoaded) dispatch(fetchUsersThunk());
     if (!branchesLoaded) dispatch(fetchBranchesThunk());
-  }, [dispatch, mealLogsLoaded, mealLogsLoading, usersLoaded, branchesLoaded]);
+  }, [dispatch, query, usersLoaded, branchesLoaded]); // Added query to dependencies
 
   const filteredData = mealLogs.filter((item) => {
     // Apply local filters to cached data
     const matchesSearch = [item.id, item.client_user_id].some((v) => String(v || '').toLowerCase().includes(searchTerm.toLowerCase()));
-    const itemKey = toDateKey(item.created_at);
+    const itemKey = toDateKey(new Date(item.created_at).toISOString());
     const fromKey = toDateKey(startDate);
     const toKey = toDateKey(endDate);
     const withinRange = isWithinRange(itemKey, fromKey, toKey);
