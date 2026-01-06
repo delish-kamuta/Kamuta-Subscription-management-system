@@ -90,6 +90,47 @@ export interface OverviewData {
   time_range: TimeRange;
 }
 
+export interface DashboardAnalyticsData {
+  summary: {
+    people_served: {
+      total: number;
+      change_percent: number;
+      trend: string;
+    };
+    total_revenue: {
+      amount: number;
+      currency: string;
+      change_percent: number;
+      trend: string;
+    };
+    top_branch: {
+      name: string;
+      meals_served: number;
+    };
+  };
+  branch_analysis: {
+    people_served_by_branch: {
+      branch: string;
+      people_served: number;
+      percentage: number;
+    }[];
+    revenue_by_branch: {
+      branch: string;
+      subscription: number;
+      paid_ticket: number;
+      total: number;
+    }[];
+  };
+  insights: string[];
+}
+
+export const getDashboardAnalytics = async (params: OverviewParams = {}) => {
+  const query = new URLSearchParams();
+  if (params.time_range) query.append('time_range', params.time_range);
+  
+  return apiClient<{ success: boolean; data: DashboardAnalyticsData }>(`/dashboard/analytics?${query.toString()}`);
+};
+
 export interface DashboardOverviewSummary {
   total_subscriptions: number;
   students_zero_meals: number;
