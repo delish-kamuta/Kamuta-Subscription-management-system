@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { listStudentSubscriptions, updateStudentSubscription, cancelStudentSubscription } from '~/services/subscriptions';
+import { listStudentSubscriptions, updateStudentSubscription, updateStudent, cancelStudentSubscription } from '~/services/subscriptions';
 import type { SubscriptionItem } from '~/hooks/useSubscriptionFilters';
 
 interface SubscriptionsState {
@@ -33,6 +33,18 @@ export const updateSubscription = createAsyncThunk<any, { token: string | null, 
   async ({ token, id, payload }, { rejectWithValue }) => {
     try {
       const response = await updateStudentSubscription(token, id, payload);
+      return response.data || response;
+    } catch (e: any) {
+      return rejectWithValue(e.message || String(e));
+    }
+  }
+);
+
+export const updateStudentDetails = createAsyncThunk<any, { token: string | null, id: string, payload: any }>(
+  'subscriptions/updateStudent',
+  async ({ token, id, payload }, { rejectWithValue }) => {
+    try {
+      const response = await updateStudent(token, id, payload);
       return response.data || response;
     } catch (e: any) {
       return rejectWithValue(e.message || String(e));

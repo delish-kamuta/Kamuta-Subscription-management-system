@@ -38,6 +38,7 @@ export interface ApiSubscription {
 export function mapApiToSubscriptionItem(item: ApiSubscription): SubscriptionItem {
   const clientName = item.student?.user?.full_name || "";
   const regNumber = item.student?.reg_number || item.id || "";
+  const studentId = item.student?.id || "";
   const userId = item.student?.user_id || item.student?.user?.id || "";
   const phone = item.student?.user?.phone || "";
   const paymentMethod = (item.payment_history && item.payment_history.length > 0)
@@ -46,6 +47,7 @@ export function mapApiToSubscriptionItem(item: ApiSubscription): SubscriptionIte
   const branchName = item.student?.user?.branch_id ? String(item.student.user.branch_id) : "";
   return {
     id: regNumber,
+    studentId,
     subscriptionId: item.id,
     userId: userId || undefined,
     tel: phone,
@@ -83,6 +85,14 @@ export async function updateStudentSubscription(token: string | null, id: string
     body: JSON.stringify(payload),
   });
   console.log('Update response:', response);
+  return response;
+}
+
+export async function updateStudent(token: string | null, id: string, payload: any): Promise<any> {
+  const response = await apiClient(`/students/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
   return response;
 }
 
