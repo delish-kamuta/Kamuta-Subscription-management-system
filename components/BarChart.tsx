@@ -15,53 +15,51 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "~/components/ui/chart"
+import type { MonthlyData } from "~/services/overview"
 
 export const description = "A stacked bar chart"
 
-const chartData = [
-  { month: "January", Subscription: 186, mobile: 80 },
-  { month: "February", Subscription: 305, mobile: 200 },
-  { month: "March", Subscription: 237, mobile: 120 },
-  { month: "April", Subscription: 73, mobile: 190 },
-  { month: "May", Subscription: 209, mobile: 130 },
-  { month: "June", Subscription: 214, mobile: 140 },
-]
-
 const chartConfig = {
-  Subscription: {
-    label: "Subscription",
+  total_meals: {
+    label: "Used Meals",
     color: "#256FF1",
   },
-  mobile: {
-    label: "Mobile",
+  remaining_meals: {
+    label: "Remaining Meals",
     color: "#60a5fa",
   },
 } satisfies ChartConfig
 
-export function ChartBarMultiple() {
+export function ChartBarMultiple({ data }: { data: MonthlyData[] }) {
+  // Format info if data is empty to prevent errors or show empty state
+  const displayData = data && data.length > 0 ? data : []; 
+
   return (
     <Card className="md:h-[60vh] lg:h-[50vh] gap-7 border-none bg-white shadow-400">
       <CardHeader>
         <CardTitle>Subscriptions</CardTitle>
-        <CardDescription>January - June 2025</CardDescription>
+        <CardDescription>Monthly Meal Usage</CardDescription>
       </CardHeader>
       <CardContent className="md:h-[29vh] ">
         <ChartContainer config={chartConfig} className="h-full w-full">
-          <BarChart accessibilityLayer data={chartData}>
+          <BarChart accessibilityLayer data={displayData}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="month"
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickFormatter={(value) => {
+                 const date = new Date(value);
+                 return isNaN(date.getTime()) ? value : date.toLocaleString('default', { month: 'short' });
+              }}
             />
             <ChartTooltip
               content={<ChartTooltipContent hideLabel />}
               cursor={false}
             />
-            <Bar dataKey="Subscription" stackId="a" fill="var(--color-Subscription)" radius={[0, 0, 4, 4]} />
-            <Bar dataKey="mobile" stackId="a" fill="var(--color-mobile)" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="total_meals" stackId="a" fill="var(--color-total_meals)" radius={[0, 0, 4, 4]} />
+            <Bar dataKey="remaining_meals" stackId="a" fill="var(--color-remaining_meals)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ChartContainer>
       </CardContent>

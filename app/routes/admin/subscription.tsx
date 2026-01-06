@@ -153,11 +153,16 @@ const Subscription = () => {
           <div className="px-4 md:px-6 py-4 text-sm text-red-600">{activeTab === 'students' ? studentError : workerError}</div>
         )}
         {!(activeTab === 'students' ? studentLoading : workerLoading) && !(activeTab === 'students' ? studentError : workerError) && (
-          activeTab === 'students' ? (
-            <SubscriptionTable items={paginatedData} isCashier={isCashier} />
-          ) : (
-            <WorkerSubscriptionTable items={paginatedData} />
-          )
+          <>
+            <div className="px-4 md:px-6 py-2 text-sm text-gray-500  bg-gray-50/50 flex w-full justify-end gap-2">
+               Found <span className="font-medium text-green-600">{filteredData.length}</span> subscriptions
+            </div>
+            {activeTab === 'students' ? (
+              <SubscriptionTable items={paginatedData} isCashier={isCashier} />
+            ) : (
+              <WorkerSubscriptionTable items={paginatedData} />
+            )}
+          </>
         )}
 
         {/* Pagination */}

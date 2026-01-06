@@ -48,9 +48,12 @@ export default function BranchesPage() {
     worker_regular_price: 2000,
     worker_vip_price: 2000,
     worker_vvip_price: 2000,
-    irregular_regular_price: 1000,
-    irregular_vip_price: 1500,
-    irregular_vvip_price: 2000,
+    irregular_student_regular_price: 800,
+    irregular_student_vip_price: 1200,
+    irregular_student_vvip_price: 1600,
+    irregular_worker_regular_price: 1000,
+    irregular_worker_vip_price: 1500,
+    irregular_worker_vvip_price: 2000,
   })
 
   useEffect(() => {
@@ -79,9 +82,12 @@ export default function BranchesPage() {
         worker_regular_price: Number(branchForm.worker_regular_price),
         worker_vip_price: Number(branchForm.worker_vip_price),
         worker_vvip_price: Number(branchForm.worker_vvip_price),
-        irregular_regular_price: Number(branchForm.irregular_regular_price),
-        irregular_vip_price: Number(branchForm.irregular_vip_price),
-        irregular_vvip_price: Number(branchForm.irregular_vvip_price),
+        irregular_student_regular_price: Number(branchForm.irregular_student_regular_price),
+        irregular_student_vip_price: Number(branchForm.irregular_student_vip_price),
+        irregular_student_vvip_price: Number(branchForm.irregular_student_vvip_price),
+        irregular_worker_regular_price: Number(branchForm.irregular_worker_regular_price),
+        irregular_worker_vip_price: Number(branchForm.irregular_worker_vip_price),
+        irregular_worker_vvip_price: Number(branchForm.irregular_worker_vvip_price),
       }
       const res = await createBranch(payload)
       const newBranch = res.data || res
@@ -95,9 +101,12 @@ export default function BranchesPage() {
         worker_regular_price: Number(newBranch.worker_regular_price),
         worker_vip_price: Number(newBranch.worker_vip_price),
         worker_vvip_price: Number(newBranch.worker_vvip_price),
-        irregular_regular_price: Number(newBranch.irregular_regular_price),
-        irregular_vip_price: Number(newBranch.irregular_vip_price),
-        irregular_vvip_price: Number(newBranch.irregular_vvip_price),
+        irregular_student_regular_price: Number(newBranch.irregular_student_regular_price),
+        irregular_student_vip_price: Number(newBranch.irregular_student_vip_price),
+        irregular_student_vvip_price: Number(newBranch.irregular_student_vvip_price),
+        irregular_worker_regular_price: Number(newBranch.irregular_worker_regular_price),
+        irregular_worker_vip_price: Number(newBranch.irregular_worker_vip_price),
+        irregular_worker_vvip_price: Number(newBranch.irregular_worker_vvip_price),
       }))
       setSuccessMessage("Branch created successfully")
       setTimeout(() => {
@@ -112,9 +121,12 @@ export default function BranchesPage() {
           worker_regular_price: 2000,
           worker_vip_price: 2000,
           worker_vvip_price: 2000,
-          irregular_regular_price: 1000,
-          irregular_vip_price: 1500,
-          irregular_vvip_price: 2000,
+          irregular_student_regular_price: 800,
+          irregular_student_vip_price: 1200,
+          irregular_student_vvip_price: 1600,
+          irregular_worker_regular_price: 1000,
+          irregular_worker_vip_price: 1500,
+          irregular_worker_vvip_price: 2000,
         })
       }, 1500)
     } catch (e) {
@@ -140,9 +152,12 @@ export default function BranchesPage() {
         worker_regular_price: Number(branchForm.worker_regular_price),
         worker_vip_price: Number(branchForm.worker_vip_price),
         worker_vvip_price: Number(branchForm.worker_vvip_price),
-        irregular_regular_price: Number(branchForm.irregular_regular_price),
-        irregular_vip_price: Number(branchForm.irregular_vip_price),
-        irregular_vvip_price: Number(branchForm.irregular_vvip_price),
+        irregular_student_regular_price: Number(branchForm.irregular_student_regular_price),
+        irregular_student_vip_price: Number(branchForm.irregular_student_vip_price),
+        irregular_student_vvip_price: Number(branchForm.irregular_student_vvip_price),
+        irregular_worker_regular_price: Number(branchForm.irregular_worker_regular_price),
+        irregular_worker_vip_price: Number(branchForm.irregular_worker_vip_price),
+        irregular_worker_vvip_price: Number(branchForm.irregular_worker_vvip_price),
       }
       const res = await updateBranch(selectedBranch.id, payload)
       const updated = res.data || res
@@ -156,9 +171,12 @@ export default function BranchesPage() {
         worker_regular_price: Number(updated.worker_regular_price ?? branchForm.worker_regular_price),
         worker_vip_price: Number(updated.worker_vip_price ?? branchForm.worker_vip_price),
         worker_vvip_price: Number(updated.worker_vvip_price ?? branchForm.worker_vvip_price),
-        irregular_regular_price: Number(updated.irregular_regular_price ?? branchForm.irregular_regular_price),
-        irregular_vip_price: Number(updated.irregular_vip_price ?? branchForm.irregular_vip_price),
-        irregular_vvip_price: Number(updated.irregular_vvip_price ?? branchForm.irregular_vvip_price),
+        irregular_student_regular_price: Number(updated.irregular_student_regular_price ?? branchForm.irregular_student_regular_price),
+        irregular_student_vip_price: Number(updated.irregular_student_vip_price ?? branchForm.irregular_student_vip_price),
+        irregular_student_vvip_price: Number(updated.irregular_student_vvip_price ?? branchForm.irregular_student_vvip_price),
+        irregular_worker_regular_price: Number(updated.irregular_worker_regular_price ?? branchForm.irregular_worker_regular_price),
+        irregular_worker_vip_price: Number(updated.irregular_worker_vip_price ?? branchForm.irregular_worker_vip_price),
+        irregular_worker_vvip_price: Number(updated.irregular_worker_vvip_price ?? branchForm.irregular_worker_vvip_price),
       }))
       setSuccessMessage("Branch updated successfully")
       setTimeout(() => {
@@ -194,9 +212,12 @@ export default function BranchesPage() {
       worker_regular_price: branch.worker_regular_price || 0,
       worker_vip_price: branch.worker_vip_price || 0,
       worker_vvip_price: branch.worker_vvip_price || 0,
-      irregular_regular_price: branch.irregular_regular_price || 0,
-      irregular_vip_price: branch.irregular_vip_price || 0,
-      irregular_vvip_price: branch.irregular_vvip_price || 0,
+      irregular_student_regular_price: branch.irregular_student_regular_price || 0,
+      irregular_student_vip_price: branch.irregular_student_vip_price || 0,
+      irregular_student_vvip_price: branch.irregular_student_vvip_price || 0,
+      irregular_worker_regular_price: branch.irregular_worker_regular_price || 0,
+      irregular_worker_vip_price: branch.irregular_worker_vip_price || 0,
+      irregular_worker_vvip_price: branch.irregular_worker_vvip_price || 0,
     })
     setIsEditOpen(true)
   }
@@ -249,10 +270,10 @@ export default function BranchesPage() {
 
           {activeTab === 'performance' && (
             <div className="flex gap-2">
-              <DropdownMenu>
+              {/* <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="bg-white border-gray-200 h-9 gap-2 min-w-[120px] justify-between">
-                    {selectedBranchFilter?.name || "All Branch"} 
+                    {selectedBranchFilter?.name || "All Branch"}
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -266,7 +287,7 @@ export default function BranchesPage() {
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
-              </DropdownMenu>
+              </DropdownMenu> */}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -333,9 +354,12 @@ export default function BranchesPage() {
                   worker_regular_price: 2000,
                   worker_vip_price: 2000,
                   worker_vvip_price: 2000,
-                  irregular_regular_price: 1000,
-                  irregular_vip_price: 1500,
-                  irregular_vvip_price: 2000,
+                  irregular_student_regular_price: 800,
+                  irregular_student_vip_price: 1200,
+                  irregular_student_vvip_price: 1600,
+                  irregular_worker_regular_price: 1000,
+                  irregular_worker_vip_price: 1500,
+                  irregular_worker_vvip_price: 2000,
                 })
                 setIsAddOpen(true)
               }} className="bg-blue-600 text-white">
@@ -344,13 +368,17 @@ export default function BranchesPage() {
             </div>
 
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="px-4 py-2 text-sm text-gray-500   bg-gray-50/50 flex w-full justify-end gap-2">
+                  Found <span className="font-medium text-green-600">{filteredBranches.length}</span> branches
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Student (Reg/VIP/VVIP)</TableHead>
                     <TableHead>Worker (Reg/VIP/VVIP)</TableHead>
-                    <TableHead>Irregular (Reg/VIP/VVIP)</TableHead>
+                    <TableHead>Irr. Student (Reg/VIP/VVIP)</TableHead>
+                    <TableHead>Irr. Worker (Reg/VIP/VVIP)</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -359,6 +387,7 @@ export default function BranchesPage() {
                     Array.from({ length: 3 }).map((_, i) => (
                       <TableRow key={i}>
                         <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-20" /></TableCell>
@@ -382,7 +411,10 @@ export default function BranchesPage() {
                           {branch.worker_regular_price?.toLocaleString()} / {branch.worker_vip_price?.toLocaleString()} / {branch.worker_vvip_price?.toLocaleString()}
                         </TableCell>
                         <TableCell>
-                          {branch.irregular_regular_price?.toLocaleString()} / {branch.irregular_vip_price?.toLocaleString()} / {branch.irregular_vvip_price?.toLocaleString()}
+                          {branch.irregular_student_regular_price?.toLocaleString()} / {branch.irregular_student_vip_price?.toLocaleString()} / {branch.irregular_student_vvip_price?.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          {branch.irregular_worker_regular_price?.toLocaleString()} / {branch.irregular_worker_vip_price?.toLocaleString()} / {branch.irregular_worker_vvip_price?.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">

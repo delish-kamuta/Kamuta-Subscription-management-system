@@ -21,7 +21,7 @@ import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import React, { useState, useEffect } from "react";
 import { useAppSelector, useAppDispatch } from "~/store/hooks";
 import { generateQrOtpForUser } from "~/services/qr";
-import { cancelSubscription, updateSubscription } from "~/store/subscriptionsSlice";
+import { cancelSubscription, updateSubscription, updateStudentDetails, fetchSubscriptions } from "~/store/subscriptionsSlice";
 import { fetchBranchesThunk } from "~/store/branchesSlice";
 import { UserRole } from "~/types/auth";
 import { handleGenerateQr, printQrTicket } from "~/lib/qr-utils";
@@ -113,24 +113,29 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   };
 
   const handleEditSave = async () => {
-    if (!item.subscriptionId) {
-      alert("Cannot update: Missing subscription ID");
+    const studentId = item.studentId;
+    if (!studentId) {
+      console.warn("Missing studentId on item", item);
+      alert("Cannot update: Missing Student ID details");
       return;
     }
+    
     try {
-      await dispatch(updateSubscription({
+      await dispatch(updateStudentDetails({
         token,
-        id: item.subscriptionId,
+        id: studentId,
         payload: {
-          student_reg_number: editForm.id,
-          meal_type: editForm.subscriptionType,
-          total_meals: Number(editForm.totalMeals),
-          amount_paid: Number(editForm.amountPaid),
-          payment_method: editForm.payment
+          full_name: editForm.clientName,
+          phone: editForm.tel,
+          reg_number: editForm.id,
+          status: editForm.status || 'active',
+          branch_id: editForm.branch
         }
       })).unwrap();
-      alert(`Subscription for ${editForm.clientName} has been updated`);
+      alert(`Student details for ${editForm.clientName} have been updated`);
       setEditOpen(false);
+      // Refresh list to show changes
+      dispatch(fetchSubscriptions({ token }));
     } catch (e) {
       alert(`Failed to update: ${e}`);
     }
@@ -268,22 +273,36 @@ const handleTopUpSave = async () => {
           </SheetHeader>
           <div className="mt-6 space-y-4">
             <div>
-              <label className="text-sm font-medium">Client Name</label>
+              <label className="text-sm font-medium">Full Name</label>
               <Input
                 value={editForm.clientName}
                 onChange={(e) => setEditForm({ ...editForm, clientName: e.target.value })}
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Subscription Type</label>
+              <label className="text-sm font-medium">Registration Number</label>
+              <Input
+                value={editForm.id}
+                onChange={(e) => setEditForm({ ...editForm, id: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Phone Number</label>
+              <Input
+                value={editForm.tel || ''}
+                onChange={(e) => setEditForm({ ...editForm, tel: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Status</label>
               <select
-                value={editForm.subscriptionType}
-                onChange={(e) => setEditForm({ ...editForm, subscriptionType: e.target.value })}
+                value={editForm.status || 'active'}
+                onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
               >
-                <option value="Regular">Regular</option>
-                <option value="VIP">VIP</option>
-                <option value="VVIP">VVIP</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="suspended">Suspended</option>
               </select>
             </div>
             <div>
@@ -300,44 +319,6 @@ const handleTopUpSave = async () => {
                 ) : (
                   <option value="">Select branch</option>
                 )}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Total Meals</label>
-                <Input
-                  type="number"
-                  value={editForm.totalMeals}
-                  onChange={(e) => setEditForm({ ...editForm, totalMeals: parseInt(e.target.value) })}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Meals Left</label>
-                <Input
-                  type="number"
-                  value={editForm.mealsLeft}
-                  onChange={(e) => setEditForm({ ...editForm, mealsLeft: parseInt(e.target.value) })}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Amount Paid</label>
-              <Input
-                type="number"
-                value={editForm.amountPaid || ''}
-                onChange={(e) => setEditForm({ ...editForm, amountPaid: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Payment Method</label>
-              <select
-                value={editForm.payment}
-                onChange={(e) => setEditForm({ ...editForm, payment: e.target.value })}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="cash">Cash</option>
-                <option value="momo">Mobile Money</option>
-                <option value="bank_transfer">Bank Transfer</option>
               </select>
             </div>
             <div className="flex gap-2 pt-4">

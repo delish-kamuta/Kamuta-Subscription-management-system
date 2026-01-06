@@ -7,7 +7,7 @@ import { ChartBarMultiple} from "../../../components/BarChart";
 import { useEffect, useState, useMemo } from "react";
 import Client from "components/client";
 import { listMealLogs, type MealLogItem } from "~/services/mealLogs";
-import { getOverviewStats } from "~/services/overview";
+import { getOverviewStats, getDashboardOverview, type MonthlyData } from "~/services/overview";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { useAppDispatch, useAppSelector } from "~/store/hooks";
 import { UserRole } from "~/types/auth";
@@ -36,8 +36,12 @@ const Dashboard = () => {
     lastDayCount: string | number;
   }[]>(dashboardStats);
 
+  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
+  const [mealUsageSummary, setMealUsageSummary] = useState<{ zero: number; low: number; plenty: number }>({ zero: 0, low: 0, plenty: 0 });
+
   useEffect(() => {
     if (isAdmin) {
+      // 1. Fetch Overview Stats (Cards)
       getOverviewStats({ time_range: 'today' })
         .then((res) => {
           if (res.success && res.data) {
@@ -46,26 +50,25 @@ const Dashboard = () => {
               if (stat.id === 'totalIncome') {
                 return { 
                   ...stat, 
-                  value: apiData.summary.total_revenue.current,
-                  currentDay: apiData.summary.total_revenue.current,
-                  lastDayCount: apiData.summary.total_revenue.previous
+                  value: apiData.summary?.total_revenue?.current || 0,
+                  currentDay: apiData.summary?.total_revenue?.current || 0,
+                  lastDayCount: apiData.summary?.total_revenue?.previous || 0
                 };
               }
               if (stat.id === 'totalCredit') {
                 return { 
                   ...stat, 
-                  value: apiData.summary.total_credit_used,
-                  // API doesn't provide previous for credit, so we assume no change for trend
-                  currentDay: apiData.summary.total_credit_used,
-                  lastDayCount: apiData.summary.total_credit_used
+                  value: apiData.summary?.total_credit_used || 0,
+                  currentDay: apiData.summary?.total_credit_used || 0,
+                  lastDayCount: apiData.summary?.total_credit_used || 0
                 };
               }
               if (stat.id === 'mealsServedToday') {
                 return { 
                   ...stat, 
-                  value: apiData.summary.total_meals.current,
-                  currentDay: apiData.summary.total_meals.current,
-                  lastDayCount: apiData.summary.total_meals.previous
+                  value: apiData.summary?.total_meals?.current || 0,
+                  currentDay: apiData.summary?.total_meals?.current || 0,
+                  lastDayCount: apiData.summary?.total_meals?.previous || 0
                 };
               }
               return stat;
@@ -74,6 +77,25 @@ const Dashboard = () => {
           }
         })
         .catch(err => console.error("Failed to fetch overview stats", err));
+
+      // 2. Fetch Dashboard Overview (Charts)
+      getDashboardOverview()
+        .then((res) => {
+           if (res.success && res.data) {
+             const chartData = res.data;
+             if (chartData.monthly_data) {
+               setMonthlyData(chartData.monthly_data);
+             }
+             if (chartData.summary) {
+               setMealUsageSummary({
+                 zero: chartData.summary.students_zero_meals || 0,
+                 low: chartData.summary.students_low_meals || 0,
+                 plenty: chartData.summary.students_plenty_meals || 0
+               });
+             }
+           }
+        })
+        .catch(err => console.error("Failed to fetch dashboard overview", err));
     }
   }, [isAdmin]);
 
@@ -161,8 +183,8 @@ const Dashboard = () => {
         </section>
       ) : (
         <section className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          <ChartBarMultiple />
-          <ChartPieSimple />
+          <ChartBarMultiple data={monthlyData} />
+          <ChartPieSimple data={mealUsageSummary} />
         </section>
       )}
     </main>

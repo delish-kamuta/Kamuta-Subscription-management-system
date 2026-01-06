@@ -50,9 +50,12 @@ export interface BranchInfo {
   worker_regular_price: number;
   worker_vip_price: number;
   worker_vvip_price: number;
-  irregular_regular_price: number;
-  irregular_vip_price: number;
-  irregular_vvip_price: number;
+  irregular_student_regular_price: number;
+  irregular_student_vip_price: number;
+  irregular_student_vvip_price: number;
+  irregular_worker_regular_price: number;
+  irregular_worker_vip_price: number;
+  irregular_worker_vvip_price: number;
   created_at: string;
   logs: any[];
 }
@@ -61,6 +64,13 @@ export interface TimeRange {
   start: string;
   end: string;
   period: string;
+}
+
+export interface MonthlyData {
+  month: string;
+  total_subscriptions: number;
+  total_meals: number;
+  remaining_meals: number;
 }
 
 export interface OverviewSummary {
@@ -80,6 +90,63 @@ export interface OverviewData {
   time_range: TimeRange;
 }
 
+export interface DashboardAnalyticsData {
+  summary: {
+    people_served: {
+      total: number;
+      change_percent: number;
+      trend: string;
+    };
+    total_revenue: {
+      amount: number;
+      currency: string;
+      change_percent: number;
+      trend: string;
+    };
+    top_branch: {
+      name: string;
+      meals_served: number;
+    };
+  };
+  branch_analysis: {
+    people_served_by_branch: {
+      branch: string;
+      people_served: number;
+      percentage: number;
+    }[];
+    revenue_by_branch: {
+      branch: string;
+      subscription: number;
+      paid_ticket: number;
+      total: number;
+    }[];
+  };
+  insights: string[];
+}
+
+export const getDashboardAnalytics = async (params: OverviewParams = {}) => {
+  const query = new URLSearchParams();
+  if (params.time_range) query.append('time_range', params.time_range);
+  
+  return apiClient<{ success: boolean; data: DashboardAnalyticsData }>(`/dashboard/analytics?${query.toString()}`);
+};
+
+export interface DashboardOverviewSummary {
+  total_subscriptions: number;
+  students_zero_meals: number;
+  students_low_meals: number;
+  students_plenty_meals: number;
+}
+
+export interface DashboardOverviewData {
+  success: boolean;
+  message: string;
+  data: {
+    monthly_data: MonthlyData[];
+    summary: DashboardOverviewSummary;
+  }
+}
+
 export interface OverviewParams {
   time_range?: 'today' | 'week' | 'month' | 'year';
   branch_id?: string;
@@ -91,6 +158,10 @@ export const getOverviewStats = async (params: OverviewParams = {}) => {
   if (params.branch_id) query.append('branch_id', params.branch_id);
 
   return apiClient<{ success: boolean; data: OverviewData }>(`/overview?${query.toString()}`);
+};
+
+export const getDashboardOverview = async () => {
+  return apiClient<DashboardOverviewData>(`/dashboard/overview`);
 };
 
 export interface SubscriptionSummary {

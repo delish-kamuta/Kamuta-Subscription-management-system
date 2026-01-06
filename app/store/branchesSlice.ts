@@ -11,9 +11,12 @@ export interface BranchItem {
   worker_regular_price?: number;
   worker_vip_price?: number;
   worker_vvip_price?: number;
-  irregular_regular_price?: number;
-  irregular_vip_price?: number;
-  irregular_vvip_price?: number;
+  irregular_student_regular_price?: number;
+  irregular_student_vip_price?: number;
+  irregular_student_vvip_price?: number;
+  irregular_worker_regular_price?: number;
+  irregular_worker_vip_price?: number;
+  irregular_worker_vvip_price?: number;
 }
 interface BranchesState {
   items: BranchItem[];
@@ -47,9 +50,12 @@ export const fetchBranchesThunk = createAsyncThunk(
         worker_regular_price: Number(b.worker_regular_price) || 0,
         worker_vip_price: Number(b.worker_vip_price) || 0,
         worker_vvip_price: Number(b.worker_vvip_price) || 0,
-        irregular_regular_price: Number(b.irregular_regular_price) || 0,
-        irregular_vip_price: Number(b.irregular_vip_price) || 0,
-        irregular_vvip_price: Number(b.irregular_vvip_price) || 0,
+        irregular_student_regular_price: Number(b.irregular_student_regular_price) || 0,
+        irregular_student_vip_price: Number(b.irregular_student_vip_price) || 0,
+        irregular_student_vvip_price: Number(b.irregular_student_vvip_price) || 0,
+        irregular_worker_regular_price: Number(b.irregular_worker_regular_price) || 0,
+        irregular_worker_vip_price: Number(b.irregular_worker_vip_price) || 0,
+        irregular_worker_vvip_price: Number(b.irregular_worker_vvip_price) || 0,
       })) as BranchItem[];
     } catch (e: any) {
       return rejectWithValue(e?.message || "Unable to fetch branches");

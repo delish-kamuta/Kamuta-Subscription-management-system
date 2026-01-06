@@ -16,6 +16,7 @@ interface GenerateTicketSheetProps {
 export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetProps) {
   const [payerName, setPayerName] = useState('')
   const [mealType, setMealType] = useState('Regular')
+  const [irregularPayerType, setIrregularPayerType] = useState('irregular_student')
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [amountPaid, setAmountPaid] = useState<number>(0)
   
@@ -51,15 +52,25 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
     const branch = branches.find(b => b.id === selectedBranchId);
     if (branch) {
       let price = 0;
-      switch (mealType) {
-        case 'Regular': price = branch.irregular_regular_price || 0; break;
-        case 'VIP': price = branch.irregular_vip_price || 0; break;
-        case 'VVIP': price = branch.irregular_vvip_price || 0; break;
-        default: price = branch.irregular_regular_price || 0;
+      if (irregularPayerType === 'irregular_student') {
+        switch (mealType) {
+          case 'Regular': price = branch.irregular_student_regular_price || 0; break;
+          case 'VIP': price = branch.irregular_student_vip_price || 0; break;
+          case 'VVIP': price = branch.irregular_student_vvip_price || 0; break;
+          default: price = branch.irregular_student_regular_price || 0;
+        }
+      } else {
+        // irregular_worker
+        switch (mealType) {
+          case 'Regular': price = branch.irregular_worker_regular_price || 0; break;
+          case 'VIP': price = branch.irregular_worker_vip_price || 0; break;
+          case 'VVIP': price = branch.irregular_worker_vvip_price || 0; break;
+          default: price = branch.irregular_worker_regular_price || 0;
+        }
       }
       setAmountPaid(price);
     }
-  }, [selectedBranchId, mealType, branches]);
+  }, [selectedBranchId, mealType, irregularPayerType, branches]);
 
   // Auto-refresh QR every 20s while ticket sheet is open and generated (cache-bust only)
   useEffect(() => {
@@ -87,6 +98,7 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
         setExpiresAt('');
         setPayerName('');
         setMealType('Regular');
+        setIrregularPayerType('student');
         setPaymentMethod('cash');
         setAmountPaid(0);
     }
@@ -122,6 +134,19 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
               <label className='text-sm font-medium text-gray-700'>Payer name</label>
               <input className='w-full border rounded-md px-3 py-2' placeholder='e.g., John Walk-in' value={payerName} onChange={(e) => setPayerName(e.target.value)} />
             </div>
+            
+            <div className='space-y-2 md:col-span-2'>
+              <label className='text-sm font-medium text-gray-700'>Payer Type</label>
+              <select 
+                className='w-full border rounded-md px-3 py-2' 
+                value={irregularPayerType} 
+                onChange={(e) => setIrregularPayerType(e.target.value)}
+              >
+                  <option value="irregular_student">Student</option>
+                  <option value="irregular_worker">Irregular Worker</option>
+              </select>
+            </div>
+
             <div className='space-y-2'>
               <label className='text-sm font-medium text-gray-700'>Meal type</label>
               <select className='w-full border rounded-md px-3 py-2' value={mealType} onChange={(e) => setMealType(e.target.value)}>
@@ -159,19 +184,27 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
                   const payload = {
                     payer_name: payerName.trim(),
                     meal_type: mealType,
+                    irregular_payer_type: irregularPayerType,
                     payment_method: paymentMethod,
                     amount_paid: amountPaid,
-                    branch_id: selectedBranchId // Include branch_id if API supports it, otherwise backend might infer from user
+                    branch_id: selectedBranchId || undefined
                   }
                   const res = await generateIrregularTicket(payload)
                   if (!res.success) throw new Error(res.message || 'Failed to generate ticket')
-                  const data = res.data!
-                  const qrCode = data.qr_code || ''
+                  const data = res.data as any // Cast to any to safely access potential legacy fields
+                  
+                  // Use qr_id as the code for the QR image, fallback to id or legacy qr_code
+                  const qrCodeContent = data.qr_id || data.id || data.qr_code || ''
+                  
+                  if (!qrCodeContent) {
+                    throw new Error('Server returned empty QR data')
+                  }
+
                   const exp = data.expires_at || ''
-                  const ticket = data.ticket_id || ''
+                  const ticket = data.id || data.ticket_id || '' // Handle ticket_id fallback just in case
                   setTicketId(ticket)
                   setExpiresAt(exp)
-                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrCode)}`
+                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrCodeContent)}`
                   setTicketQr(qrUrl)
                   setTicketGenerated(true)
                 } catch (e) {

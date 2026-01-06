@@ -9,9 +9,12 @@ export interface BranchPayload {
   worker_regular_price: string | number;
   worker_vip_price: string | number;
   worker_vvip_price: string | number;
-  irregular_regular_price: string | number;
-  irregular_vip_price: string | number;
-  irregular_vvip_price: string | number;
+  irregular_student_regular_price: string | number;
+  irregular_student_vip_price: string | number;
+  irregular_student_vvip_price: string | number;
+  irregular_worker_regular_price: string | number;
+  irregular_worker_vip_price: string | number;
+  irregular_worker_vvip_price: string | number;
 }
 
 export async function createBranch(payload: BranchPayload) {

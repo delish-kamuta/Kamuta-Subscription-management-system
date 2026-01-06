@@ -19,6 +19,14 @@ export interface MealLogsResponse {
   success: boolean
   message?: string
   data?: MealLogItem[]
+  pagination?: {
+    current_page: number
+    per_page: number
+    total_items: number
+    total_pages: number
+    has_next: boolean
+    has_prev: boolean
+  }
 }
 
 export type MealLogsQuery = Partial<{
@@ -28,6 +36,8 @@ export type MealLogsQuery = Partial<{
   branch_id: string
   client_user_id: string
   scanned_by: string
+  per_page: number
+  page: number
 }>
 
 export async function listMealLogs(query: MealLogsQuery = {}): Promise<MealLogsResponse> {

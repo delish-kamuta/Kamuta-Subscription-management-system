@@ -16,9 +16,12 @@ export function useBranchForm(
     worker_regular_price: 2000,
     worker_vip_price: 2000,
     worker_vvip_price: 2000,
-    irregular_regular_price: 1000,
-    irregular_vip_price: 1500,
-    irregular_vvip_price: 2000,
+    irregular_student_regular_price: 800,
+    irregular_student_vip_price: 1200,
+    irregular_student_vvip_price: 1600,
+    irregular_worker_regular_price: 1000,
+    irregular_worker_vip_price: 1500,
+    irregular_worker_vvip_price: 2000,
   })
 
   const handleAddBranch = async (e: React.FormEvent) => {
@@ -46,9 +49,12 @@ export function useBranchForm(
           worker_regular_price: String(Number(branchForm.worker_regular_price)),
           worker_vip_price: String(Number(branchForm.worker_vip_price)),
           worker_vvip_price: String(Number(branchForm.worker_vvip_price)),
-          irregular_regular_price: String(Number(branchForm.irregular_regular_price)),
-          irregular_vip_price: String(Number(branchForm.irregular_vip_price)),
-          irregular_vvip_price: String(Number(branchForm.irregular_vvip_price)),
+          irregular_student_regular_price: String(Number(branchForm.irregular_student_regular_price)),
+          irregular_student_vip_price: String(Number(branchForm.irregular_student_vip_price)),
+          irregular_student_vvip_price: String(Number(branchForm.irregular_student_vvip_price)),
+          irregular_worker_regular_price: String(Number(branchForm.irregular_worker_regular_price)),
+          irregular_worker_vip_price: String(Number(branchForm.irregular_worker_vip_price)),
+          irregular_worker_vvip_price: String(Number(branchForm.irregular_worker_vvip_price)),
         }),
       })
 
@@ -63,9 +69,12 @@ export function useBranchForm(
         worker_regular_price: 2000,
         worker_vip_price: 2000,
         worker_vvip_price: 2000,
-        irregular_regular_price: 1000,
-        irregular_vip_price: 1500,
-        irregular_vvip_price: 2000,
+        irregular_student_regular_price: 800,
+        irregular_student_vip_price: 1200,
+        irregular_student_vvip_price: 1600,
+        irregular_worker_regular_price: 1000,
+        irregular_worker_vip_price: 1500,
+        irregular_worker_vvip_price: 2000,
       })
 
       setTimeout(() => {

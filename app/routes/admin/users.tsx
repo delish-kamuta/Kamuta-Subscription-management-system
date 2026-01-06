@@ -65,6 +65,10 @@ export default function UsersPage() {
         onOpenAddBranch={() => setIsAddBranchOpen(true)}
       />
 
+      <div className="px-4 md:px-6 py-2 text-sm text-gray-500 bg-white  flex w-full justify-end gap-2">
+         Found <span className="font-medium text-green-600">{filteredUsers.length}</span> users
+      </div>
+
       <UsersTable
         users={filteredUsers}
         isLoading={usersLoading}
