@@ -2,6 +2,7 @@ import { useLocation } from "react-router"
 import { cn } from "~/lib/utils"
 
 import React from "react";
+import { Breadcrumbs } from "~/components/Breadcrumbs";
 
 interface props{
     title: string,
@@ -12,7 +13,7 @@ interface props{
 export const Header = ({title , description, action}:props) => {
     const location = useLocation();
   return (
-   <header className="header">
+   <header className="header flex flex-col gap-4">
     <article>
         <div className="flex items-center gap-4">
           {action && <div className="flex items-center self-start">{action}</div>}
@@ -23,6 +24,7 @@ export const Header = ({title , description, action}:props) => {
 
         <p className={cn('text-gray-100 font-normal', location.pathname === '/'? 'text-base md:text-lg' :'text-sm md:text-lg')}>{description} </p>
     </article>
+    <Breadcrumbs />
 
    </header>
   )

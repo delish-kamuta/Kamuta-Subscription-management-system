@@ -9,18 +9,21 @@ const AdminLayout = () => {
   return (
     <SidebarProvider>
       <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CASHIER, UserRole.WAITSTAFF, UserRole.STUDENT, UserRole.WORKER]}>
-        <div className="admin-layout">
+        <div className="admin-layout flex w-full">
           <aside className=''>
             <AppSidebar />
           </aside>
 
-          <main className="children">
-            <Outlet />
+          <main className="children flex-1 flex flex-col w-full h-screen overflow-hidden">
+            <div className="flex-1 overflow-auto p-4">
+               <Outlet />
+            </div>
           </main>
         </div>
       </ProtectedRoute>
     </SidebarProvider>
   )
 }
+
 
 export default AdminLayout
