@@ -16,6 +16,7 @@ interface GenerateTicketSheetProps {
 export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetProps) {
   const [payerName, setPayerName] = useState('')
   const [mealType, setMealType] = useState('Regular')
+  const [irregularPayerType, setIrregularPayerType] = useState('irregular_student')
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [amountPaid, setAmountPaid] = useState<number>(0)
   
@@ -87,6 +88,7 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
         setExpiresAt('');
         setPayerName('');
         setMealType('Regular');
+        setIrregularPayerType('student');
         setPaymentMethod('cash');
         setAmountPaid(0);
     }
@@ -122,6 +124,19 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
               <label className='text-sm font-medium text-gray-700'>Payer name</label>
               <input className='w-full border rounded-md px-3 py-2' placeholder='e.g., John Walk-in' value={payerName} onChange={(e) => setPayerName(e.target.value)} />
             </div>
+            
+            <div className='space-y-2 md:col-span-2'>
+              <label className='text-sm font-medium text-gray-700'>Payer Type</label>
+              <select 
+                className='w-full border rounded-md px-3 py-2' 
+                value={irregularPayerType} 
+                onChange={(e) => setIrregularPayerType(e.target.value)}
+              >
+                  <option value="irregular_student">Student</option>
+                  <option value="irregular_worker">Worker</option>
+              </select>
+            </div>
+
             <div className='space-y-2'>
               <label className='text-sm font-medium text-gray-700'>Meal type</label>
               <select className='w-full border rounded-md px-3 py-2' value={mealType} onChange={(e) => setMealType(e.target.value)}>
@@ -158,10 +173,11 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
                   setIsGenerating(true)
                   const payload = {
                     payer_name: payerName.trim(),
-                    meal_type: mealType,
+                    meal_paid: mealType,
+                    irregular_payer_type: irregularPayerType,
                     payment_method: paymentMethod,
-                    amount_paid: amountPaid,
-                    branch_id: selectedBranchId // Include branch_id if API supports it, otherwise backend might infer from user
+                    // amount_paid removed from payload as per new requirement, though calculated in UI
+                    branch_id: selectedBranchId || undefined
                   }
                   const res = await generateIrregularTicket(payload)
                   if (!res.success) throw new Error(res.message || 'Failed to generate ticket')

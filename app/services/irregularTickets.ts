@@ -2,9 +2,10 @@ import { apiClient, ensureValidTokenOrMessage } from "~/lib/api";
 
 export interface GenerateIrregularTicketPayload {
   payer_name: string;
-  meal_type: string; // e.g., "Regular" | "VIP" | "VVIP"
+  meal_paid: string; // e.g., "Regular" | "VIP" | "VVIP"
+  irregular_payer_type: string; // e.g., "irregular_student"
   payment_method?: string; // required for CASHIER
-  amount_paid?: number; // required for CASHIER
+  amount_paid?: number; // optional, validation might be on backend or removed
   branch_id?: string; // Optional, for Admin to specify branch
 }
 
@@ -12,7 +13,8 @@ export interface IrregularTicketResponseData {
   qr_code: string;
   ticket_id: string;
   payer_name: string;
-  meal_type: string;
+  meal_paid: string;
+  irregular_payer_type?: string;
   amount_paid?: number;
   payment_method?: string;
   expires_at: string;
