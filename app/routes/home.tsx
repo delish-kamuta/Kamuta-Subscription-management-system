@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
+import { useAppSelector } from "~/store/hooks";
 import {
   Youtube,
   Facebook,
@@ -16,6 +17,8 @@ import {
 } from "lucide-react";
 
 const Home = () => {
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+
   return (
     <div className="min-h-screen bg-light-200 font-inter">
       {/* Header */}
@@ -32,11 +35,19 @@ const Home = () => {
             </div>
 
             <div className="flex gap-4 items-center">
-              <Link to="/auth/login">
-                <Button className="bg-primary-500 hover:bg-primary-100 text-white shadow-lg shadow-primary-500/20 transition-all duration-300 rounded-full px-6">
-                  Login
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link to="/dashboard">
+                  <Button className="bg-primary-500 hover:bg-primary-100 text-white shadow-lg shadow-primary-500/20 transition-all duration-300 rounded-full px-6">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/auth/login">
+                  <Button className="bg-primary-500 hover:bg-primary-100 text-white shadow-lg shadow-primary-500/20 transition-all duration-300 rounded-full px-6">
+                    Login
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
