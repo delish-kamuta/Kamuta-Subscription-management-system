@@ -66,6 +66,13 @@ export interface TimeRange {
   period: string;
 }
 
+export interface MonthlyData {
+  month: string;
+  total_subscriptions: number;
+  total_meals: number;
+  remaining_meals: number;
+}
+
 export interface OverviewSummary {
   total_revenue: StatComparison;
   total_meals: StatComparison;
@@ -83,6 +90,22 @@ export interface OverviewData {
   time_range: TimeRange;
 }
 
+export interface DashboardOverviewSummary {
+  total_subscriptions: number;
+  students_zero_meals: number;
+  students_low_meals: number;
+  students_plenty_meals: number;
+}
+
+export interface DashboardOverviewData {
+  success: boolean;
+  message: string;
+  data: {
+    monthly_data: MonthlyData[];
+    summary: DashboardOverviewSummary;
+  }
+}
+
 export interface OverviewParams {
   time_range?: 'today' | 'week' | 'month' | 'year';
   branch_id?: string;
@@ -94,6 +117,10 @@ export const getOverviewStats = async (params: OverviewParams = {}) => {
   if (params.branch_id) query.append('branch_id', params.branch_id);
 
   return apiClient<{ success: boolean; data: OverviewData }>(`/overview?${query.toString()}`);
+};
+
+export const getDashboardOverview = async () => {
+  return apiClient<DashboardOverviewData>(`/dashboard/overview`);
 };
 
 export interface SubscriptionSummary {
