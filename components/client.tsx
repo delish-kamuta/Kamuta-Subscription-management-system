@@ -279,7 +279,7 @@ const Client = ({userName}:props) => {
         <section className="bg-white p-6 rounded-lg shadow mt-6">
           <div className="flex gap-1 md:items-center flex-col md:flex-row justify-between mb-4">
             <h2 className="text-xl font-semibold">Meals Log</h2>
-            <div className="flex items-center gap-2 md:flex-row ">
+            <div className="flex flex-col md:items-center gap-2 md:flex-row ">
               <div className="flex flex-col md:flex-row md:items-center">
                 <label className="text-sm">From</label>
               <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="border md:px-2 py-1 rounded" />
