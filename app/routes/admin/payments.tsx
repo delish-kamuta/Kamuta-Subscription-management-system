@@ -89,6 +89,10 @@ const Payments = () => {
           <div className="px-4 md:px-6 py-4 text-sm text-red-600">{error}</div>
         )}
         {!loading && !error && (
+        <>
+        <div className="px-4 md:px-6 py-2 text-sm text-gray-500 bg-gray-50/50 flex w-full justify-end gap-2">
+           Found <span className="font-medium text-green-600">{sourceData.length}</span> payments
+        </div>
         <PaymentTable
           filteredPayments={tableData}
           currentPage={currentPage}
@@ -98,6 +102,7 @@ const Payments = () => {
             if (original) handleViewDetails(original);
           }}
         />
+        </>
         )}
 
         {/* Pagination */}

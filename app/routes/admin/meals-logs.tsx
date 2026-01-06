@@ -297,8 +297,11 @@ const MealsLogs = () => {
 
         {!mealLogsLoading && !mealLogsState.error && (
           <>
+            <div className="px-4 md:px-6 py-2 text-sm text-gray-500  border-gray-100 bg-gray-50/50 flex w-full justify-end gap-2">
+               Found <span className="font-medium text-green-600">{filteredData.length}</span> meal logs
+            </div>
             {/* Logs Table */}
-            <div className="mt-4 overflow-x-auto">
+            <div className="mt-0 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

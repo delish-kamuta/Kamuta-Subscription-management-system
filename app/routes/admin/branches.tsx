@@ -368,6 +368,9 @@ export default function BranchesPage() {
             </div>
 
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="px-4 py-2 text-sm text-gray-500   bg-gray-50/50 flex w-full justify-end gap-2">
+                  Found <span className="font-medium text-green-600">{filteredBranches.length}</span> branches
+              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
