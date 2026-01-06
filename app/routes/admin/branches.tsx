@@ -273,7 +273,7 @@ export default function BranchesPage() {
               {/* <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="bg-white border-gray-200 h-9 gap-2 min-w-[120px] justify-between">
-                    {selectedBranchFilter?.name || "All Branch"} 
+                    {selectedBranchFilter?.name || "All Branch"}
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
