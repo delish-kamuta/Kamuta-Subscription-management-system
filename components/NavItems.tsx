@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router';
-import { SidebarMenuItem , SidebarMenuButton} from '~/components/ui/sidebar'
+import { SidebarMenuItem , SidebarMenuButton, useSidebar } from '~/components/ui/sidebar'
 import { sidebarItems } from '~/constants'
 import {cn} from '~/lib/utils';
 import { useAppSelector } from '~/store/hooks';
 import { UserRole, CustomerType } from '~/types/auth';
 
 const NavItems = () => {
+  const { setOpenMobile, isMobile } = useSidebar()
   // Filter sidebar items based on user role
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   // Default to STUDENT for guests
@@ -44,7 +45,12 @@ const NavItems = () => {
           className="w-full flex justify-center h-full inset-0 hover:bg-transparent hover:text-inherit "
           tooltip={item.label}
         >
-          <NavLink to={item.href} key={item.id} className="w-full">
+          <NavLink
+            to={item.href}
+            key={item.id}
+            className="w-full"
+            onClick={() => isMobile && setOpenMobile(false)}
+          >
             {({ isActive }: { isActive: boolean }) => (
               <div
                 className={cn(

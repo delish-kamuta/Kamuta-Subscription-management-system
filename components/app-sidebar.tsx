@@ -20,7 +20,7 @@ import { useAppDispatch, useAppSelector } from "~/store/hooks"
 import { logout as logoutAction } from "~/store/authSlice"
 
 export function AppSidebar() {
-  const { open, toggleSidebar } = useSidebar();
+  const { open, toggleSidebar, isMobile, setOpenMobile } = useSidebar();
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const { user } = useAppSelector((state) => state.auth)
@@ -41,6 +41,7 @@ export function AppSidebar() {
       
       // Navigate to login page
       navigate("/auth/login")
+      if (isMobile) setOpenMobile(false)
     } catch (error) {
       console.error("Logout error:", error)
       alert("An error occurred during logout.")
@@ -53,7 +54,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="h-screen flex flex-col border-black/5 w-[21%] lg:w-[18%]">
       <SidebarHeader className="w-full">
         <div className="flex items-center justify-between gap-2 p-2 w-full border-b border-black/5 py-3">
-          <Link to="/">
+          <Link to="/" onClick={() => isMobile && setOpenMobile(false)}>
             <div className="flex items-center gap-2">
               <img
                 src="assets/icons/cutlery.png"
@@ -79,7 +80,10 @@ export function AppSidebar() {
       <SidebarFooter>
         <div className="flex px-6 gap-2 items-center w-full group-data-[collapsible=icon]:px-0">
           <button
-            onClick={() => navigate('/profile')}
+            onClick={() => {
+              navigate('/profile');
+              if (isMobile) setOpenMobile(false);
+            }}
             className="flex items-center gap-2 flex-1 text-left cursor-pointer"
             title="View profile"
           >
