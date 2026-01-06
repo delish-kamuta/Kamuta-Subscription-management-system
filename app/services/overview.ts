@@ -50,9 +50,12 @@ export interface BranchInfo {
   worker_regular_price: number;
   worker_vip_price: number;
   worker_vvip_price: number;
-  irregular_regular_price: number;
-  irregular_vip_price: number;
-  irregular_vvip_price: number;
+  irregular_student_regular_price: number;
+  irregular_student_vip_price: number;
+  irregular_student_vvip_price: number;
+  irregular_worker_regular_price: number;
+  irregular_worker_vip_price: number;
+  irregular_worker_vvip_price: number;
   created_at: string;
   logs: any[];
 }

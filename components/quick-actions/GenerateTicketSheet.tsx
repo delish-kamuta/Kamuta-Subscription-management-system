@@ -52,15 +52,25 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
     const branch = branches.find(b => b.id === selectedBranchId);
     if (branch) {
       let price = 0;
-      switch (mealType) {
-        case 'Regular': price = branch.irregular_regular_price || 0; break;
-        case 'VIP': price = branch.irregular_vip_price || 0; break;
-        case 'VVIP': price = branch.irregular_vvip_price || 0; break;
-        default: price = branch.irregular_regular_price || 0;
+      if (irregularPayerType === 'irregular_student') {
+        switch (mealType) {
+          case 'Regular': price = branch.irregular_student_regular_price || 0; break;
+          case 'VIP': price = branch.irregular_student_vip_price || 0; break;
+          case 'VVIP': price = branch.irregular_student_vvip_price || 0; break;
+          default: price = branch.irregular_student_regular_price || 0;
+        }
+      } else {
+        // irregular_worker
+        switch (mealType) {
+          case 'Regular': price = branch.irregular_worker_regular_price || 0; break;
+          case 'VIP': price = branch.irregular_worker_vip_price || 0; break;
+          case 'VVIP': price = branch.irregular_worker_vvip_price || 0; break;
+          default: price = branch.irregular_worker_regular_price || 0;
+        }
       }
       setAmountPaid(price);
     }
-  }, [selectedBranchId, mealType, branches]);
+  }, [selectedBranchId, mealType, irregularPayerType, branches]);
 
   // Auto-refresh QR every 20s while ticket sheet is open and generated (cache-bust only)
   useEffect(() => {
@@ -133,7 +143,7 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
                 onChange={(e) => setIrregularPayerType(e.target.value)}
               >
                   <option value="irregular_student">Student</option>
-                  <option value="irregular_worker">Worker</option>
+                  <option value="irregular_worker">Irregular Worker</option>
               </select>
             </div>
 
@@ -173,21 +183,28 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
                   setIsGenerating(true)
                   const payload = {
                     payer_name: payerName.trim(),
-                    meal_paid: mealType,
+                    meal_type: mealType,
                     irregular_payer_type: irregularPayerType,
                     payment_method: paymentMethod,
-                    // amount_paid removed from payload as per new requirement, though calculated in UI
+                    amount_paid: amountPaid,
                     branch_id: selectedBranchId || undefined
                   }
                   const res = await generateIrregularTicket(payload)
                   if (!res.success) throw new Error(res.message || 'Failed to generate ticket')
-                  const data = res.data!
-                  const qrCode = data.qr_code || ''
+                  const data = res.data as any // Cast to any to safely access potential legacy fields
+                  
+                  // Use qr_id as the code for the QR image, fallback to id or legacy qr_code
+                  const qrCodeContent = data.qr_id || data.id || data.qr_code || ''
+                  
+                  if (!qrCodeContent) {
+                    throw new Error('Server returned empty QR data')
+                  }
+
                   const exp = data.expires_at || ''
-                  const ticket = data.ticket_id || ''
+                  const ticket = data.id || data.ticket_id || '' // Handle ticket_id fallback just in case
                   setTicketId(ticket)
                   setExpiresAt(exp)
-                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrCode)}`
+                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrCodeContent)}`
                   setTicketQr(qrUrl)
                   setTicketGenerated(true)
                 } catch (e) {
