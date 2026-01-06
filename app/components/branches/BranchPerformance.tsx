@@ -15,10 +15,13 @@ interface BranchPerformanceProps {
 export function BranchPerformance({ branchId, timeRange }: BranchPerformanceProps) {
   const [data, setData] = useState<OverviewData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true)
+        setErrorMsg(null)
         let apiTimeRange: 'today' | 'week' | 'month' | 'year' = 'week';
         if (timeRange === 'Today') apiTimeRange = 'today';
         if (timeRange === 'This Week') apiTimeRange = 'week';
@@ -28,9 +31,13 @@ export function BranchPerformance({ branchId, timeRange }: BranchPerformanceProp
         const res = await getOverviewStats({ time_range: apiTimeRange, branch_id: branchId })
         if (res.data) {
           setData(res.data)
+        } else {
+          // Fallback if data is at root or structure is different
+          setData(res as unknown as OverviewData)
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch overview stats", error)
+        setErrorMsg(error?.message || "Failed to load data")
       } finally {
         setLoading(false)
       }
@@ -63,7 +70,7 @@ export function BranchPerformance({ branchId, timeRange }: BranchPerformanceProp
     )
   }
 
-  if (!data) return <div>Failed to load data</div>
+  if (!data) return <div className="p-4 text-red-500 font-medium">Error: {errorMsg || "Failed to load data"}</div>
 
   // Mocking some data derived from overview if not directly available
   // In a real scenario, we would parse data.branch_comparison or similar
