@@ -222,12 +222,12 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
               <div id='ticket-content' className='ticket'>
                 <div className='text-center font-semibold tracking-wide'>MEAL TICKET</div>
                 <div className='grid grid-cols-2 gap-1 mt-2 text-xs'>
-                  <div><span className='font-semibold'>Ticket ID:</span> {ticketId || '—'}</div>
                   <div><span className='font-semibold'>Date:</span> {dayjs().format('D MMM YYYY, HH:mm')}</div>
                   {expiresAt && (<div><span className='font-semibold'>Expires:</span> {dayjs(expiresAt).format('D MMM YYYY, HH:mm')}</div>)}
+                  <div><span className='font-semibold'>Type:</span> {irregularPayerType === 'irregular_student' ? 'Student' : 'Campus Worker'}</div>
                   <div><span className='font-semibold'>Meal:</span> {mealType}</div>
                   <div><span className='font-semibold'>Payment:</span> {paymentMethod}</div>
-                  <div><span className='font-semibold'>Paid:</span> {amountPaid}</div>
+                  <div><span className='font-semibold'>Amount:</span> {amountPaid} RWF</div>
                 </div>
                 {/* Debug: show exact JSON payload encoded in QR for verification */}
                 <div className='my-3 border-t border-dashed border-gray-200' />
