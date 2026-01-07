@@ -1,4 +1,6 @@
 import { Header } from "../../../components/Header";
+import { useNavigate } from "react-router";
+import { UserRole } from "~/types/auth";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "~/components/ui/button";
@@ -20,7 +22,15 @@ interface ScanResult {
 }
 
 const ScanQR = () => {
+  const navigate = useNavigate();
   const { user } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (user?.role === UserRole.CASHIER) {
+      navigate('/unauthorized');
+    }
+  }, [user, navigate]);
+
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [recentScans, setRecentScans] = useState<ScanResult[]>([]);
