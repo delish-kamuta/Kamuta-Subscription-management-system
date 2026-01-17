@@ -1,15 +1,14 @@
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import { useAppSelector } from "~/store/hooks";
+import { WhoCanUseIt } from "~/components/home/WhoCanUseIt";
+import { HowItWorks } from "~/components/home/HowItWorks";
 import {
   Youtube,
   Facebook,
   Instagram,
   Linkedin,
   Twitter,
-  QrCode,
-  Smartphone,
-  Shield,
   Utensils,
   MapPin,
   Phone,
@@ -29,7 +28,7 @@ const Home = () => {
               <div className="bg-primary-50 p-2 rounded-xl">
                 <Utensils className="w-8 h-8 text-primary-500" />
               </div>
-              <span className="text-2xl font-bold text-dark-300">
+              <span className="text-2xl font-bold text-dark-300 hidden md:block">
                 Restaurant<span className="text-primary-500">System</span>
               </span>
             </div>
@@ -112,60 +111,11 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Features Section */}
-        <section className="py-24 bg-white">
-          <div className="container mx-auto px-6">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-dark-300">
-                Why Choose Our System?
-              </h2>
-              <p className="text-gray-500 text-lg">
-                We provide a seamless dining experience with top-notch security
-                and convenience.
-              </p>
-            </div>
+        {/* Features Section - Who Can Use It */}
+        <WhoCanUseIt />
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: <QrCode className="w-8 h-8 text-white" />,
-                  title: "QR Code Payments",
-                  desc: "Scan and pay in seconds. No cash needed, just your smartphone.",
-                  color: "bg-primary-500",
-                },
-                {
-                  icon: <Smartphone className="w-8 h-8 text-white" />,
-                  title: "Mobile First",
-                  desc: "Manage your account and track expenses on the go.",
-                  color: "bg-navy-500",
-                },
-                {
-                  icon: <Shield className="w-8 h-8 text-white" />,
-                  title: "Secure Transactions",
-                  desc: "Bank-grade security for all your payments and data.",
-                  color: "bg-success-500",
-                },
-              ].map((feature, idx) => (
-                <div
-                  key={idx}
-                  className="group p-8 rounded-3xl bg-light-200 hover:bg-white border border-transparent hover:border-gray-100 hover:shadow-2xl hover:shadow-primary-500/10 transition-all duration-300"
-                >
-                  <div
-                    className={`w-16 h-16 ${feature.color} rounded-2xl flex items-center justify-center mb-6 shadow-lg transform group-hover:rotate-6 transition-transform`}
-                  >
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 text-dark-300">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-500 leading-relaxed">
-                    {feature.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* How It Works Section */}
+        <HowItWorks />
 
         {/* CTA Section */}
         <section className="py-20">
