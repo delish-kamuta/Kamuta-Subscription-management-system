@@ -78,14 +78,6 @@ const Home = () => {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Link to="/auth/signup">
-                    <Button
-                      size="lg"
-                      className="bg-primary-500 hover:bg-primary-100 text-white px-8 py-6 text-lg rounded-full shadow-xl shadow-primary-500/20 transition-all hover:scale-105"
-                    >
-                      Get Started Now
-                    </Button>
-                  </Link>
                   <Button
                     size="lg"
                     variant="outline"
@@ -99,7 +91,7 @@ const Home = () => {
               <div className="lg:w-1/2 relative">
                 <div className="absolute inset-0 bg-gradient-to-tr from-primary-500/20 to-transparent rounded-full blur-3xl transform translate-x-10 translate-y-10"></div>
                 <img
-                  src="/assets/images/hero-img.png"
+                  src="/assets/images/hero.jpg"
                   alt="Delicious Food"
                   className="relative z-10 w-full max-w-lg mx-auto transform hover:scale-105 transition-transform duration-500 drop-shadow-2xl"
                   onError={(e) => {
@@ -120,28 +112,6 @@ const Home = () => {
 
         {/* FAQ Section */}
         <FAQ />
-
-        {/* CTA Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-6">
-            <div className="bg-primary-500 rounded-3xl p-12 md:p-20 text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-full bg-[url('/assets/images/pattern.png')] opacity-10"></div>
-              <div className="relative z-10 max-w-3xl mx-auto">
-                <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-                  Ready to upgrade your dining experience?
-                </h2>
-                <p className="text-primary-50 text-lg mb-10">
-                  Join thousands of students enjoying hassle-free meals today.
-                </p>
-                <Link to="/auth/signup">
-                  <Button className="bg-white text-primary-500 hover:bg-gray-100 px-10 py-6 text-lg rounded-full font-bold shadow-xl transition-transform hover:scale-105">
-                    Create Free Account
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       {/* Footer */}
@@ -193,14 +163,6 @@ const Home = () => {
                     className="hover:text-primary-500 transition-colors"
                   >
                     Login
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/auth/signup"
-                    className="hover:text-primary-500 transition-colors"
-                  >
-                    Register
                   </Link>
                 </li>
                 <li>
