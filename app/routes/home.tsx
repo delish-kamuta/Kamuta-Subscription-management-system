@@ -1,15 +1,15 @@
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import { useAppSelector } from "~/store/hooks";
+import { WhoCanUseIt } from "~/components/home/WhoCanUseIt";
+import { HowItWorks } from "~/components/home/HowItWorks";
+import { FAQ } from "~/components/home/FAQ";
 import {
   Youtube,
   Facebook,
   Instagram,
   Linkedin,
   Twitter,
-  QrCode,
-  Smartphone,
-  Shield,
   Utensils,
   MapPin,
   Phone,
@@ -29,7 +29,7 @@ const Home = () => {
               <div className="bg-primary-50 p-2 rounded-xl">
                 <Utensils className="w-8 h-8 text-primary-500" />
               </div>
-              <span className="text-2xl font-bold text-dark-300">
+              <span className="text-2xl font-bold text-dark-300 hidden md:block">
                 Restaurant<span className="text-primary-500">System</span>
               </span>
             </div>
@@ -68,7 +68,7 @@ const Home = () => {
                 </div>
                 <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight text-dark-300">
                   Delicious Meals, <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-100">
+                  <span className="text-transparent bg-clip-text bg-linear-to-r from-primary-500 to-primary-100">
                     Digital Payments
                   </span>
                 </h1>
@@ -78,14 +78,6 @@ const Home = () => {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Link to="/auth/signup">
-                    <Button
-                      size="lg"
-                      className="bg-primary-500 hover:bg-primary-100 text-white px-8 py-6 text-lg rounded-full shadow-xl shadow-primary-500/20 transition-all hover:scale-105"
-                    >
-                      Get Started Now
-                    </Button>
-                  </Link>
                   <Button
                     size="lg"
                     variant="outline"
@@ -97,9 +89,9 @@ const Home = () => {
               </div>
 
               <div className="lg:w-1/2 relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-primary-500/20 to-transparent rounded-full blur-3xl transform translate-x-10 translate-y-10"></div>
+                <div className="absolute inset-0 bg-linear-to-tr from-primary-500/20 to-transparent rounded-full blur-3xl transform translate-x-10 translate-y-10"></div>
                 <img
-                  src="/assets/images/hero-img.png"
+                  src="/assets/images/hero.jpg"
                   alt="Delicious Food"
                   className="relative z-10 w-full max-w-lg mx-auto transform hover:scale-105 transition-transform duration-500 drop-shadow-2xl"
                   onError={(e) => {
@@ -112,82 +104,14 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Features Section */}
-        <section className="py-24 bg-white">
-          <div className="container mx-auto px-6">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-dark-300">
-                Why Choose Our System?
-              </h2>
-              <p className="text-gray-500 text-lg">
-                We provide a seamless dining experience with top-notch security
-                and convenience.
-              </p>
-            </div>
+        {/* Features Section - Who Can Use It */}
+        <WhoCanUseIt />
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: <QrCode className="w-8 h-8 text-white" />,
-                  title: "QR Code Payments",
-                  desc: "Scan and pay in seconds. No cash needed, just your smartphone.",
-                  color: "bg-primary-500",
-                },
-                {
-                  icon: <Smartphone className="w-8 h-8 text-white" />,
-                  title: "Mobile First",
-                  desc: "Manage your account and track expenses on the go.",
-                  color: "bg-navy-500",
-                },
-                {
-                  icon: <Shield className="w-8 h-8 text-white" />,
-                  title: "Secure Transactions",
-                  desc: "Bank-grade security for all your payments and data.",
-                  color: "bg-success-500",
-                },
-              ].map((feature, idx) => (
-                <div
-                  key={idx}
-                  className="group p-8 rounded-3xl bg-light-200 hover:bg-white border border-transparent hover:border-gray-100 hover:shadow-2xl hover:shadow-primary-500/10 transition-all duration-300"
-                >
-                  <div
-                    className={`w-16 h-16 ${feature.color} rounded-2xl flex items-center justify-center mb-6 shadow-lg transform group-hover:rotate-6 transition-transform`}
-                  >
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 text-dark-300">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-500 leading-relaxed">
-                    {feature.desc}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* How It Works Section */}
+        <HowItWorks />
 
-        {/* CTA Section */}
-        <section className="py-20">
-          <div className="container mx-auto px-6">
-            <div className="bg-primary-500 rounded-3xl p-12 md:p-20 text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-full bg-[url('/assets/images/pattern.png')] opacity-10"></div>
-              <div className="relative z-10 max-w-3xl mx-auto">
-                <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-                  Ready to upgrade your dining experience?
-                </h2>
-                <p className="text-primary-50 text-lg mb-10">
-                  Join thousands of students enjoying hassle-free meals today.
-                </p>
-                <Link to="/auth/signup">
-                  <Button className="bg-white text-primary-500 hover:bg-gray-100 px-10 py-6 text-lg rounded-full font-bold shadow-xl transition-transform hover:scale-105">
-                    Create Free Account
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* FAQ Section */}
+        <FAQ />
       </main>
 
       {/* Footer */}
@@ -239,14 +163,6 @@ const Home = () => {
                     className="hover:text-primary-500 transition-colors"
                   >
                     Login
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/auth/signup"
-                    className="hover:text-primary-500 transition-colors"
-                  >
-                    Register
                   </Link>
                 </li>
                 <li>
