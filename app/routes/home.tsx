@@ -3,6 +3,7 @@ import { Button } from "~/components/ui/button";
 import { useAppSelector } from "~/store/hooks";
 import { WhoCanUseIt } from "~/components/home/WhoCanUseIt";
 import { HowItWorks } from "~/components/home/HowItWorks";
+import { FAQ } from "~/components/home/FAQ";
 import {
   Youtube,
   Facebook,
@@ -116,6 +117,9 @@ const Home = () => {
 
         {/* How It Works Section */}
         <HowItWorks />
+
+        {/* FAQ Section */}
+        <FAQ />
 
         {/* CTA Section */}
         <section className="py-20">
