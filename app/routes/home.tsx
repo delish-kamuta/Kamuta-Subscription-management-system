@@ -68,7 +68,7 @@ const Home = () => {
                 </div>
                 <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight text-dark-300">
                   Delicious Meals, <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 to-primary-100">
+                  <span className="text-transparent bg-clip-text bg-linear-to-r from-primary-500 to-primary-100">
                     Digital Payments
                   </span>
                 </h1>
@@ -89,7 +89,7 @@ const Home = () => {
               </div>
 
               <div className="lg:w-1/2 relative">
-                <div className="absolute inset-0 bg-gradient-to-tr from-primary-500/20 to-transparent rounded-full blur-3xl transform translate-x-10 translate-y-10"></div>
+                <div className="absolute inset-0 bg-linear-to-tr from-primary-500/20 to-transparent rounded-full blur-3xl transform translate-x-10 translate-y-10"></div>
                 <img
                   src="/assets/images/hero.jpg"
                   alt="Delicious Food"
