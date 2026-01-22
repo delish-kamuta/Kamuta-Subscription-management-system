@@ -6,7 +6,7 @@ import { fetchBranchesThunk } from '~/store/branchesSlice'
 import { generateIrregularTicket } from '~/services/irregularTickets'
 import { UserRole } from '~/types/auth'
 import dayjs from 'dayjs'
-import { printQrTicket, downloadQrTicket } from '~/lib/qr-utils'
+import { printQrTicket, downloadQrTicket, sendToMobilePrinter } from '~/lib/qr-utils'
 
 interface GenerateTicketSheetProps {
   open: boolean;
@@ -22,6 +22,7 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
   
   const [ticketId, setTicketId] = useState<string>('');
   const [ticketQr, setTicketQr] = useState<string>('');
+  const [rawQrContent, setRawQrContent] = useState<string>('');
   const [ticketGenerated, setTicketGenerated] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [expiresAt, setExpiresAt] = useState<string>('');
@@ -187,6 +188,7 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
                   const ticket = data.id || data.ticket_id || '' // Handle ticket_id fallback just in case
                   setTicketId(ticket)
                   setExpiresAt(exp)
+                  setRawQrContent(qrCodeContent) // Save raw content for printer app
                   
                   // Use local qrcode generation
                   try {
@@ -237,7 +239,18 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
               </div>
               <div className='mt-4 flex justify-end gap-2'>
                 <Button variant='outline' onClick={() => downloadQrTicket('ticket-content', ticketId)}>Download</Button>
-                <Button className='bg-blue-600 text-white' onClick={() => printQrTicket('ticket-content')}>Print</Button>
+                <Button className='bg-blue-600 text-white' onClick={() => {
+                   const isAndroid = /Android/i.test(navigator.userAgent);
+                   if (isAndroid) {
+                     sendToMobilePrinter({
+                       items: [{ name: `Meal Ticket (${mealType})`, qty: 1, price: amountPaid }],
+                       total: amountPaid,
+                       qrCode: rawQrContent
+                     });
+                   } else {
+                     printQrTicket('ticket-content');
+                   }
+                }}>Print</Button>
               </div>
             </div>
           )}

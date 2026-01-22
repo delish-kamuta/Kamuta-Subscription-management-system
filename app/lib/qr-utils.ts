@@ -188,3 +188,23 @@ export const downloadQrTicket = async (contentId: string, ticketId?: string) => 
     alert('Could not generate ticket image.');
   }
 };
+
+export interface MobilePrintItem {
+  name: string;
+  qty: number;
+  price: number;
+}
+
+export interface MobilePrintPayload {
+  items: MobilePrintItem[];
+  total: number;
+  qrCode?: string;
+}
+
+export const sendToMobilePrinter = (data: MobilePrintPayload) => {
+  const jsonString = JSON.stringify(data);
+  const encodedPayload = encodeURIComponent(jsonString);
+  const url = `kamuta://print?payload=${encodedPayload}`;
+  window.location.href = url;
+};
+
