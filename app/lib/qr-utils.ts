@@ -52,15 +52,32 @@ export const printQrTicket = (contentId: string) => {
     return;
   }
 
-  const printWindow = window.open('', '_blank', 'width=300,height=500');
-  if (printWindow) {
-    printWindow.document.write(`
+  // Create a hidden iframe to handle printing (bypasses popup blockers)
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  
+  document.body.appendChild(iframe);
+  
+  const doc = iframe.contentWindow?.document;
+  if (!doc) {
+    // Fallback if iframe cannot be accessed
+    alert('Printing failed: could not create print context.'); 
+    return; 
+  }
+
+  doc.open();
+  doc.write(`
       <!DOCTYPE html>
       <html>
         <head>
           <title>Print Meal Ticket</title>
           <style>
-            @page { margin: 2mm; }
+            @page { margin: 2mm; size: auto; }
             body { font-family: 'Courier New', Courier, monospace; padding: 0; margin: 0; }
             .ticket { max-width: 57mm; width: 100%; margin: 0 auto; }
             .text-center { text-align: center; }
@@ -81,13 +98,27 @@ export const printQrTicket = (contentId: string) => {
         <body>
           ${content.outerHTML}
           <script>
-            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 500); };
+            window.onload = () => { 
+                setTimeout(() => { 
+                    try {
+                        window.print(); 
+                    } catch(e) {
+                        console.error('Print error:', e);
+                    }
+                }, 800); 
+            };
           </script>
         </body>
       </html>
     `);
-    printWindow.document.close();
-  }
+  doc.close();
+
+  // Clean up iframe after a delay to allow print dialog to engage
+  setTimeout(() => {
+    if (document.body.contains(iframe)) {
+      document.body.removeChild(iframe);
+    }
+  }, 10000);
 };
 
 export const downloadQrTicket = (contentId: string, ticketId?: string) => {
