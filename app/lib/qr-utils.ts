@@ -199,6 +199,13 @@ export interface MobilePrintPayload {
   items: MobilePrintItem[];
   total: number;
   qrCode?: string;
+  ticketId?: string;
+  date?: string;
+  expiresAt?: string;
+  payerType?: string;
+  mealType?: string;
+  paymentMethod?: string;
+  payerName?: string;
 }
 
 export const sendToMobilePrinter = (data: MobilePrintPayload) => {
