@@ -121,32 +121,70 @@ export const printQrTicket = (contentId: string) => {
   }, 10000);
 };
 
-export const downloadQrTicket = (contentId: string, ticketId?: string) => {
-  const content = document.getElementById(contentId);
-  if (!content) return;
-  const html = `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Meal Ticket ${ticketId ? `- ${ticketId}` : ''}</title>
-    <style>
-      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; padding: 24px; }
-      .ticket { max-width: 420px; margin: 0 auto; border: 1px solid #e5e7eb; padding: 16px; }
-      pre { white-space: pre-wrap; margin: 0; }
-      .qr { display: flex; align-items: center; justify-content: center; padding: 16px 0; }
-    </style>
-  </head>
-  <body>
-    ${content.outerHTML}
-  </body>
-</html>`;
-  const blob = new Blob([html], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `ticket-${ticketId || 'meal'}.html`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+export const downloadQrTicket = async (contentId: string, ticketId?: string) => {
+  const original = document.getElementById(contentId);
+  if (!original) return;
+
+  try {
+    const html2canvas = (await import('html2canvas')).default;
+
+    // Create a robust clone for capturing
+    const clone = original.cloneNode(true) as HTMLElement;
+    
+    // Explicitly set styles to ensure correct rendering off-screen
+    // We match the approximate width of the ticket in the UI
+    clone.style.width = '380px'; 
+    clone.style.height = 'auto';
+    clone.style.position = 'absolute';
+    clone.style.left = '-9999px';
+    clone.style.top = '0';
+    clone.style.background = '#ffffff';
+    clone.style.padding = '20px';
+    clone.style.margin = '0'; // Remove margins that might shift it
+    // Ensure text color is black for contrast
+    clone.style.color = '#000000';
+    
+    // Remove conflicting IDs to avoid DOM issues
+    clone.removeAttribute('id');
+    
+    document.body.appendChild(clone);
+
+    // Wait for any images in the clone to signal they are loaded
+    // (Crucial for the QR code image)
+    const images = clone.querySelectorAll('img');
+    await Promise.all(
+        Array.from(images).map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+                img.onload = resolve;
+                img.onerror = resolve;
+            });
+        })
+    );
+    
+    // Short delay to ensure layout is stable
+    await new Promise(r => setTimeout(r, 200));
+
+    const canvas = await html2canvas(clone, {
+      scale: 2, 
+      backgroundColor: '#ffffff',
+      logging: false,
+      allowTaint: true,
+      useCORS: true,
+    });
+
+    document.body.removeChild(clone);
+
+    // Convert to JPG and download
+    const image = canvas.toDataURL('image/jpeg', 0.95);
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = `ticket-${ticketId || 'meal'}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Ticket download failed:', error);
+    alert('Could not generate ticket image.');
+  }
 };

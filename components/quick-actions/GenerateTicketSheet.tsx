@@ -72,23 +72,6 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
     }
   }, [selectedBranchId, mealType, irregularPayerType, branches]);
 
-  // Auto-refresh QR every 20s while ticket sheet is open and generated (cache-bust only)
-  useEffect(() => {
-    if (!open || !ticketGenerated) return;
-
-    const refresh = () => {
-      setTicketQr((prev) => {
-        if (!prev) return prev;
-        const base = prev.split('&cacheBust=')[0];
-        return `${base}&cacheBust=${Date.now()}`;
-      });
-    };
-
-    refresh();
-    const interval = setInterval(refresh, 20000);
-    return () => clearInterval(interval);
-  }, [open, ticketGenerated]);
-
   // Reset state when closed
   useEffect(() => {
     if (!open) {
@@ -204,8 +187,19 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
                   const ticket = data.id || data.ticket_id || '' // Handle ticket_id fallback just in case
                   setTicketId(ticket)
                   setExpiresAt(exp)
-                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrCodeContent)}`
-                  setTicketQr(qrUrl)
+                  
+                  // Use local qrcode generation
+                  try {
+                    const QRCode = (await import('qrcode')).default;
+                    const url = await QRCode.toDataURL(qrCodeContent, { width: 256, margin: 1 });
+                    setTicketQr(url);
+                  } catch (err) {
+                     console.error(err);
+                     // Fallback to external API if local generation fails
+                     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(qrCodeContent)}`
+                     setTicketQr(qrUrl)
+                  }
+                  
                   setTicketGenerated(true)
                 } catch (e) {
                   alert(e instanceof Error ? e.message : 'Failed to generate irregular ticket')
