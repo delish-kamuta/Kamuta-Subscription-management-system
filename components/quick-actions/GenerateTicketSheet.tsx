@@ -245,7 +245,14 @@ export function GenerateTicketSheet({ open, onOpenChange }: GenerateTicketSheetP
                      sendToMobilePrinter({
                        items: [{ name: `Meal Ticket (${mealType})`, qty: 1, price: amountPaid }],
                        total: amountPaid,
-                       qrCode: rawQrContent
+                       qrCode: rawQrContent,
+                       ticketId,
+                       date: dayjs().format('D MMM YYYY, HH:mm'),
+                       expiresAt: expiresAt ? dayjs(expiresAt).format('D MMM YYYY, HH:mm') : '',
+                       payerType: irregularPayerType === 'irregular_student' ? 'Student' : 'Campus Worker',
+                       mealType,
+                       paymentMethod,
+                       payerName
                      });
                    } else {
                      printQrTicket('ticket-content');
