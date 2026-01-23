@@ -21,6 +21,7 @@ import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import { useNavigate } from "react-router-dom";
 import { sendToMobilePrinter } from "~/lib/qr-utils";
 import dayjs from "dayjs";
+import { useAppSelector } from "~/store/hooks";
 
 interface WorkerSubscriptionTableProps {
   items: SubscriptionItem[];
@@ -28,6 +29,7 @@ interface WorkerSubscriptionTableProps {
 
 export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTableProps) {
   const navigate = useNavigate();
+  const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
   const [qrOpenId, setQrOpenId] = React.useState<string | null>(null);
   const [qrLoading, setQrLoading] = React.useState(false);
   const [qrError, setQrError] = React.useState('');
@@ -194,9 +196,20 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                       const isAndroid = /Android/i.test(navigator.userAgent);
                       if (isAndroid && qrData) {
                         const expireDate = dayjs().add(qrData.expires_in_seconds, 'second');
+                        
+                        let price = 0;
+                        const branch = branches.find((b: any) => b.name === item.branch || b.id === item.branch);
+                        if (branch) {
+                            const type = item.subscriptionType || 'Regular'; 
+                            if (type === 'Regular') price = branch.worker_regular_price || 0;
+                            else if (type === 'VIP') price = branch.worker_vip_price || 0;
+                            else if (type === 'VVIP') price = branch.worker_vvip_price || 0;
+                            else price = branch.worker_regular_price || 0;
+                        }
+
                         sendToMobilePrinter({
-                          items: [{ name: `Worker Meal`, qty: 1, price: 0 }],
-                          total: 0,
+                          items: [{ name: `Worker Meal`, qty: 1, price: price }],
+                          total: price,
                           qrCode: qrData.qr_code,
                           ticketId: item.subscriptionId || item.id,
                           date: dayjs().format('D MMM YYYY, HH:mm'),
