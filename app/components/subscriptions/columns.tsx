@@ -25,6 +25,7 @@ import { cancelSubscription, updateSubscription, updateStudentDetails, fetchSubs
 import { fetchBranchesThunk } from "~/store/branchesSlice";
 import { UserRole } from "~/types/auth";
 import { handleGenerateQr, printQrTicket, sendToMobilePrinter } from "~/lib/qr-utils";
+import dayjs from "dayjs";
 
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
@@ -477,14 +478,34 @@ const handleTopUpSave = async () => {
                 onClick={() => {
                   const isAndroid = /Android/i.test(navigator.userAgent);
                   if (isAndroid && qrState.data) {
-                    const expireDate = new Date(Date.now() + (qrState.data.expires_in_seconds * 1000));
+                    const expireDate = dayjs().add(qrState.data.expires_in_seconds, 'second');
+                    
+                    let price = 0;
+                    const branch = branches.find((b: any) => b.name === item.branch || b.id === item.branch);
+                    if (branch) {
+                        const type = item.subscriptionType || 'Regular';
+                        const isWorker = item.customerType?.toLowerCase() === 'worker';
+                        
+                        if (isWorker) {
+                             if (type === 'Regular') price = branch.worker_regular_price || 0;
+                             else if (type === 'VIP') price = branch.worker_vip_price || 0;
+                             else if (type === 'VVIP') price = branch.worker_vvip_price || 0;
+                             else price = branch.worker_regular_price || 0;
+                        } else {
+                             if (type === 'Regular') price = branch.student_regular_price || 0;
+                             else if (type === 'VIP') price = branch.student_vip_price || 0;
+                             else if (type === 'VVIP') price = branch.student_vvip_price || 0;
+                             else price = branch.student_regular_price || 0;
+                        }
+                    }
+
                     sendToMobilePrinter({
-                      items: [{ name: `Subscription Meal`, qty: 1, price: 0 }],
-                      total: 0,
+                      items: [{ name: `Subscription Meal (${item.subscriptionType})`, qty: 1, price: price }],
+                      total: price,
                       qrCode: qrState.data.qr_code,
                       ticketId: item.subscriptionId || item.id,
-                      date: new Date().toLocaleString(),
-                      expiresAt: expireDate.toLocaleString(),
+                      date: dayjs().format('D MMM YYYY, HH:mm'),
+                      expiresAt: expireDate.format('D MMM YYYY, HH:mm'),
                       payerType: item.customerType || 'Student',
                       mealType: item.subscriptionType,
                       paymentMethod: 'Subscription',
