@@ -19,6 +19,8 @@ import { MoreHorizontal } from "lucide-react";
 import { formatCurrency } from "~/lib/utils";
 import type { SubscriptionItem } from "~/hooks/useSubscriptionFilters";
 import { useNavigate } from "react-router-dom";
+import { sendToMobilePrinter } from "~/lib/qr-utils";
+import dayjs from "dayjs";
 
 interface WorkerSubscriptionTableProps {
   items: SubscriptionItem[];
@@ -189,67 +191,86 @@ export default function WorkerSubscriptionTable({ items }: WorkerSubscriptionTab
                     disabled={!qrImage}
                     onClick={() => {
                       if (!qrImage) return;
-                      const printWindow = window.open('', '_blank');
-                      if (printWindow) {
-                        printWindow.document.write(`
-                          <html>
-                            <head>
-                              <title>Print QR Code</title>
-                              <style>
-                                @page { margin: 0; size: auto; }
-                                body { 
-                                  width: 58mm; 
-                                  margin: 0 auto; 
-                                  padding: 5px; 
-                                  font-family: monospace; 
-                                  text-align: center; 
-                                }
-                                .container {
-                                  display: flex;
-                                  flex-direction: column;
-                                  align-items: center;
-                                  width: 100%;
-                                }
-                                img { 
-                                  width: 100%; 
-                                  max-width: 200px;
-                                  height: auto; 
-                                  display: block;
-                                  margin: 5px 0;
-                                }
-                                .name { 
-                                  font-size: 14px; 
-                                  font-weight: bold; 
-                                  margin-bottom: 5px; 
-                                  word-wrap: break-word;
-                                }
-                                .info { 
-                                  margin-top: 5px; 
-                                  border-top: 1px dashed #000; 
-                                  padding-top: 5px; 
-                                  width: 100%;
-                                }
-                                .meta { 
-                                  font-size: 12px; 
-                                  color: #000; 
-                                  margin: 2px 0; 
-                                }
-                              </style>
-                            </head>
-                            <body>
-                              <div class="container">
-                                <img src="${qrImage}" />
-                                <div class="info">
-                                  <div class="meta">Expires: ${qrData?.expires_in_seconds}s</div>
+                      const isAndroid = /Android/i.test(navigator.userAgent);
+                      if (isAndroid && qrData) {
+                        const expireDate = dayjs().add(qrData.expires_in_seconds, 'second');
+                        sendToMobilePrinter({
+                          items: [{ name: `Worker Meal`, qty: 1, price: 0 }],
+                          total: 0,
+                          qrCode: qrData.qr_code,
+                          ticketId: item.subscriptionId || item.id,
+                          date: dayjs().format('D MMM YYYY, HH:mm'),
+                          expiresAt: expireDate.format('D MMM YYYY, HH:mm'),
+                          payerType: 'Worker',
+                          mealType: item.subscriptionType || 'Prepaid',
+                          paymentMethod: 'Wallet',
+                          payerName: qrData.user_name || item.clientName
+                        });
+                      } else {
+                        const printWindow = window.open('', '_blank');
+                        if (printWindow) {
+                          printWindow.document.write(`
+                            <html>
+                              <head>
+                                <title>Print QR Code</title>
+                                <style>
+                                  @page { margin: 0; size: auto; }
+                                  body { 
+                                    width: 58mm; 
+                                    margin: 0 auto; 
+                                    padding: 5px; 
+                                    font-family: monospace; 
+                                    text-align: center; 
+                                  }
+                                  .container {
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    width: 100%;
+                                  }
+                                  img { 
+                                    width: 100%; 
+                                    max-width: 200px;
+                                    height: auto; 
+                                    display: block;
+                                    margin: 5px 0;
+                                  }
+                                  .name { 
+                                    font-size: 14px; 
+                                    font-weight: bold; 
+                                    margin-bottom: 5px; 
+                                    word-wrap: break-word;
+                                  }
+                                  .info { 
+                                    margin-top: 5px; 
+                                    border-top: 1px dashed #000; 
+                                    padding-top: 5px; 
+                                    width: 100%;
+                                  }
+                                  .meta { 
+                                    font-size: 12px; 
+                                    color: #000; 
+                                    margin: 2px 0; 
+                                  }
+                                </style>
+                              </head>
+                              <body>
+                                <div class="container">
+                                  <div class="name">${item.clientName}</div>
+                                  <img src="${qrImage}" />
+                                  <div class="info">
+                                    <div class="meta">Expires: ${qrData?.expires_in_seconds}s</div>
+                                    <div class="meta">Reg: ${item.id}</div> 
+                                  </div>
                                 </div>
-                              </div>
-                              <script>
-                                window.onload = function() { window.print(); window.close(); }
-                              </script>
-                            </body>
-                          </html>
-                        `);
-                        printWindow.document.close();
+                                <script>
+                                  window.onload = function() { window.print(); window.close(); }
+                                </script>
+                              </body>
+                            </html>
+                          `);
+                          printWindow.document.close();
+                        }
                       }
                     }}
                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
