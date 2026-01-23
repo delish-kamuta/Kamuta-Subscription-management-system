@@ -24,7 +24,7 @@ import { generateQrOtpForUser } from "~/services/qr";
 import { cancelSubscription, updateSubscription, updateStudentDetails, fetchSubscriptions } from "~/store/subscriptionsSlice";
 import { fetchBranchesThunk } from "~/store/branchesSlice";
 import { UserRole } from "~/types/auth";
-import { handleGenerateQr, printQrTicket } from "~/lib/qr-utils";
+import { handleGenerateQr, printQrTicket, sendToMobilePrinter } from "~/lib/qr-utils";
 
 function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
@@ -474,7 +474,26 @@ const handleTopUpSave = async () => {
               </Button>
               <Button
                 disabled={!qrState.image}
-                onClick={() => printQrTicket(`ticket-content-${item.id}`)}
+                onClick={() => {
+                  const isAndroid = /Android/i.test(navigator.userAgent);
+                  if (isAndroid && qrState.data) {
+                    const expireDate = new Date(Date.now() + (qrState.data.expires_in_seconds * 1000));
+                    sendToMobilePrinter({
+                      items: [{ name: `Subscription Meal`, qty: 1, price: 0 }],
+                      total: 0,
+                      qrCode: qrState.data.qr_code,
+                      ticketId: item.subscriptionId || item.id,
+                      date: new Date().toLocaleString(),
+                      expiresAt: expireDate.toLocaleString(),
+                      payerType: item.customerType || 'Student',
+                      mealType: item.subscriptionType,
+                      paymentMethod: 'Subscription',
+                      payerName: qrState.data.user_name
+                    });
+                  } else {
+                    printQrTicket(`ticket-content-${item.id}`);
+                  }
+                }}
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               >
                 Print QR
