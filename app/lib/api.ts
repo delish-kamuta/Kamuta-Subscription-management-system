@@ -1,6 +1,9 @@
 import { store } from "~/store/store"
 
-export const API_BASE_URL = "https://restaurant-bn-api.onrender.com/api";
+// Use environment variable if available, otherwise fallback (useful for local dev)
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://76.13.118.134:8000/api";
+
+console.log(`[API] Configuration: Base URL is ${API_BASE_URL}`);
 
 export function getToken(): string | null {
   // Prefer Redux token

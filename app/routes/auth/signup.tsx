@@ -4,6 +4,7 @@ import { UserRole } from "~/types/auth"
 import { mapApiRoleToUserRole, mapApiCustomerType } from "~/types/auth"
 import { useAppDispatch } from "~/store/hooks"
 import { signup as signupAction } from "~/store/authSlice"
+import { API_BASE_URL } from "~/lib/api"
 
 export default function SignupPage() {
   const navigate = useNavigate()
@@ -12,7 +13,7 @@ export default function SignupPage() {
   const handleSignup = async (data: { phone: string; password: string }) => {
     try {
       // Call the signup API
-      const response = await fetch("https://restaurant-bn-api.onrender.com/api/auth/signup", {
+      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

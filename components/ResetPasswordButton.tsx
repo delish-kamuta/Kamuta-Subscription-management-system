@@ -22,7 +22,7 @@ export default function ResetPasswordButton() {
       if (!user?.id) { setError('Missing user id'); return }
       if (!newPassword) { setError('New password is required'); return }
       setSubmitting(true)
-      const resp = await authFetch('https://restaurant-bn-api.onrender.com/api/users/reset-password', {
+      const resp = await authFetch('/users/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: user.id, old_password: oldPassword, new_password: newPassword }),

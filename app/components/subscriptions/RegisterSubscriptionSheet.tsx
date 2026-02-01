@@ -6,6 +6,7 @@ import { upsertSubscription } from '~/store/subscriptionsSlice'
 import { addUserOptimistic } from '~/store/usersSlice'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '~/components/ui/sheet'
 import { Button } from '~/components/ui/button'
+import { API_BASE_URL } from '~/lib/api'
 
 interface RegisterSubscriptionSheetProps {
   open: boolean
@@ -127,7 +128,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         payload.reg_number = formData.reg_number.trim()
       }
 
-      const resp = await fetch('https://restaurant-bn-api.onrender.com/api/users', {
+      const resp = await fetch(`${API_BASE_URL}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
