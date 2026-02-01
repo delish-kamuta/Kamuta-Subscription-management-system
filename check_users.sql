@@ -1,0 +1,1 @@
+SELECT role, id FROM "User";

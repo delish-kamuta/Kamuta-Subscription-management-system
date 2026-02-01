@@ -1,0 +1,38 @@
+services:
+  app:
+    image: delishkamuta01/kamuta-subscription-management-system-app:latest
+    ports:
+      - "80:3000"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=http://76.13.118.134:8000/api
+    restart: always
+
+  backend:
+    image: delishkamuta01/kamuta-subscription-management-system-backend:latest
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - PORT=8000
+      - NODE_ENV=production
+      # Connects to the 'db' service defined below
+      - DATABASE_URL=postgresql://kamuta_user:secure_password@db:5432/kamuta_db?schema=public
+      - JWT_SECRET=change_this_to_a_secure_random_string
+    restart: always
+
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: kamuta_user
+      POSTGRES_PASSWORD: secure_password
+      POSTGRES_DB: kamuta_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432" # Optional: Remove if you don't want external access to the DB
+
+volumes:
+  postgres_data:

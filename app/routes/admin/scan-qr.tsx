@@ -7,7 +7,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Camera, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useAppSelector } from "~/store/hooks";
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
+import type { Html5Qrcode } from "html5-qrcode";
 import { scanQrOtp } from "~/services/qr";
 import { scanIrregularTicket } from "~/services/irregularTickets";
 
@@ -123,8 +123,11 @@ const ScanQR = () => {
       // Wait for the DOM element to be rendered
       await new Promise(resolve => setTimeout(resolve, 100));
 
+      const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import("html5-qrcode");
+
       const html5QrCode = new Html5Qrcode(scannerElementId);
-      scannerRef.current = html5QrCode;
+      // NOTE: We only assign to ref AFTER successful start to avoid cleanup crashes
+      // scannerRef.current = html5QrCode; 
 
       const config = { 
         fps: 15,
@@ -158,14 +161,21 @@ const ScanQR = () => {
         }
       );
 
+      scannerRef.current = html5QrCode;
       setHasPermission(true);
     } catch (error) {
       console.error("Error starting scanner:", error);
       setHasPermission(false);
       setIsScanning(false);
+      
+      let msg = "Camera access denied or unavailable.";
+      if (typeof window !== 'undefined' && window.location.protocol === 'http:' && window.location.hostname !== 'localhost') {
+        msg += " Camera requires HTTPS.";
+      }
+
       setScanResult({
         success: false,
-        message: "Camera access denied or unavailable. Please allow camera permission.",
+        message: msg,
         timestamp: new Date().toLocaleString()
       });
     }

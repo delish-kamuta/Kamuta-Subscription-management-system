@@ -4,6 +4,7 @@ import { mapApiRoleToUserRole, mapApiCustomerType } from "~/types/auth"
 import { useNavigate } from "react-router"
 import { useAppDispatch } from "~/store/hooks"
 import { login as loginAction } from "~/store/authSlice"
+import { API_BASE_URL } from "~/lib/api"
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -12,7 +13,7 @@ export default function LoginPage() {
   const handleLogin = async (data: { phone: string; password: string }) => {
     try {
       // Call the login API
-      const response = await fetch("https://restaurant-bn-api.onrender.com/api/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

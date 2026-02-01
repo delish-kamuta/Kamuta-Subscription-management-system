@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: .
+      target: development
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      # Allow frontend to talk to backend
+      - VITE_API_URL=http://localhost:8000/api
+
+  backend:
+    build:
+      context: ../Kamuta-Subscription-management-system_bn
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../Kamuta-Subscription-management-system_bn:/app
+      - /app/node_modules
+    environment:
+      - PORT=8000
+      - NODE_ENV=development
