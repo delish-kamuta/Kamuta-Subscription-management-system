@@ -58,15 +58,15 @@ export function AddBranchSheet({ open, onOpenChange, error, successMessage, isLo
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label htmlFor="student_regular_price" className="text-sm font-medium">Regular *</label>
-                <Input id="student_regular_price" type="number" value={branchForm.student_regular_price} onChange={(e) => setBranchForm({ ...branchForm, student_regular_price: Number(e.target.value) })} required min={0} />
+                <Input id="student_regular_price" type="number" step="0.01" value={branchForm.student_regular_price} onChange={(e) => setBranchForm({ ...branchForm, student_regular_price: Number(e.target.value) })} required min={0} />
               </div>
               <div className="space-y-2">
                 <label htmlFor="student_vip_price" className="text-sm font-medium">VIP *</label>
-                <Input id="student_vip_price" type="number" value={branchForm.student_vip_price} onChange={(e) => setBranchForm({ ...branchForm, student_vip_price: Number(e.target.value) })} required min={0} />
+                <Input id="student_vip_price" type="number" step="0.01" value={branchForm.student_vip_price} onChange={(e) => setBranchForm({ ...branchForm, student_vip_price: Number(e.target.value) })} required min={0} />
               </div>
               <div className="space-y-2">
                 <label htmlFor="student_vvip_price" className="text-sm font-medium">VVIP *</label>
-                <Input id="student_vvip_price" type="number" value={branchForm.student_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, student_vvip_price: Number(e.target.value) })} required min={0} />
+                <Input id="student_vvip_price" type="number" step="0.01" value={branchForm.student_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, student_vvip_price: Number(e.target.value) })} required min={0} />
               </div>
             </div>
           </div>
@@ -76,15 +76,15 @@ export function AddBranchSheet({ open, onOpenChange, error, successMessage, isLo
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label htmlFor="worker_regular_price" className="text-sm font-medium">Regular *</label>
-                <Input id="worker_regular_price" type="number" value={branchForm.worker_regular_price} onChange={(e) => setBranchForm({ ...branchForm, worker_regular_price: Number(e.target.value) })} required min={0} />
+                <Input id="worker_regular_price" type="number" step="0.01" value={branchForm.worker_regular_price} onChange={(e) => setBranchForm({ ...branchForm, worker_regular_price: Number(e.target.value) })} required min={0} />
               </div>
               <div className="space-y-2">
                 <label htmlFor="worker_vip_price" className="text-sm font-medium">VIP *</label>
-                <Input id="worker_vip_price" type="number" value={branchForm.worker_vip_price} onChange={(e) => setBranchForm({ ...branchForm, worker_vip_price: Number(e.target.value) })} required min={0} />
+                <Input id="worker_vip_price" type="number" step="0.01" value={branchForm.worker_vip_price} onChange={(e) => setBranchForm({ ...branchForm, worker_vip_price: Number(e.target.value) })} required min={0} />
               </div>
               <div className="space-y-2">
                 <label htmlFor="worker_vvip_price" className="text-sm font-medium">VVIP *</label>
-                <Input id="worker_vvip_price" type="number" value={branchForm.worker_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, worker_vvip_price: Number(e.target.value) })} required min={0} />
+                <Input id="worker_vvip_price" type="number" step="0.01" value={branchForm.worker_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, worker_vvip_price: Number(e.target.value) })} required min={0} />
               </div>
             </div>
           </div>
@@ -94,15 +94,15 @@ export function AddBranchSheet({ open, onOpenChange, error, successMessage, isLo
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label htmlFor="irregular_student_regular_price" className="text-sm font-medium">Regular *</label>
-                <Input id="irregular_student_regular_price" type="number" value={branchForm.irregular_student_regular_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_student_regular_price: Number(e.target.value) })} required min={0} />
+                <Input id="irregular_student_regular_price" type="number" step="0.01" value={branchForm.irregular_student_regular_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_student_regular_price: Number(e.target.value) })} required min={0} />
               </div>
               <div className="space-y-2">
                 <label htmlFor="irregular_student_vip_price" className="text-sm font-medium">VIP *</label>
-                <Input id="irregular_student_vip_price" type="number" value={branchForm.irregular_student_vip_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_student_vip_price: Number(e.target.value) })} required min={0} />
+                <Input id="irregular_student_vip_price" type="number" step="0.01" value={branchForm.irregular_student_vip_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_student_vip_price: Number(e.target.value) })} required min={0} />
               </div>
               <div className="space-y-2">
                 <label htmlFor="irregular_student_vvip_price" className="text-sm font-medium">VVIP *</label>
-                <Input id="irregular_student_vvip_price" type="number" value={branchForm.irregular_student_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_student_vvip_price: Number(e.target.value) })} required min={0} />
+                <Input id="irregular_student_vvip_price" type="number" step="0.01" value={branchForm.irregular_student_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_student_vvip_price: Number(e.target.value) })} required min={0} />
               </div>
             </div>
           </div>
@@ -112,15 +112,15 @@ export function AddBranchSheet({ open, onOpenChange, error, successMessage, isLo
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label htmlFor="irregular_worker_regular_price" className="text-sm font-medium">Regular *</label>
-                <Input id="irregular_worker_regular_price" type="number" value={branchForm.irregular_worker_regular_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_worker_regular_price: Number(e.target.value) })} required min={0} />
+                <Input id="irregular_worker_regular_price" type="number" step="0.01" value={branchForm.irregular_worker_regular_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_worker_regular_price: Number(e.target.value) })} required min={0} />
               </div>
               <div className="space-y-2">
                 <label htmlFor="irregular_worker_vip_price" className="text-sm font-medium">VIP *</label>
-                <Input id="irregular_worker_vip_price" type="number" value={branchForm.irregular_worker_vip_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_worker_vip_price: Number(e.target.value) })} required min={0} />
+                <Input id="irregular_worker_vip_price" type="number" step="0.01" value={branchForm.irregular_worker_vip_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_worker_vip_price: Number(e.target.value) })} required min={0} />
               </div>
               <div className="space-y-2">
                 <label htmlFor="irregular_worker_vvip_price" className="text-sm font-medium">VVIP *</label>
-                <Input id="irregular_worker_vvip_price" type="number" value={branchForm.irregular_worker_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_worker_vvip_price: Number(e.target.value) })} required min={0} />
+                <Input id="irregular_worker_vvip_price" type="number" step="0.01" value={branchForm.irregular_worker_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, irregular_worker_vvip_price: Number(e.target.value) })} required min={0} />
               </div>
             </div>
           </div>
