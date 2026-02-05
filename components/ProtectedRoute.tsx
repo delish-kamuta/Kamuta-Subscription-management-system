@@ -1,8 +1,8 @@
-import { type ReactNode } from "react"
-import { Navigate } from "react-router"
+import { type ReactNode, useEffect, useState } from "react"
+import { Navigate, useLocation } from "react-router"
+import { jwtDecode } from "jwt-decode"
 import { UserRole } from "~/types/auth"
 import { useAppSelector } from "~/store/hooks"
-
 
 interface ProtectedRouteProps {
   children: ReactNode
@@ -10,16 +10,56 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { isAuthenticated, user, hydrated, token } = useAppSelector((state) => state.auth as any)
+  const location = useLocation()
+  const { user, hydrated } = useAppSelector((state) => state.auth as any)
+  const [isTokenVerified, setIsTokenVerified] = useState(false)
+  const [isValidToken, setIsValidToken] = useState(false)
 
-  // Wait for hydration before deciding
-  if (!hydrated) {
-    return <></>
+  useEffect(() => {
+    // This effect runs only on the client
+    const token = localStorage.getItem('authToken')
+
+    if (!token) {
+      setIsValidToken(false)
+      setIsTokenVerified(true)
+      return
+    }
+
+    try {
+      const decoded: any = jwtDecode(token)
+      const currentTime = Date.now() / 1000
+
+      if (decoded.exp && decoded.exp < currentTime) {
+        // Token expired
+        localStorage.removeItem('authToken')
+        localStorage.removeItem('authUser')
+        setIsValidToken(false)
+      } else {
+        setIsValidToken(true)
+      }
+    } catch (error) {
+      // Invalid token
+      localStorage.removeItem('authToken')
+      setIsValidToken(false)
+    }
+    
+    setIsTokenVerified(true)
+  }, [])
+
+  // 1. SSR & Initial Client Render: Return null to avoid hydration mismatch
+  // and prevent accessing localStorage on server.
+  if (!isTokenVerified) {
+    return null
   }
 
-  // If not authenticated after hydration, redirect
-  if (!isAuthenticated || !token) {
-    return <Navigate to="/auth/login" replace />
+  // 2. Redirect if token was invalid
+  if (!isValidToken) {
+    return <Navigate to="/auth/login" state={{ from: location }} replace />
+  }
+
+  // 3. Wait for Redux hydration before checking roles
+  if (!hydrated) {
+    return null
   }
 
   if (user?.role && !allowedRoles.includes(user.role)) {
