@@ -17,6 +17,9 @@ type Props = {
     worker_regular_price: number
     worker_vip_price: number
     worker_vvip_price: number
+    student_leader_regular_price: number
+    student_leader_vip_price: number
+    student_leader_vvip_price: number
     irregular_student_regular_price: number
     irregular_student_vip_price: number
     irregular_student_vvip_price: number
@@ -85,6 +88,24 @@ export function AddBranchSheet({ open, onOpenChange, error, successMessage, isLo
               <div className="space-y-2">
                 <label htmlFor="worker_vvip_price" className="text-sm font-medium">VVIP *</label>
                 <Input id="worker_vvip_price" type="number" step="0.01" value={branchForm.worker_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, worker_vvip_price: Number(e.target.value) })} required min={0} />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold border-b pb-1">Student Leader Prices</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="student_leader_regular_price" className="text-sm font-medium">Regular *</label>
+                <Input id="student_leader_regular_price" type="number" step="0.01" value={branchForm.student_leader_regular_price} onChange={(e) => setBranchForm({ ...branchForm, student_leader_regular_price: Number(e.target.value) })} required min={0} />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="student_leader_vip_price" className="text-sm font-medium">VIP *</label>
+                <Input id="student_leader_vip_price" type="number" step="0.01" value={branchForm.student_leader_vip_price} onChange={(e) => setBranchForm({ ...branchForm, student_leader_vip_price: Number(e.target.value) })} required min={0} />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="student_leader_vvip_price" className="text-sm font-medium">VVIP *</label>
+                <Input id="student_leader_vvip_price" type="number" step="0.01" value={branchForm.student_leader_vvip_price} onChange={(e) => setBranchForm({ ...branchForm, student_leader_vvip_price: Number(e.target.value) })} required min={0} />
               </div>
             </div>
           </div>
