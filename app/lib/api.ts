@@ -4,7 +4,8 @@ import { store } from "~/store/store"
 export const API_BASE_URL = "https://kamuta-subscription-management-system-bn-p99l.onrender.com/api";
 // export const API_BASE_URL = import.meta.env.VITE_API_URL || "https://delish-kamuta.com/api";
 
-console.log(`[API] Configuration: Base URL is ${API_BASE_URL}`);
+console.log(`[API] Configuration: Base URL is ${API_BASE_URL} (Hardcoded for Review)`);
+
 
 export function getToken(): string | null {
   // Prefer Redux token
