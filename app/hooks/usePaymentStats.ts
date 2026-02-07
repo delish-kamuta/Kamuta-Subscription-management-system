@@ -2,8 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "~/store/hooks";
 import { fetchPaymentsThunk } from "~/store/paymentsSlice";
 import { fetchBranchesThunk } from "~/store/branchesSlice";
+import { fetchUsersThunk } from "~/store/usersSlice";
 import { exportToCsv, formatCurrency } from "~/lib/utils";
 import { toDateKey, isWithinRange } from "~/lib/date";
+import { UserRole, mapApiRoleToUserRole } from "~/types/auth";
 
 export interface Payment {
   paymentId: string;
@@ -15,12 +17,15 @@ export interface Payment {
   paymentDate: string;
   addedNotes: string;
   payment: string;
+  cashier: string;
 }
 
 export const usePaymentStats = (itemsPerPage: number = 8) => {
   const dispatch = useAppDispatch();
   const paymentsState = useAppSelector((s) => (s as any).payments);
   const branchesState = useAppSelector((s) => (s as any).branches);
+  const usersState = useAppSelector((s) => (s as any).users); // Fetch users state
+
   const apiPayments = (paymentsState?.items ?? []) as any[];
   const loading = Boolean(paymentsState?.loading);
   const error = paymentsState?.error as string | null;
@@ -41,7 +46,23 @@ export const usePaymentStats = (itemsPerPage: number = 8) => {
     if (!branchesState?.loaded && !branchesState?.loading) {
       dispatch(fetchBranchesThunk());
     }
-  }, [dispatch, paymentsState?.loaded, paymentsState?.loading, branchesState?.loaded, branchesState?.loading]);
+    if (!usersState?.loaded && !usersState?.loading) {
+      dispatch(fetchUsersThunk());
+    }
+  }, [dispatch, paymentsState?.loaded, paymentsState?.loading, branchesState?.loaded, branchesState?.loading, usersState?.loaded, usersState?.loading]);
+
+  // Derive cashiers from users list
+  const cashiers = useMemo(() => {
+    if (!usersState?.items) return [];
+    return usersState.items.filter((u: any) => {
+       const role = mapApiRoleToUserRole(u.role);
+       return role === UserRole.CASHIER || role === UserRole.ADMIN; // Include admins or just cashiers? User asked for cashier filter.
+    }).map((u: any) => ({
+      id: u.id,
+      name: u.full_name || u.username || "Unknown"
+    }));
+  }, [usersState?.items]);
+
 
   // Prepare data for charts
   const last7Days = useMemo(() => {
@@ -73,6 +94,7 @@ export const usePaymentStats = (itemsPerPage: number = 8) => {
           paymentDateKey: r.date ? new Date(r.date).toISOString().split('T')[0] : '', // Normalize to YYYY-MM-DD
           addedNotes: "",
           payment: r.paymentMethod,
+          cashier: r.cashier || "N/A", // Map cashier from API response
         }))
       : [];
   }, [apiPayments]);
@@ -84,7 +106,7 @@ export const usePaymentStats = (itemsPerPage: number = 8) => {
         .filter((p) => p.paymentDateKey === day.key)
         .reduce((sum, p) => sum + p.amountPaid, 0),
     }));
-  }, [last7Days, sourceData]);
+  }, [last7Days, sourceData]); // Re-calculate when sourceData changes
 
   const totalRevenue = useMemo(() => {
     return sourceData.reduce((sum, p) => sum + p.amountPaid, 0);
@@ -114,7 +136,8 @@ export const usePaymentStats = (itemsPerPage: number = 8) => {
         item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.paymentId.includes(searchTerm);
       const matchesBranch = branchFilter === "All" || item.branch === branchFilter;
-      const matchesCashier = cashierFilter === "All" || true; // Cashier data not in payment object yet
+      const matchesCashier = cashierFilter === "All" || item.cashier === cashierFilter; 
+
       const itemKey = toDateKey(item.paymentDate);
       const fromKey = toDateKey(startDate);
       const toKey = toDateKey(endDate);
@@ -171,7 +194,7 @@ export const usePaymentStats = (itemsPerPage: number = 8) => {
       date: p.paymentDate,
       status: "Completed",
       branch: p.branch,
-      cashier: "N/A",
+      cashier: p.cashier,
     }));
   }, [filteredData]);
 
@@ -211,5 +234,6 @@ export const usePaymentStats = (itemsPerPage: number = 8) => {
     handleExport,
     handleViewDetails,
     branches: branchesState?.items || [],
+    cashiers,
   };
 };

@@ -15,6 +15,7 @@ interface PaymentFiltersProps {
   setEndDate: (value: string) => void;
   onExport: () => void;
   branches?: { id: string; name?: string }[];
+  cashiers?: { id: string; name?: string }[];
 }
 
 export default function PaymentFilters({
@@ -30,6 +31,7 @@ export default function PaymentFilters({
   setEndDate,
   onExport,
   branches = [],
+  cashiers = [],
 }: PaymentFiltersProps) {
   const clearDates = () => {
     setStartDate("");
@@ -68,9 +70,11 @@ export default function PaymentFilters({
             className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
           >
             <option value="All">Cashier: All</option>
-            <option value="James Anderson">James Anderson</option>
-            <option value="Michael Johnson">Michael Johnson</option>
-            <option value="David Brown">David Brown</option>
+            {cashiers.map((cashier) => (
+              <option key={cashier.id} value={cashier.name}>
+                {cashier.name}
+              </option>
+            ))}
           </select>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1">
