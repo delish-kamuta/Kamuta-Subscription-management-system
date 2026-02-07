@@ -10,6 +10,11 @@ const StatsCard = ({ title, value, currentDay, lastDayCount }: StatsCard) => {
   const last = typeof lastDayCount === 'number' ? lastDayCount : Number(lastDayCount) || 0;
   const { trend, percentage } = calculateTrendPercentage(current, last);
   const isDecrement = trend === "decrement";
+
+  const formattedValue = typeof value === 'number'
+    ? value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+    : value;
+
   return (
     <article className="stats-card">
       <h3 className="text-base font-medium">
@@ -17,7 +22,7 @@ const StatsCard = ({ title, value, currentDay, lastDayCount }: StatsCard) => {
       </h3>
       <div className="content">
         <div className="flex flex-col gap-4">
-          <h2 className="text-4xl">{value}</h2>
+          <h2 className="text-4xl">{formattedValue}</h2>
           <div className="flex items-center gap-2">
             <figure className="flex items-center gap-1">
               <img src={`/assets/icons/${isDecrement ? "arrow-down-red.svg": "arrow-up-green.svg"}`} className="size-5" alt="" />
