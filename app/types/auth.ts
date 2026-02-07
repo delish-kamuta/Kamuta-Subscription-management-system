@@ -13,6 +13,7 @@ export enum CustomerType {
 
 export interface Student {
   reg_number?: string;
+  student_type?: string;
 }
 
 // Maps backend role strings to frontend UserRole enum

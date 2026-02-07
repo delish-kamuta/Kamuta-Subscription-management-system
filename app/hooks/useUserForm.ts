@@ -19,7 +19,9 @@ export function useUserForm(
     branch_id: "",
     password: "",
     reg_number: "",
+    student_type: "regular",
   })
+
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,6 +44,10 @@ export function useUserForm(
         role: formData.role,
         password: formData.password,
         reg_number : formData.reg_number,
+      }
+      
+      if (isStudent) {
+        payload.student_type = formData.student_type
       }
 
       if (!formData.branch_id) {
@@ -94,7 +100,9 @@ export function useUserForm(
         branch_id: "",
         password: "",
         reg_number: "",
+        student_type: "regular",
       })
+
       
       setTimeout(() => {
         setIsAddUserOpen(false)

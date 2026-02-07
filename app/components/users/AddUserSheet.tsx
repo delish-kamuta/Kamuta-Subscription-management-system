@@ -19,6 +19,7 @@ type Props = {
     branch_id: string
     password: string
     reg_number: string
+    student_type?: string
   }
   setFormData: (data: any) => void
   branches: BranchOption[]
@@ -79,10 +80,27 @@ export function AddUserSheet({ open, onOpenChange, error, successMessage, isLoad
           </div>
 
           {formData.role.toLowerCase() === 'student' && (
+            <>
             <div className="space-y-2">
               <label htmlFor="reg_number" className="text-sm font-medium">Registration Number *</label>
               <Input id="reg_number" type="text" value={formData.reg_number} onChange={(e) => setFormData({ ...formData, reg_number: e.target.value })} required={formData.role.toLowerCase() === 'student'} placeholder="STU2024001" />
             </div>
+
+            {user?.role === "ADMIN" && (
+                <div className="space-y-2">
+                  <label htmlFor="student_type" className="text-sm font-medium">Student Type</label>
+                  <select
+                    id="student_type"
+                    value={formData.student_type || 'regular'}
+                    onChange={(e) => setFormData({ ...formData, student_type: e.target.value })}
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    <option value="regular">Regular</option>
+                    <option value="leader">Leader</option>
+                  </select>
+                </div>
+              )}
+            </>
           )}
 
           <div className="space-y-2">

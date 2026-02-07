@@ -120,7 +120,8 @@ export default function UsersPage() {
             role: selectedUser.role,
             branch_id: selectedUser.branch_id,
             password: '',
-            reg_number: selectedUser?.student?.reg_number || ''
+            reg_number: selectedUser?.student?.reg_number || '',
+            student_type: 'regular' // Defaults to regular as we don't have it on User object yet
           }}
           setFormData={() => {}}
           branches={branches}
@@ -145,7 +146,8 @@ export default function UsersPage() {
             role: selectedUser.role,
             branch_id: selectedUser.branch_id,
             password: selectedUser.password || '',
-            reg_number: selectedUser?.student?.reg_number || ''
+            reg_number: selectedUser?.student?.reg_number || '',
+            student_type: 'regular' // Defaults to regular
           }}
           setFormData={(fd) => {
             if (!selectedUser) return
