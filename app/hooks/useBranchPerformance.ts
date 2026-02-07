@@ -7,6 +7,14 @@ interface UseBranchPerformanceProps {
   timeRange?: string;
 }
 
+// Helper to safely convert any value to a number
+const safeNumber = (val: any): number => {
+  if (val === null || val === undefined) return 0;
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  const num = parseFloat(String(val)); // Use parseFloat to handle strings like "583.34"
+  return isNaN(num) ? 0 : num;
+};
+
 export const useBranchPerformance = ({ branchId, timeRange }: UseBranchPerformanceProps) => {
   const [data, setData] = useState<DashboardAnalyticsData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -43,15 +51,22 @@ export const useBranchPerformance = ({ branchId, timeRange }: UseBranchPerforman
     const peopleServedByBranch = data.branch_analysis?.people_served_by_branch || [];
     const revenueByBranch = data.branch_analysis?.revenue_by_branch || [];
 
-    const branchPerformance = peopleServedByBranch.map(b => ({
-      name: b.branch,
-      served: b.people_served,
-      percentage: b.percentage,
-      revenueData: revenueByBranch.find(r => r.branch === b.branch) || { total: 0, subscription: 0, paid_ticket: 0 }
-    }));
+    const branchPerformance = peopleServedByBranch.map(b => {
+      const r = revenueByBranch.find(r => r.branch === b.branch);
+      return {
+        name: b.branch,
+        served: safeNumber(b.people_served),
+        percentage: safeNumber(b.percentage),
+        revenueData: {
+          total: safeNumber(r?.total),
+          subscription: safeNumber(r?.subscription),
+          paid_ticket: safeNumber(r?.paid_ticket)
+        }
+      };
+    });
 
-    const totalServed = data.summary?.people_served?.total || 0;
-    const totalRevenue = data.summary?.total_revenue?.amount || 0;
+    const totalServed = safeNumber(data.summary?.people_served?.total);
+    const totalRevenue = safeNumber(data.summary?.total_revenue?.amount);
     // Use served people data for the pie chart
     const pieData = branchPerformance.map(b => ({
       name: b.name,

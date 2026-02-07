@@ -17,7 +17,7 @@ const initialState: RolesState = {
         { name: 'worker' },
         { name: 'cashier' },
         { name: 'scanner' },
-        { name: 'Admin' },
+        { name: 'admin' },
       ],
   loaded: true,
 }

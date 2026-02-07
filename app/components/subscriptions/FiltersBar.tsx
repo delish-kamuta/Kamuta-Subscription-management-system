@@ -73,7 +73,7 @@ export default function FiltersBar({
               <option value="All">Subscription Type: All</option>
               <option value="VVIP">VVIP</option>
               <option value="Vip">VIP</option>
-              <option value="Ordinary">Ordinary</option>
+              <option value="Regular">Regular</option>
             </select>
             <div className="relative w-full md:w-auto">
               <select

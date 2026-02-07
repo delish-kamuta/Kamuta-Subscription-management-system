@@ -1,7 +1,7 @@
 import { store } from "~/store/store"
 
 // Use environment variable if available, otherwise fallback (useful for local dev)
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://76.13.118.134:8000/api";
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "https://delish-kamuta.com/api";
 
 console.log(`[API] Configuration: Base URL is ${API_BASE_URL}`);
 

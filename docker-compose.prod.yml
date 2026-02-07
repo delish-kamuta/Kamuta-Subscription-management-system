@@ -2,10 +2,11 @@ services:
   app:
     image: delishkamuta01/kamuta-subscription-management-system-app:latest
     ports:
-      - "80:3000"
+      - "3000:3000"
     environment:
       - NODE_ENV=production
-      - VITE_API_URL=http://76.13.118.134:8000/api
+      # Use the HTTPS domain now that SSL is set up
+      - VITE_API_URL=https://delish-kamuta.com/api
     restart: always
 
   backend:

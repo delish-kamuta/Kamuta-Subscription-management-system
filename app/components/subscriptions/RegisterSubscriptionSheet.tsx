@@ -88,7 +88,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         }
       }
       
-      const totalAmount = number_of_meal * pricePerMeal
+      const totalAmount = Math.round(number_of_meal * Number(pricePerMeal))
       setFormData((fd) => {
         const newAmount = String(totalAmount)
         return fd.amount_paid === newAmount ? fd : { ...fd, amount_paid: newAmount }
