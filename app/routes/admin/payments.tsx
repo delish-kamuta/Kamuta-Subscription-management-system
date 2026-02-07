@@ -34,6 +34,7 @@ const Payments = () => {
     totalPages,
     handleExport,
     handleViewDetails,
+    branches,
   } = usePaymentStats(itemsPerPage);
 
   const { data: overviewData } = usePaymentOverview({ time_range: 'week' });
@@ -80,6 +81,7 @@ const Payments = () => {
           endDate={endDate}
           setEndDate={setEndDate}
           onExport={handleExport}
+          branches={branches}
         />
 
         {loading && (

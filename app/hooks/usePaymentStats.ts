@@ -210,5 +210,6 @@ export const usePaymentStats = (itemsPerPage: number = 8) => {
     totalPages,
     handleExport,
     handleViewDetails,
+    branches: branchesState?.items || [],
   };
 };
