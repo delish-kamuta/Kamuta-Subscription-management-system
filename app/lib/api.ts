@@ -1,7 +1,8 @@
 import { store } from "~/store/store"
 
 // Use environment variable if available, otherwise fallback (useful for local dev)
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "https://delish-kamuta.com/api";
+export const API_BASE_URL = "https://kamuta-subscription-management-system-bn-p99l.onrender.com/api";
+// export const API_BASE_URL = import.meta.env.VITE_API_URL || "https://delish-kamuta.com/api";
 
 console.log(`[API] Configuration: Base URL is ${API_BASE_URL}`);
 
