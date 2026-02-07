@@ -11,6 +11,9 @@ export interface BranchItem {
   worker_regular_price?: number;
   worker_vip_price?: number;
   worker_vvip_price?: number;
+  student_leader_regular_price?: number;
+  student_leader_vip_price?: number;
+  student_leader_vvip_price?: number;
   irregular_student_regular_price?: number;
   irregular_student_vip_price?: number;
   irregular_student_vvip_price?: number;
@@ -50,6 +53,9 @@ export const fetchBranchesThunk = createAsyncThunk(
         worker_regular_price: Number(b.worker_regular_price) || 0,
         worker_vip_price: Number(b.worker_vip_price) || 0,
         worker_vvip_price: Number(b.worker_vvip_price) || 0,
+        student_leader_regular_price: Number(b.student_leader_regular_price) || 0,
+        student_leader_vip_price: Number(b.student_leader_vip_price) || 0,
+        student_leader_vvip_price: Number(b.student_leader_vvip_price) || 0,
         irregular_student_regular_price: Number(b.irregular_student_regular_price) || 0,
         irregular_student_vip_price: Number(b.irregular_student_vip_price) || 0,
         irregular_student_vvip_price: Number(b.irregular_student_vvip_price) || 0,

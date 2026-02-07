@@ -48,6 +48,9 @@ export default function BranchesPage() {
     worker_regular_price: 2000,
     worker_vip_price: 2000,
     worker_vvip_price: 2000,
+    student_leader_regular_price: 0,
+    student_leader_vip_price: 0,
+    student_leader_vvip_price: 0,
     irregular_student_regular_price: 800,
     irregular_student_vip_price: 1200,
     irregular_student_vvip_price: 1600,
@@ -82,6 +85,9 @@ export default function BranchesPage() {
         worker_regular_price: Number(branchForm.worker_regular_price),
         worker_vip_price: Number(branchForm.worker_vip_price),
         worker_vvip_price: Number(branchForm.worker_vvip_price),
+        student_leader_regular_price: Number(branchForm.student_leader_regular_price),
+        student_leader_vip_price: Number(branchForm.student_leader_vip_price),
+        student_leader_vvip_price: Number(branchForm.student_leader_vvip_price),
         irregular_student_regular_price: Number(branchForm.irregular_student_regular_price),
         irregular_student_vip_price: Number(branchForm.irregular_student_vip_price),
         irregular_student_vvip_price: Number(branchForm.irregular_student_vvip_price),
@@ -101,6 +107,9 @@ export default function BranchesPage() {
         worker_regular_price: Number(newBranch.worker_regular_price),
         worker_vip_price: Number(newBranch.worker_vip_price),
         worker_vvip_price: Number(newBranch.worker_vvip_price),
+        student_leader_regular_price: Number(newBranch.student_leader_regular_price),
+        student_leader_vip_price: Number(newBranch.student_leader_vip_price),
+        student_leader_vvip_price: Number(newBranch.student_leader_vvip_price),
         irregular_student_regular_price: Number(newBranch.irregular_student_regular_price),
         irregular_student_vip_price: Number(newBranch.irregular_student_vip_price),
         irregular_student_vvip_price: Number(newBranch.irregular_student_vvip_price),
@@ -121,6 +130,9 @@ export default function BranchesPage() {
           worker_regular_price: 2000,
           worker_vip_price: 2000,
           worker_vvip_price: 2000,
+          student_leader_regular_price: 0,
+          student_leader_vip_price: 0,
+          student_leader_vvip_price: 0,
           irregular_student_regular_price: 800,
           irregular_student_vip_price: 1200,
           irregular_student_vvip_price: 1600,
@@ -152,6 +164,9 @@ export default function BranchesPage() {
         worker_regular_price: Number(branchForm.worker_regular_price),
         worker_vip_price: Number(branchForm.worker_vip_price),
         worker_vvip_price: Number(branchForm.worker_vvip_price),
+        student_leader_regular_price: Number(branchForm.student_leader_regular_price),
+        student_leader_vip_price: Number(branchForm.student_leader_vip_price),
+        student_leader_vvip_price: Number(branchForm.student_leader_vvip_price),
         irregular_student_regular_price: Number(branchForm.irregular_student_regular_price),
         irregular_student_vip_price: Number(branchForm.irregular_student_vip_price),
         irregular_student_vvip_price: Number(branchForm.irregular_student_vvip_price),
@@ -171,6 +186,9 @@ export default function BranchesPage() {
         worker_regular_price: Number(updated.worker_regular_price ?? branchForm.worker_regular_price),
         worker_vip_price: Number(updated.worker_vip_price ?? branchForm.worker_vip_price),
         worker_vvip_price: Number(updated.worker_vvip_price ?? branchForm.worker_vvip_price),
+        student_leader_regular_price: Number(updated.student_leader_regular_price ?? branchForm.student_leader_regular_price),
+        student_leader_vip_price: Number(updated.student_leader_vip_price ?? branchForm.student_leader_vip_price),
+        student_leader_vvip_price: Number(updated.student_leader_vvip_price ?? branchForm.student_leader_vvip_price),
         irregular_student_regular_price: Number(updated.irregular_student_regular_price ?? branchForm.irregular_student_regular_price),
         irregular_student_vip_price: Number(updated.irregular_student_vip_price ?? branchForm.irregular_student_vip_price),
         irregular_student_vvip_price: Number(updated.irregular_student_vvip_price ?? branchForm.irregular_student_vvip_price),
@@ -212,6 +230,9 @@ export default function BranchesPage() {
       worker_regular_price: branch.worker_regular_price || 0,
       worker_vip_price: branch.worker_vip_price || 0,
       worker_vvip_price: branch.worker_vvip_price || 0,
+      student_leader_regular_price: branch.student_leader_regular_price || 0,
+      student_leader_vip_price: branch.student_leader_vip_price || 0,
+      student_leader_vvip_price: branch.student_leader_vvip_price || 0,
       irregular_student_regular_price: branch.irregular_student_regular_price || 0,
       irregular_student_vip_price: branch.irregular_student_vip_price || 0,
       irregular_student_vvip_price: branch.irregular_student_vvip_price || 0,
@@ -354,6 +375,9 @@ export default function BranchesPage() {
                   worker_regular_price: 2000,
                   worker_vip_price: 2000,
                   worker_vvip_price: 2000,
+                  student_leader_regular_price: 0,
+                  student_leader_vip_price: 0,
+                  student_leader_vvip_price: 0,
                   irregular_student_regular_price: 800,
                   irregular_student_vip_price: 1200,
                   irregular_student_vvip_price: 1600,
@@ -376,6 +400,7 @@ export default function BranchesPage() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Student (Reg/VIP/VVIP)</TableHead>
+                    <TableHead>S. Leader (Reg/VIP/VVIP)</TableHead>
                     <TableHead>Worker (Reg/VIP/VVIP)</TableHead>
                     <TableHead>Irr. Student (Reg/VIP/VVIP)</TableHead>
                     <TableHead>Irr. Worker (Reg/VIP/VVIP)</TableHead>
@@ -391,12 +416,13 @@ export default function BranchesPage() {
                         <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                         <TableCell><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                       </TableRow>
                     ))
                   ) : filteredBranches.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                         No branches found.
                       </TableCell>
                     </TableRow>
@@ -406,6 +432,9 @@ export default function BranchesPage() {
                         <TableCell className="font-medium">{branch.name}</TableCell>
                         <TableCell>
                           {branch.student_regular_price?.toLocaleString()} / {branch.student_vip_price?.toLocaleString()} / {branch.student_vvip_price?.toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          {branch.student_leader_regular_price?.toLocaleString()} / {branch.student_leader_vip_price?.toLocaleString()} / {branch.student_leader_vvip_price?.toLocaleString()}
                         </TableCell>
                         <TableCell>
                           {branch.worker_regular_price?.toLocaleString()} / {branch.worker_vip_price?.toLocaleString()} / {branch.worker_vvip_price?.toLocaleString()}

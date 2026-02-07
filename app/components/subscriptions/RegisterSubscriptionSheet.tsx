@@ -27,6 +27,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
     phone: '',
     reg_number: '',
     role: 'student',
+    student_type: 'regular',
     days: '',
     meal_type: 'Regular',
     branch_id: '',
@@ -71,18 +72,24 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
       if (formData.meal_type === 'Regular') {
         if (formData.role === 'worker') {
           pricePerMeal = selectedBranch.worker_regular_price || 0
+        } else if (formData.role === 'student' && formData.student_type === 'leader') {
+          pricePerMeal = selectedBranch.student_leader_regular_price || 0
         } else {
           pricePerMeal = selectedBranch.student_regular_price || 0
         }
       } else if (formData.meal_type === 'VIP') {
         if (formData.role === 'worker') {
           pricePerMeal = selectedBranch.worker_vip_price || 0
+        } else if (formData.role === 'student' && formData.student_type === 'leader') {
+          pricePerMeal = selectedBranch.student_leader_vip_price || 0
         } else {
           pricePerMeal = selectedBranch.student_vip_price || 0
         }
       } else if (formData.meal_type === 'VVIP') {
         if (formData.role === 'worker') {
           pricePerMeal = selectedBranch.worker_vvip_price || 0
+        } else if (formData.role === 'student' && formData.student_type === 'leader') {
+          pricePerMeal = selectedBranch.student_leader_vvip_price || 0
         } else {
           pricePerMeal = selectedBranch.student_vvip_price || 0
         }
@@ -94,7 +101,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         return fd.amount_paid === newAmount ? fd : { ...fd, amount_paid: newAmount }
       })
     }
-  }, [formData.branch_id, formData.days, formData.meal_type, branches, formData.role])
+  }, [formData.branch_id, formData.days, formData.meal_type, branches, formData.role, formData.student_type])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -124,8 +131,13 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
       }
 
       // Only include reg_number for students
-      if (formData.role === 'student' && formData.reg_number.trim()) {
-        payload.reg_number = formData.reg_number.trim()
+      if (formData.role === 'student') {
+        if (formData.reg_number.trim()) {
+          payload.reg_number = formData.reg_number.trim()
+        }
+        if (currentUser?.role === 'ADMIN') {
+          payload.student_type = formData.student_type
+        }
       }
 
       const resp = await fetch(`${API_BASE_URL}/users`, {
@@ -186,7 +198,10 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
           role: formData.role,
           branch_id: selectedBranchId,
           created_at: new Date().toISOString(),
-          student: formData.role === 'student' ? { reg_number: formData.reg_number } : undefined,
+          student: formData.role === 'student' ? { 
+            reg_number: formData.reg_number,
+            student_type: currentUser?.role === 'ADMIN' ? formData.student_type : undefined
+          } : undefined,
         }))
 
         if (formData.role === 'worker') {
@@ -204,6 +219,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         phone: '',
         reg_number: '',
         role: 'student',
+        student_type: 'regular',
         days: '',
         meal_type: 'Regular',
         branch_id: branches[0]?.id || '',
@@ -324,6 +340,19 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
                     required
                   />
                 </div>
+                {currentUser?.role === 'ADMIN' && (
+                  <div className='space-y-2'>
+                    <label className='text-sm font-medium text-gray-700'>Student Type *</label>
+                    <select
+                      className='w-full border rounded-md px-3 py-2'
+                      value={formData.student_type}
+                      onChange={(e) => setFormData({ ...formData, student_type: e.target.value })}
+                    >
+                      <option value='regular'>Regular Student</option>
+                      <option value='leader'>Student Leader</option>
+                    </select>
+                  </div>
+                )}
                 <div className='space-y-2'>
                   <label className='text-sm font-medium text-gray-700'>Number of Days *</label>
                   <input 
