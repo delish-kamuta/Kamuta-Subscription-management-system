@@ -28,6 +28,7 @@ const Subscription = () => {
   const { items: studentItems, loading: studentLoading, error: studentError } = useStudentSubscriptions();
   const { items: workerItems, loading: workerLoading, error: workerError } = useWorkerSubscriptions();
   const { data: overviewData, loading: overviewLoading } = useSubscriptionOverview({ time_range: 'month' });
+  const { data: todayOverviewData } = useSubscriptionOverview({ time_range: 'today' });
   const { items: branches } = useAppSelector((s) => (s as any).branches || { items: [] });
   
   const stats = overviewData ? [
@@ -41,9 +42,9 @@ const Subscription = () => {
     {
       id: "newSubscription",
       title: "New Subscriptions",
-      value: overviewData.summary.new_subscriptions.current,
-      currentDay: overviewData.summary.new_subscriptions.current,
-      lastDayCount: overviewData.summary.new_subscriptions.previous,
+      value: todayOverviewData?.summary.new_subscriptions.current ?? 0,
+      currentDay: todayOverviewData?.summary.new_subscriptions.current ?? 0,
+      lastDayCount: todayOverviewData?.summary.new_subscriptions.previous ?? 0,
     },
     {
       id: "expiringThisWeek",
