@@ -331,7 +331,7 @@ const MealsLogs = () => {
                     <TableCell className="text-sm">{item.deduction_source}</TableCell>
                     <TableCell className="whitespace-nowrap hidden lg:table-cell text-sm">{new Date(item.created_at).toLocaleString()}</TableCell>
                     <TableCell className="whitespace-nowrap hidden md:table-cell text-sm">
-                      {item.scanner?.full_name || resolveUserName(item.scanned_by) || (item.scanned_by ? String(item.scanned_by) : "")}
+                      {item.scannedBy?.full_name || item.scanner?.full_name || resolveUserName(item.scanned_by) || (item.scanned_by ? String(item.scanned_by) : "")}
                     </TableCell>
                     {!isCashier && (
                       <TableCell className="whitespace-nowrap hidden xl:table-cell text-sm">{resolveBranchName(item.branch_id)}</TableCell>
