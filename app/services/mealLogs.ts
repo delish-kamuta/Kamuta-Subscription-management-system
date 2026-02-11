@@ -12,6 +12,10 @@ export interface MealLogItem {
     id: string
     full_name: string
   }
+  scannedBy?: {
+    id: string
+    full_name: string
+  }
   created_at: string
 }
 
