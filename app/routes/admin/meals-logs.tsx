@@ -27,6 +27,7 @@ import { fetchUsersThunk } from "~/store/usersSlice";
 import { fetchBranchesThunk } from "~/store/branchesSlice";
 import { fetchMealLogsThunk } from "~/store/mealLogsSlice";
 import { type MealLogsQuery } from "~/services/mealLogs";
+import { MealLogsStats } from "~/components/meal-logs/MealLogsStats";
 
 const MealsLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -159,6 +160,14 @@ const MealsLogs = () => {
         action={
           <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
         }
+      />
+
+      {/* Stats Section */}
+      <MealLogsStats
+        data={mealLogs} 
+        resolveUserName={resolveUserName} 
+        resolveBranchName={resolveBranchName} 
+        branches={branches}
       />
 
       {/* Meals Logs Table Section */}
