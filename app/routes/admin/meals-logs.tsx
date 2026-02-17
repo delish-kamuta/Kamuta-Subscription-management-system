@@ -18,6 +18,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
+import { Skeleton as UiSkeleton } from "~/components/ui/skeleton";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~\/lib\/utils";
@@ -295,24 +296,24 @@ const MealsLogs = () => {
         {mealLogsLoading && (
           <div className="mt-6 space-y-4">
              <div className="flex justify-between items-center mb-4">
-               <Skeleton className="h-10 w-[200px]" />
-               <Skeleton className="h-10 w-[120px]" />
+               <UiSkeleton className="h-10 w-[200px]" />
+               <UiSkeleton className="h-10 w-[120px]" />
              </div>
              <div className="border rounded-md">
                 <div className="h-12 bg-gray-50/50 border-b px-4 flex items-center gap-4">
-                   <Skeleton className="h-4 w-[100px]" />
-                   <Skeleton className="h-4 w-[80px]" />
-                   <Skeleton className="h-4 w-[80px]" />
-                   <Skeleton className="h-4 w-[120px]" />
-                   <Skeleton className="h-4 w-[120px]" />
+                   <UiSkeleton className="h-4 w-[100px]" />
+                   <UiSkeleton className="h-4 w-[80px]" />
+                   <UiSkeleton className="h-4 w-[80px]" />
+                   <UiSkeleton className="h-4 w-[120px]" />
+                   <UiSkeleton className="h-4 w-[120px]" />
                 </div>
                 {[1, 2, 3, 4, 5].map((i) => (
                    <div key={i} className="h-16 px-4 flex items-center gap-4 border-b last:border-0">
-                      <Skeleton className="h-4 w-[100px]" />
-                      <Skeleton className="h-4 w-[80px]" />
-                      <Skeleton className="h-4 w-[80px]" />
-                      <Skeleton className="h-4 w-[120px]" />
-                      <Skeleton className="h-4 w-[120px]" />
+                      <UiSkeleton className="h-4 w-[100px]" />
+                      <UiSkeleton className="h-4 w-[80px]" />
+                      <UiSkeleton className="h-4 w-[80px]" />
+                      <UiSkeleton className="h-4 w-[120px]" />
+                      <UiSkeleton className="h-4 w-[120px]" />
                    </div>
                 ))}
              </div>
