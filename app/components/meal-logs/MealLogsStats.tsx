@@ -75,10 +75,33 @@ export const MealLogsStats = ({
     ],
 
     // Map dailyLogsData label -> date
-    dailyLogsData: statsData?.dailyLogsData?.map(d => ({
-      date: d.label,
-      count: d.count
-    })) || [],
+    dailyLogsData: statsData?.dailyLogsData?.map((d: any) => {
+      // Prioritize `day` (e.g., "Mon") for Week/Day view, otherwise fallback to `date` (e.g., "23/02/2026")
+      // Ensure we always return a string, even if properties are missing
+      const day = d.day || d.Day;
+      const date = d.date || d.Date;
+      const label = d.label || d.Label; 
+      
+      let displayDate = "Unknown";
+      
+      // Check if we have day and date for the preferred format
+      if (day && date && (timeFilter === "Week" || timeFilter === "Day")) {
+        displayDate = `${day}, ${date}`;
+      } 
+      // Fallback strategies
+      else if (date) {
+        displayDate = date;
+      } else if (day) {
+        displayDate = day;
+      } else if (label) {
+        displayDate = label;
+      }
+      
+      return {
+        date: displayDate,
+        count: d.count || 0
+      };
+    }) || [],
 
     branchStats: statsData?.branchStats || {},
   };
@@ -202,10 +225,11 @@ export const MealLogsStats = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Total Meals Card */}
         <StatsCard
-          title={`Total Meals ${currentMonthName}`}
-          value={stats.thisMonthMeals}
-          currentDay={stats.thisMonthMeals}
-          lastDayCount={stats.lastMonthMeals}
+          title="Total Meals Served"
+          value={stats.totalMeals}
+          // Assuming the API might return relevant comparison data later
+          currentDay={stats.totalMeals} 
+          lastDayCount={0}
         />
 
         {/* Top Scanner Users */}
