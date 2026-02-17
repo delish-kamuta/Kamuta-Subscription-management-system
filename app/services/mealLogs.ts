@@ -63,7 +63,7 @@ export interface MealLogsStatsResponse {
   success: boolean;
   data?: {
     totalMeals: number;
-    dailyLogsData: { label: string; count: number }[]; // Changed date -> label
+    dailyLogsData: { date: string; day: string; count: number }[]; // Updated to match new backend response
     lunchVsSupperData: { Lunch: number; Supper: number }; // Changed array -> object
     branchStats: Record<string, { Regular: number; VIP: number; VVIP: number }>;
     topScanners: { scanned_by: string; full_name: string; count: number }[]; // Expanded

@@ -76,7 +76,7 @@ export const MealLogsStats = ({
 
     // Map dailyLogsData label -> date
     dailyLogsData: statsData?.dailyLogsData?.map(d => ({
-      date: d.label,
+      date: (timeFilter === "Week" || timeFilter === "Day") && d.day ? d.day : d.date || d.day, 
       count: d.count
     })) || [],
 
