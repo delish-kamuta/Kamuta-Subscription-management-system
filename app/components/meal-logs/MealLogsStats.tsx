@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
 } from "~/components/ui/dropdown-menu";
 import { Button } from "~/components/ui/button";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 
 interface MealLogsStatsProps {
   resolveUserName: (id: string | number | null | undefined) => string;
@@ -403,12 +403,13 @@ export const MealLogsStats = ({
   return (
     <div className="flex flex-col gap-6 mb-8">
       {/* Filters */}
-      <div className="flex justify-end">
+      <div className="flex justify-end items-center gap-2">
+        {isRefetching && <span className="text-xs text-muted-foreground animate-pulse">Updating...</span>}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="default" className="min-w-[100px] justify-between border border-black/10">
-              {timeFilter}
-              <ChevronDown className="h-4 w-4 opacity-50" />
+            <Button variant="default" className="min-w-[100px] justify-between border border-black/10" disabled={isRefetching}>
+              {isRefetching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : timeFilter}
+              <ChevronDown className="h-4 w-4 opacity-50 ml-2" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-white border-none">
@@ -432,25 +433,24 @@ export const MealLogsStats = ({
             else if (timeFilter === "Month") { label = "(This Month)"; trend = "vs last month"; }
             else if (timeFilter === "Year") { label = "(This Year)"; trend = "vs last year"; }
             
-            // If filtering by specific date, maybe clarify? For now, stick to the main filter label.
-            
             return (
+              <>
                 <StatsCard
-                title={`Total Meals Served ${label}`}
-                value={stats.totalMeals}
-                // Assuming the API might return relevant comparison data later
-                currentDay={stats.totalMeals} 
-                lastDayCount={0}
-                trendLabel={trend}
+                  title={`Total Meals Served ${label}`}
+                  value={stats.totalMeals}
+                  currentDay={stats.totalMeals} 
+                  lastDayCount={0}
+                  trendLabel={trend}
                 />
+
+                {/* Top Scanner Users */}
+                <TopScanners data={stats.topScanners} label={label} />
+
+                {/* Lunch VS Supper */}
+                <LunchVsSupper data={stats.lunchVsSupperData} label={label} />
+              </>
             );
         })()}
-
-        {/* Top Scanner Users */}
-        <TopScanners data={stats.topScanners} />
-
-        {/* Lunch VS Supper */}
-        <LunchVsSupper data={stats.lunchVsSupperData} />
 
         {/* Daily Meals Logs & Meals Served By Branch */}
         <div className="lg:col-span-3 grid grid-cols-1 lg:grid-cols-2 gap-6">

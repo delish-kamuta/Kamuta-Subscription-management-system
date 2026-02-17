@@ -50,7 +50,7 @@ export const DailyMealsChart = ({ data, selectedDate, onSelectDate }: DailyMeals
             className={`cursor-pointer transition-colors p-2 rounded-lg -mx-2 ${isSelected ? 'bg-blue-50 border border-blue-100' : 'hover:bg-slate-50'}`}
           >
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className={`font-semibold min-w-[3rem] ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
+              <span className={`font-semibold min-w-12 ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
                 {item.date || "N/A"}
               </span>
               <span className={`font-medium ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
