@@ -74,12 +74,21 @@ export interface MealLogsStatsResponse {
   message?: string;
 }
 
-export async function getMealLogsStats(timeFilter: string = "Week"): Promise<MealLogsStatsResponse> {
+export async function getMealLogsStats(
+  timeFilter: string = "Week",
+  selectedPeriodDate?: string
+): Promise<MealLogsStatsResponse> {
   const tokenError = ensureValidTokenOrMessage()
   if (tokenError) return { success: false, message: tokenError }
   
   try {
-    const data = await apiClient<any>(`/meal-logs/stats?timeFilter=${timeFilter}`)
+    const params = new URLSearchParams();
+    params.set("timeFilter", timeFilter);
+    if (selectedPeriodDate) {
+      params.set("selectedPeriodDate", selectedPeriodDate);
+    }
+    
+    const data = await apiClient<any>(`/meal-logs/stats?${params.toString()}`)
     return data as MealLogsStatsResponse
   } catch (e: any) {
     return { success: false, message: e?.message || "Failed to fetch stats" }
