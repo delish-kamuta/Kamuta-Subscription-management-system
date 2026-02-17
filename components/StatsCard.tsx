@@ -3,9 +3,10 @@ interface StatsCard {
   value: number | string;
   currentDay: number | string;
   lastDayCount: number | string;
+  trendLabel?: string;
 }
 import { calculateTrendPercentage, cn } from "app/lib/utils";
-const StatsCard = ({ title, value, currentDay, lastDayCount }: StatsCard) => {
+const StatsCard = ({ title, value, currentDay, lastDayCount, trendLabel }: StatsCard) => {
   const current = typeof currentDay === 'number' ? currentDay : Number(currentDay) || 0;
   const last = typeof lastDayCount === 'number' ? lastDayCount : Number(lastDayCount) || 0;
   const { trend, percentage } = calculateTrendPercentage(current, last);
@@ -30,7 +31,7 @@ const StatsCard = ({ title, value, currentDay, lastDayCount }: StatsCard) => {
                 {Math.round(percentage)}%
               </figcaption>
             </figure>
-            <p className="text-sm font-medium text-gray-100 truncate">vs yesterday</p>
+            <p className="text-sm font-medium text-gray-100 truncate">{trendLabel || "vs yesterday"}</p>
           </div>
         </div>
         <div className="w-full">

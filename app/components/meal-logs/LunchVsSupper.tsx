@@ -3,12 +3,12 @@ interface MealStat {
   value: number;
 }
 
-export const LunchVsSupper = ({ data }: { data: MealStat[] }) => {
+export const LunchVsSupper = ({ data, label }: { data: MealStat[]; label?: string }) => {
   const maxVal = Math.max(...data.map((d) => d.value)) || 1;
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-full">
-      <h3 className="font-semibold text-gray-900 mb-6">Lunch VS Supper</h3>
+      <h3 className="font-semibold text-gray-900 mb-6">Lunch VS Supper {label}</h3>
       <div className="space-y-6">
         {data.map((item) => (
           <div key={item.name} className="flex flex-col gap-1">
