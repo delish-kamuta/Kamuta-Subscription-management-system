@@ -58,3 +58,30 @@ export async function listMealLogs(query: MealLogsQuery = {}): Promise<MealLogsR
     return { success: false, message: e?.message || "Network error" }
   }
 }
+
+export interface MealLogsStatsResponse {
+  success: boolean;
+  data?: {
+    totalMeals: number;
+    dailyLogsData: { label: string; count: number }[]; // Changed date -> label
+    lunchVsSupperData: { Lunch: number; Supper: number }; // Changed array -> object
+    branchStats: Record<string, { Regular: number; VIP: number; VVIP: number }>;
+    topScanners: { scanned_by: string; full_name: string; count: number }[]; // Expanded
+    // Adding optional fields in case they are restored later or computed on frontend
+    thisMonthMeals?: number;
+    lastMonthMeals?: number;
+  };
+  message?: string;
+}
+
+export async function getMealLogsStats(timeFilter: string = "Week"): Promise<MealLogsStatsResponse> {
+  const tokenError = ensureValidTokenOrMessage()
+  if (tokenError) return { success: false, message: tokenError }
+  
+  try {
+    const data = await apiClient<any>(`/meal-logs/stats?timeFilter=${timeFilter}`)
+    return data as MealLogsStatsResponse
+  } catch (e: any) {
+    return { success: false, message: e?.message || "Failed to fetch stats" }
+  }
+}
