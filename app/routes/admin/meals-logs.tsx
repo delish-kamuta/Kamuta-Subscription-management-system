@@ -46,6 +46,7 @@ const MealsLogs = () => {
   const mealLogs = Array.isArray(mealLogsState.items) ? mealLogsState.items : [];
   const mealLogsLoading = mealLogsState.loading;
   const mealLogsLoaded = mealLogsState.loaded;
+  const mealLogsError = mealLogsState.error;
   const branches = useAppSelector((state) => state.branches.items);
   const branchesLoaded = useAppSelector((state) => state.branches.loaded);
   const users = useAppSelector((state) => state.users.items);
@@ -162,6 +163,13 @@ const MealsLogs = () => {
           <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
         }
       />
+
+      {mealLogsError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <strong className="font-bold">Error loading logs:</strong>
+          <span className="block sm:inline"> {mealLogsError}</span>
+        </div>
+      )}
 
       {/* Stats Section */}
       <MealLogsStats 
