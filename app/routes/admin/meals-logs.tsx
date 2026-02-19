@@ -18,6 +18,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
+import { Skeleton as UiSkeleton } from "~/components/ui/skeleton";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~\/lib\/utils";
@@ -27,6 +28,7 @@ import { fetchUsersThunk } from "~/store/usersSlice";
 import { fetchBranchesThunk } from "~/store/branchesSlice";
 import { fetchMealLogsThunk } from "~/store/mealLogsSlice";
 import { type MealLogsQuery } from "~/services/mealLogs";
+import { MealLogsStats } from "~/components/meal-logs/MealLogsStats";
 
 const MealsLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,6 +46,7 @@ const MealsLogs = () => {
   const mealLogs = Array.isArray(mealLogsState.items) ? mealLogsState.items : [];
   const mealLogsLoading = mealLogsState.loading;
   const mealLogsLoaded = mealLogsState.loaded;
+  const mealLogsError = mealLogsState.error;
   const branches = useAppSelector((state) => state.branches.items);
   const branchesLoaded = useAppSelector((state) => state.branches.loaded);
   const users = useAppSelector((state) => state.users.items);
@@ -159,6 +162,20 @@ const MealsLogs = () => {
         action={
           <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
         }
+      />
+
+      {mealLogsError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <strong className="font-bold">Error loading logs:</strong>
+          <span className="block sm:inline"> {mealLogsError}</span>
+        </div>
+      )}
+
+      {/* Stats Section */}
+      <MealLogsStats 
+        resolveUserName={resolveUserName} 
+        resolveBranchName={resolveBranchName} 
+        branches={branches}
       />
 
       {/* Meals Logs Table Section */}
@@ -285,8 +302,29 @@ const MealsLogs = () => {
 
         {/* Loading and Error States */}
         {mealLogsLoading && (
-          <div className="p-6 text-center text-gray-500">
-            Loading meal logs...
+          <div className="mt-6 space-y-4">
+             <div className="flex justify-between items-center mb-4">
+               <UiSkeleton className="h-10 w-[200px]" />
+               <UiSkeleton className="h-10 w-[120px]" />
+             </div>
+             <div className="border rounded-md">
+                <div className="h-12 bg-gray-50/50 border-b px-4 flex items-center gap-4">
+                   <UiSkeleton className="h-4 w-[100px]" />
+                   <UiSkeleton className="h-4 w-[80px]" />
+                   <UiSkeleton className="h-4 w-[80px]" />
+                   <UiSkeleton className="h-4 w-[120px]" />
+                   <UiSkeleton className="h-4 w-[120px]" />
+                </div>
+                {[1, 2, 3, 4, 5].map((i) => (
+                   <div key={i} className="h-16 px-4 flex items-center gap-4 border-b last:border-0">
+                      <UiSkeleton className="h-4 w-[100px]" />
+                      <UiSkeleton className="h-4 w-[80px]" />
+                      <UiSkeleton className="h-4 w-[80px]" />
+                      <UiSkeleton className="h-4 w-[120px]" />
+                      <UiSkeleton className="h-4 w-[120px]" />
+                   </div>
+                ))}
+             </div>
           </div>
         )}
         {mealLogsState.error && (
