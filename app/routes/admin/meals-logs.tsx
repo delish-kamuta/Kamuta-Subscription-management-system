@@ -37,6 +37,7 @@ const MealsLogs = () => {
   const [clientTypeFilter, setClientTypeFilter] = useState<string>("");
   const [mealTypeFilter, setMealTypeFilter] = useState<string>("");
   const [sourceFilter, setSourceFilter] = useState<string>("");
+  const [mealTimeFilter, setMealTimeFilter] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const itemsPerPage = 8;
@@ -115,7 +116,19 @@ const MealsLogs = () => {
     const matchesSource = !sourceFilter || item.deduction_source === sourceFilter;
     const matchesBranch = !branchFilter || item.branch_id === branchFilter;
     
-    return matchesSearch && withinRange && matchesClientType && matchesMealType && matchesSource && matchesBranch;
+    // Meal Time Filter
+    let matchesMealTime = true;
+    if (mealTimeFilter) {
+      const logDate = new Date(item.created_at);
+      const hour = logDate.getHours();
+      if (mealTimeFilter === "Lunch") {
+        matchesMealTime = hour >= 11 && hour < 16;
+      } else if (mealTimeFilter === "Supper") {
+        matchesMealTime = hour >= 16 && hour < 23;
+      }
+    }
+
+    return matchesSearch && withinRange && matchesClientType && matchesMealType && matchesSource && matchesBranch && matchesMealTime;
   }).sort((a, b) => {
     const dateA = new Date(a.created_at).getTime();
     const dateB = new Date(b.created_at).getTime();
@@ -245,6 +258,20 @@ const MealsLogs = () => {
               </select>
             </div>
 
+            {/* Meal Time Filter */}
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">Meal Time</label>
+              <select
+                value={mealTimeFilter}
+                onChange={(e) => setMealTimeFilter(e.target.value)}
+                className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+              >
+                <option value="">All Day</option>
+                <option value="Lunch">Lunch</option>
+                <option value="Supper">Supper</option>
+              </select>
+            </div>
+
             {/* Source Filter */}
             <div>
               <label className="text-xs text-gray-500 block mb-1">Source</label>
@@ -307,8 +334,8 @@ const MealsLogs = () => {
                <UiSkeleton className="h-10 w-[200px]" />
                <UiSkeleton className="h-10 w-[120px]" />
              </div>
-             <div className="border rounded-md">
-                <div className="h-12 bg-gray-50/50 border-b px-4 flex items-center gap-4">
+             <div className="border border-gray-200 rounded-md">
+                <div className="h-12 bg-gray-50/50 border-b border-gray-200 px-4 flex items-center gap-4">
                    <UiSkeleton className="h-4 w-[100px]" />
                    <UiSkeleton className="h-4 w-[80px]" />
                    <UiSkeleton className="h-4 w-[80px]" />
@@ -316,7 +343,7 @@ const MealsLogs = () => {
                    <UiSkeleton className="h-4 w-[120px]" />
                 </div>
                 {[1, 2, 3, 4, 5].map((i) => (
-                   <div key={i} className="h-16 px-4 flex items-center gap-4 border-b last:border-0">
+                   <div key={i} className="h-16 px-4 flex items-center gap-4 border-b last:border-0 border-gray-200">
                       <UiSkeleton className="h-4 w-[100px]" />
                       <UiSkeleton className="h-4 w-[80px]" />
                       <UiSkeleton className="h-4 w-[80px]" />
