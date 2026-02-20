@@ -15,6 +15,7 @@ export interface PaymentRow {
   status: string;
   branch: string;
   cashier: string;
+  type: 'Subscription' | 'Top Up';
 }
 
 function normalizePaymentMethod(method: string | undefined | null): string {
@@ -59,6 +60,7 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
             id: rows.length + 1,
             customerName,
             regNumber,
+            type: 'Subscription',
             amount: String(ph.amount ?? api.amount_paid ?? ''),
             paymentMethod: normalizePaymentMethod(ph.payment_method),
             date: ph.created_at || api.created_at || api.start_date || '',
@@ -107,6 +109,7 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
                 id: rows.length + 1,
                 customerName,
                 regNumber,
+                type: 'Subscription',
                 amount: String(ph.amount ?? s.amount_paid ?? ''),
                 paymentMethod: normalizePaymentMethod(ph.payment_method),
                 date: ph.created_at || s.created_at || s.start_date || '',
@@ -143,6 +146,7 @@ export async function listPaymentsFromSubscriptions(token: string | null): Promi
                 id: rows.length + 1,
                 customerName,
                 regNumber,
+                type: 'Top Up',
                 amount: String(t.amount || ''),
                 paymentMethod: normalizePaymentMethod(t.payment_method || t.method),
                 date: t.created_at || t.date || '',

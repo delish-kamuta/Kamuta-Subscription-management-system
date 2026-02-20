@@ -1,5 +1,16 @@
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { Header } from "../../../components/Header";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "~/components/ui/dropdown-menu";
+import { Button } from "~/components/ui/button";
+import { ChevronDown, Loader2 } from "lucide-react";
+import { useState } from "react";
 import PaymentFilters from "~/components/payments/PaymentFilters";
 import FinancialStatsSection from "~/components/payments/FinancialStatsSection";
 import ChartsSection from "~/components/payments/ChartsSection";
@@ -10,6 +21,8 @@ import { usePaymentOverview } from "~/hooks/usePaymentOverview";
 
 const Payments = () => {
   const itemsPerPage = 8;
+  const [timeFilter, setTimeFilter] = useState("Week");
+  
   const {
     loading,
     error,
@@ -21,6 +34,8 @@ const Payments = () => {
     setBranchFilter,
     cashierFilter,
     setCashierFilter,
+    typeFilter,
+    setTypeFilter,
     startDate,
     setStartDate,
     endDate,
@@ -36,9 +51,15 @@ const Payments = () => {
     handleViewDetails,
     branches,
     cashiers,
+    revenueByBranch,
   } = usePaymentStats(itemsPerPage);
 
-  const { data: overviewData } = usePaymentOverview({ time_range: 'week' });
+  const { data: overviewData, loading: overviewLoading } = usePaymentOverview({ 
+    time_range: timeFilter.toLowerCase() === 'today' ? 'today' :
+                timeFilter.toLowerCase() === 'week' ? 'week' :
+                timeFilter.toLowerCase() === 'month' ? 'month' :
+                timeFilter.toLowerCase() === 'year' ? 'year' : 'week'
+  });
 
   const paymentMethods = overviewData ? [
     { method: "Cash", count: overviewData.by_payment_method.cash.count, percentage: overviewData.by_payment_method.cash.percentage },
@@ -57,14 +78,34 @@ const Payments = () => {
         }
       />
 
+      <div className="flex justify-end px-4 md:px-6">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="min-w-[100px] justify-between border border-black/10">
+              {overviewLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : timeFilter}
+              <ChevronDown className="h-4 w-4 opacity-50 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-white border-none">
+            <DropdownMenuLabel>Time Range</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setTimeFilter("Today")}>Today</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTimeFilter("Week")}>Week</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTimeFilter("Month")}>Month</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTimeFilter("Year")}>Year</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Financial Summary */}
-      <FinancialStatsSection summary={overviewData?.summary || null} />
+      <FinancialStatsSection summary={overviewData} />
 
       {/* Charts Section */}
       <ChartsSection
         dailyRevenue={dailyRevenue}
         paymentMethods={paymentMethods}
         totalRevenue={overviewData?.summary.total_revenue || 0}
+        revenueByBranch={revenueByBranch}
       />
 
 
@@ -77,6 +118,8 @@ const Payments = () => {
           setBranchFilter={setBranchFilter}
           cashierFilter={cashierFilter}
           setCashierFilter={setCashierFilter}
+          typeFilter={typeFilter}
+          setTypeFilter={setTypeFilter}
           startDate={startDate}
           setStartDate={setStartDate}
           endDate={endDate}
