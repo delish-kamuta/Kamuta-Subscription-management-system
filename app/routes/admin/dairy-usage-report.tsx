@@ -13,6 +13,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "~/components/ui/sheet";
 
 export default function DairyUsageReport() {
   const navigate = useNavigate();
@@ -75,6 +82,15 @@ export default function DairyUsageReport() {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  
+  // Sheet state
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<typeof usageData[0] | null>(null);
+
+  const handleViewDetails = (record: typeof usageData[0]) => {
+    setSelectedRecord(record);
+    setIsSheetOpen(true);
+  };
 
   const filteredData = usageData.filter((item) => {
     const matchBranch = selectedBranch === "All Branches" || item.branch === selectedBranch;
@@ -223,7 +239,7 @@ export default function DairyUsageReport() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleViewDetails(row)}>View Details</DropdownMenuItem>
                       <DropdownMenuItem>Edit Report</DropdownMenuItem>
                       <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
                     </DropdownMenuContent>
@@ -275,6 +291,78 @@ export default function DairyUsageReport() {
              </Button>
         </div>
       </div>
+
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent className="overflow-y-auto bg-white px-6 py-4">
+          <SheetHeader>
+            <SheetTitle>Usage Report Details</SheetTitle>
+            <SheetDescription>
+              Details of dairy usage record.
+            </SheetDescription>
+          </SheetHeader>
+          
+          {selectedRecord && (
+            <div className="mt-6 flex flex-col gap-6">
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-gray-500">Date</span>
+                <span className="text-base font-medium text-gray-900">{selectedRecord.date}</span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="flex flex-col gap-1">
+                    <span className="text-sm font-medium text-gray-500">Recorded By</span>
+                    <span className="text-base font-medium text-gray-900">{selectedRecord.submittedBy}</span>
+                 </div>
+                 <div className="flex flex-col gap-1">
+                     <span className="text-sm font-medium text-gray-500">Time</span>
+                     <span className="text-base font-medium text-gray-900">{selectedRecord.timeSubmitted}</span>
+                 </div>
+              </div>
+              
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-gray-500">Branch</span>
+                <span className="text-base font-medium text-gray-900">{selectedRecord.branch}</span>
+              </div>
+
+               <div className="h-px bg-slate-100 my-2" />
+
+               <div className="flex flex-col gap-3">
+                   <h4 className="font-semibold text-gray-900">Ingredients</h4>
+                   <div className="grid grid-cols-2 gap-y-4">
+                       <div>
+                           <span className="block text-sm text-gray-500">Rice</span>
+                           <span className="block font-medium">{selectedRecord.rice}</span>
+                       </div>
+                       <div>
+                           <span className="block text-sm text-gray-500">Carrot</span>
+                           <span className="block font-medium">{selectedRecord.carrot}</span>
+                       </div>
+                       <div>
+                           <span className="block text-sm text-gray-500">Eggs</span>
+                           <span className="block font-medium">{selectedRecord.eggs}</span>
+                       </div>
+                        <div>
+                           <span className="block text-sm text-gray-500">Milk</span>
+                           <span className="block font-medium">{selectedRecord.milk}</span>
+                       </div>
+                   </div>
+               </div>
+
+                <div className="h-px bg-slate-100 my-2" />
+                
+                <div className="flex flex-col gap-1 bg-slate-50 p-4 rounded-lg">
+                    <span className="text-sm font-medium text-gray-500">Total Cost</span>
+                    <span className="text-xl font-bold text-gray-900">{selectedRecord.totalCost} RWF</span>
+                </div>
+                
+                <div className="flex gap-2 mt-4">
+                     <Button variant="outline" className="flex-1" onClick={() => setIsSheetOpen(false)}>Close</Button>
+                     <Button className="flex-1 bg-blue-600 hover:bg-blue-700">Edit Record</Button>
+                </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </main>
   );
 }
