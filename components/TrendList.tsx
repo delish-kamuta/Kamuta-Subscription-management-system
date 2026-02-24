@@ -1,4 +1,7 @@
 
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
+
 interface TrendItem {
   label: string;
   value: number;
@@ -15,6 +18,7 @@ interface TrendListProps {
   emptyMessage?: string;
   loading?: boolean;
   maxValue?: number;
+  limit?: number;
 }
 
 export const TrendList = ({
@@ -25,7 +29,9 @@ export const TrendList = ({
   emptyMessage = "No data available",
   loading = false,
   maxValue,
+  limit,
 }: TrendListProps) => {
+  const [expanded, setExpanded] = useState(false);
   const safeData = Array.isArray(items) ? items : [];
 
   // Calculate max value for progress bar scaling
@@ -34,8 +40,11 @@ export const TrendList = ({
   const maxVal = Number.isFinite(maxValRaw) && maxValRaw > 0 ? maxValRaw : 1;
   const clamp = (n: number) => Math.max(0, Math.min(100, n));
 
+  const itemsToShow = limit && !expanded ? safeData.slice(0, limit) : safeData;
+  const hasMore = limit ? safeData.length > limit : false;
+
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-full">
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 h-full flex flex-col relative pb-12">
       <div className="flex justify-between items-center mb-6">
         <h3 className="font-semibold text-gray-900 flex items-center gap-2">
           {title}
@@ -54,7 +63,7 @@ export const TrendList = ({
       </div>
 
       <div className="space-y-6">
-        {safeData.map((item, index) => {
+        {itemsToShow.map((item, index) => {
           const isSelected = !!selectedKey && !!item.key && selectedKey === item.key;
           const isClickable = !!onSelect;
 
@@ -92,6 +101,19 @@ export const TrendList = ({
            <div className="text-center text-gray-500 py-4">{emptyMessage}</div>
         )}
       </div>
+
+      {hasMore && (
+        <div className="absolute bottom-4 right-6">
+          <Button 
+            variant="link" 
+            size="sm"
+            className="px-0 py-0 h-auto text-blue-600 font-medium" 
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? "View Less" : "View More +"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
