@@ -73,6 +73,8 @@ export default function DairyUsageReport() {
   const [selectedBranch, setSelectedBranch] = useState("All Branches");
   const [selectedStaff, setSelectedStaff] = useState("All Staff");
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const filteredData = usageData.filter((item) => {
     const matchBranch = selectedBranch === "All Branches" || item.branch === selectedBranch;
@@ -80,6 +82,11 @@ export default function DairyUsageReport() {
     const matchDate = !selectedDate || dayjs(item.date).isSame(dayjs(selectedDate), 'day');
     return matchBranch && matchStaff && matchDate;
   });
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const currentData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
   const uniqueBranches = Array.from(new Set(usageData.map(item => item.branch)));
   const uniqueStaff = Array.from(new Set(usageData.map(item => item.submittedBy)));
@@ -94,12 +101,6 @@ export default function DairyUsageReport() {
               <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
             }
           />
-           <div className="w-full">
-            <Button variant="ghost" size="sm" className="pl-0 hover:bg-transparent hover:text-blue-600 -ml-2" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
-          </Button>
-            </div>
       </div>
 
       {/* Filters Row */}
@@ -128,7 +129,7 @@ export default function DairyUsageReport() {
                         <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuContent align="start" className="w-[200px] bg-white border border-slate-200">
                     <DropdownMenuItem onSelect={() => setSelectedBranch("All Branches")}>All Branches</DropdownMenuItem>
                     {uniqueBranches.map((branch) => (
                       <DropdownMenuItem key={branch} onSelect={() => setSelectedBranch(branch)}>
@@ -147,7 +148,7 @@ export default function DairyUsageReport() {
                         <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuContent align="start" className="w-[200px] bg-white border border-slate-200">
                      <DropdownMenuItem onSelect={() => setSelectedStaff("All Staff")}>All Staff</DropdownMenuItem>
                      {uniqueStaff.map((staff) => (
                        <DropdownMenuItem key={staff} onSelect={() => setSelectedStaff(staff)}>
@@ -166,7 +167,7 @@ export default function DairyUsageReport() {
                   setSelectedStaff("All Staff");
                   setSelectedDate("");
                 }}
-                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                className="text-red-500 hover:text-red-600  hover:bg-red-50"
                 title="Clear filters"
               >
                 <FilterX className="h-4 w-4" />
@@ -197,8 +198,8 @@ export default function DairyUsageReport() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredData.length > 0 ? (
-              filteredData.map((row) => (
+            {currentData.length > 0 ? (
+              currentData.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="text-gray-500 font-medium">{row.date}</TableCell>
                 <TableCell className="font-semibold">{row.rice}</TableCell>
@@ -240,22 +241,36 @@ export default function DairyUsageReport() {
           </TableBody>
         </Table>
         
-        {/* Pagination Mock */}
+        {/* Pagination */}
         <div className="flex items-center justify-between p-4 border-t border-slate-100">
-             <Button variant="outline" className="text-gray-600 gap-2 pl-2.5">
+             <Button 
+                variant="outline" 
+                className="text-gray-600 gap-2 pl-2.5"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+             >
                 <ArrowLeft className="h-4 w-4" /> Previous
              </Button>
              
              <div className="flex items-center gap-2">
-                <Button variant="default" className="h-8 w-8 bg-blue-600 p-0 text-white">1</Button>
-                <Button variant="ghost" className="h-8 w-8 p-0 text-gray-600 hover:bg-slate-100">2</Button>
-                <Button variant="ghost" className="h-8 w-8 p-0 text-gray-600 hover:bg-slate-100">3</Button>
-                <Button variant="ghost" className="h-8 w-8 p-0 text-gray-600 hover:bg-slate-100">4</Button>
-                <Button variant="ghost" className="h-8 w-8 p-0 text-gray-600 hover:bg-slate-100">5</Button>
-                <Button variant="ghost" className="h-8 w-8 p-0 text-gray-600 hover:bg-slate-100">6</Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "ghost"}
+                    className={`h-8 w-8 p-0 ${currentPage === page ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-slate-100"}`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ))}
              </div>
 
-             <Button variant="outline" className="text-gray-600 gap-2 pr-2.5">
+             <Button 
+                variant="outline" 
+                className="text-gray-600 gap-2 pr-2.5"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages || totalPages === 0}
+             >
                 Next <ArrowLeft className="h-4 w-4 rotate-180" />
              </Button>
         </div>
