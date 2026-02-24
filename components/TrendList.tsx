@@ -14,6 +14,7 @@ interface TrendListProps {
   selectedKey?: string | null;
   emptyMessage?: string;
   loading?: boolean;
+  maxValue?: number;
 }
 
 export const TrendList = ({
@@ -23,11 +24,13 @@ export const TrendList = ({
   selectedKey,
   emptyMessage = "No data available",
   loading = false,
+  maxValue,
 }: TrendListProps) => {
   const safeData = Array.isArray(items) ? items : [];
 
   // Calculate max value for progress bar scaling
-  const maxValRaw = Math.max(...safeData.map((d) => d.value));
+  const dataMax = Math.max(...safeData.map((d) => d.value));
+  const maxValRaw = maxValue !== undefined ? maxValue : dataMax;
   const maxVal = Number.isFinite(maxValRaw) && maxValRaw > 0 ? maxValRaw : 1;
   const clamp = (n: number) => Math.max(0, Math.min(100, n));
 

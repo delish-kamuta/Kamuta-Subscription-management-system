@@ -3,9 +3,11 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { Header } from "../../../components/Header";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { ArrowLeft, ChevronDown, TrendingUp } from "lucide-react";
-import { Progress } from "~/components/ui/progress";
+import { useState } from "react";
+import StatsCard from "../../../components/StatsCard";
+import { TrendList } from "../../../components/TrendList";
+import { BranchStatsTable } from "../../../components/BranchStatsTable";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +18,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tool
 
 export default function ViewProfitReport() {
   const navigate = useNavigate();
+  const [showAllBranches, setShowAllBranches] = useState(false);
 
   // Mock Data
   const profitData = {
@@ -25,9 +28,14 @@ export default function ViewProfitReport() {
 
   const branchRevenues = [
       { name: "CAVM", amount: 1000, max: 1200 },
-      { name: "CAVM", amount: 1000, max: 1200 }, // Intentionally duplicated per screenshot? Assuming placeholder name
-      { name: "CAVM", amount: 1000, max: 1200 }
+      { name: "NYAGATRE", amount: 950, max: 1200 },
+      { name: "BUSOGO", amount: 800, max: 1200 },
+      { name: "RUKARA", amount: 1100, max: 1200 },
+      { name: "HUYE", amount: 1050, max: 1200 },
   ];
+
+  const displayedBranches = showAllBranches ? branchRevenues : branchRevenues.slice(0, 2);
+  const maxBranchRevenue = Math.max(...branchRevenues.map(b => b.amount));
 
   const dateRevenues = [
       { date: "2026-02-08", amount: 1000, max: 1200 },
@@ -84,87 +92,69 @@ export default function ViewProfitReport() {
         {/* Top Section: Profit & Branch Revenue */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Profit Card */}
-            <Card className="border-slate-100 shadow-sm">
-                <CardContent className="p-8 flex flex-col justify-center h-full min-h-[250px]">
-                     <span className="text-gray-600 font-medium mb-4">Profit</span>
-                     <span className="text-5xl font-bold text-gray-900 mb-4">{profitData.amount}</span>
-                     <div className="flex items-center gap-2 text-green-600 font-medium">
-                        <TrendingUp className="h-5 w-5" />
-                        {profitData.trend}
-                     </div>
-                </CardContent>
-            </Card>
+            <StatsCard
+                title="Profit"
+                value="12,450 RWF"
+                currentDay={12450}
+                lastDayCount={11116}
+                trendLabel="vs last month"
+            />
 
             {/* Branch's Revenue */}
-            <Card className="border-slate-100 shadow-sm">
-                 <CardHeader>
-                     <CardTitle className="text-base font-bold text-gray-900">Branch's Revenue</CardTitle>
-                 </CardHeader>
-                 <CardContent className="space-y-6">
-                     {branchRevenues.map((item, index) => (
-                         <div key={index} className="space-y-2">
-                             <div className="flex justify-between text-sm font-semibold">
-                                 <span>{item.name}</span>
-                                 <span>{item.amount} RWF</span>
-                             </div>
-                             <Progress value={(item.amount / item.max) * 100} className="h-4 bg-slate-200" />
-                         </div>
-                     ))}
-                     <Button variant="link" className="px-0 text-blue-600 font-medium">
-                         View More +
+            <div className="relative h-full flex flex-col">
+                 <TrendList
+                    title="Branch's Revenue"
+                    items={displayedBranches.map(b => ({
+                        label: b.name,
+                        value: b.amount,
+                        formattedValue: `${b.amount} RWF`,
+                        key: b.name
+                    }))}
+                    maxValue={maxBranchRevenue}
+                 />
+                 <div className="absolute bottom-6 right-6">
+                    <Button 
+                        variant="link" 
+                        size="sm"
+                        className="px-0 py-0 h-auto text-blue-600 font-medium" 
+                        onClick={() => setShowAllBranches(!showAllBranches)}
+                     >
+                         {showAllBranches ? "View Less" : "View More +"}
                      </Button>
-                 </CardContent>
-            </Card>
+                 </div>
+            </div>
         </div>
 
         {/* Middle Section: Revenue History & Profit Table */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
              {/* Revenue History */}
-             <Card className="border-slate-100 shadow-sm">
-                <CardHeader>
-                    <CardTitle className="text-base font-bold text-gray-900">Revenue (This week | Month | Year | Weeks)</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    {dateRevenues.map((item, index) => (
-                        <div key={index} className="space-y-2">
-                            <div className="flex justify-between text-sm font-semibold">
-                                <span>{item.date}</span>
-                                <span>{item.amount} RWF</span>
-                            </div>
-                            <Progress value={(item.amount / item.max) * 100} className="h-2 bg-slate-200" />
-                        </div>
-                    ))}
-                </CardContent>
-             </Card>
+             <TrendList
+                title="Revenue (This week | Month | Year | Weeks)"
+                items={dateRevenues.map(d => ({
+                    label: d.date,
+                    value: d.amount,
+                    formattedValue: `${d.amount} RWF`,
+                    key: d.date
+                }))}
+             />
 
              {/* Profit Generated by Branch Table */}
-             <Card className="border-slate-100 shadow-sm overflow-hidden">
-                <CardHeader>
-                     <CardTitle className="text-base font-bold text-gray-900">Profit Generated by Branch</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="border-b border-gray-100">
-                                <TableHead className="text-gray-500 font-medium pl-6">Branch</TableHead>
-                                <TableHead className="text-gray-500 font-medium">Regular</TableHead>
-                                <TableHead className="text-gray-500 font-medium">VIP</TableHead>
-                                <TableHead className="text-gray-500 font-medium pr-6">VVIP</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {profitByBranch.map((row, index) => (
-                                <TableRow key={index} className="border-b border-gray-50 last:border-0 hover:bg-slate-50">
-                                    <TableCell className="font-medium pl-6">{row.branch}</TableCell>
-                                    <TableCell>{row.regular}</TableCell>
-                                    <TableCell>{row.vip}</TableCell>
-                                    <TableCell className="pr-6">{row.vvip}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-             </Card>
+             <BranchStatsTable
+                title="Profit Generated by Branch"
+                data={profitByBranch.map(p => ({
+                    branch: p.branch,
+                    Regular: p.regular,
+                    VIP: p.vip,
+                    VVIP: p.vvip,
+                }))}
+                columns={[
+                    { header: "Branch", accessorKey: "branch", align: "left" },
+                    { header: "Regular", accessorKey: "Regular", align: "left" },
+                    { header: "VIP", accessorKey: "VIP", align: "left" },
+                    { header: "VVIP", accessorKey: "VVIP", align: "left" },
+                ]}
+                showTotalRow={false}
+             />
         </div>
 
         {/* Bottom Section: Monthly Revenue Chart */}
