@@ -3,7 +3,7 @@ import { Header } from "../../../components/Header";
 import StatsCard from "../../../components/StatsCard";
 import { Button } from "~/components/ui/button";
 import { Link, useNavigate } from "react-router";
-import { AlertTriangle, ChefHat, Milk, Package, TrendingUp, LayoutGrid, ArrowRightLeft } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 
 export default function RestaurantDashboard() {
@@ -12,25 +12,28 @@ export default function RestaurantDashboard() {
   // Mock data for the dashboard
   const stats = [
     {
-      title: "Current Stock Value",
-      value: "12,450 RWF",
-      trend: "↑ 12% vs last month",
-      trendUp: true,
-      icon: <LayoutGrid className="h-4 w-4 text-gray-500" />
+      title: "Current Stock Value(RWF)",
+      value: "12,450",
+      // Inferring numbers to match the mocked "12%" trend
+      currentDay: 12450, 
+      lastDayCount: 11116, 
+      trendLabel: "vs last month",
     },
     {
-      title: "Today's Ingredient",
-      value: "3,210 RWF",
-      trend: "↓ 2% vs last month",
-      trendUp: false,
-      icon: <Package className="h-4 w-4 text-gray-500" />
+      title: "Today's Ingredient(RWF)",
+      value: "3,210",
+      // Inferring numbers to match mocked "-2%" trend
+      currentDay: 3210,
+      lastDayCount: 3275,
+      trendLabel: "vs last month",
     },
     {
-      title: "Revenue Today",
-      value: "520 RWF",
-      trend: "↑ 2% vs last month",
-      trendUp: true,
-      icon: <TrendingUp className="h-4 w-4 text-gray-500" />
+      title: "Revenue Today(RWF)",
+      value: "520",
+      // Inferring numbers to match mocked "2%" trend
+      currentDay: 520,
+      lastDayCount: 510,
+      trendLabel: "vs last month",
     }
   ];
 
@@ -68,15 +71,14 @@ export default function RestaurantDashboard() {
       {/* Stats Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between min-h-[140px]">
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-gray-500">{stat.title}</span>
-              <span className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</span>
-            </div>
-            <div className={`text-xs font-medium flex items-center gap-1 mt-4 ${stat.trendUp ? 'text-green-600' : 'text-red-500'}`}>
-                {stat.trend}
-            </div>
-          </div>
+          <StatsCard
+            key={index}
+            title={stat.title}
+            value={stat.value}
+            currentDay={stat.currentDay}
+            lastDayCount={stat.lastDayCount}
+            trendLabel={stat.trendLabel}
+          />
         ))}
       </div>
 
