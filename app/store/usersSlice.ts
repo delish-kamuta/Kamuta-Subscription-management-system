@@ -26,48 +26,47 @@ const initialState: UsersState = {
   loading: false,
 }
 
-/** Extract total count from a paginated response */
 function extractTotal(data: any): number {
   if (!data || Array.isArray(data)) return 0;
 
   return (
     data?.meta?.total ??
+    data?.pagination?.total_items ??
+    data?.pagination?.totalItems ??
     data?.total ??
     data?.count ??
     data?.totalItems ??
     data?.data?.meta?.total ??
+    data?.data?.pagination?.total_items ??
     data?.data?.total ??
     data?.data?.count ??
     0
   );
 }
 
-/** Extract total pages from a paginated response */
 function extractTotalPages(data: any): number {
   if (!data || Array.isArray(data)) return 1;
 
   return (
     data?.meta?.totalPages ??
+    data?.pagination?.total_pages ??
+    data?.pagination?.totalPages ??
     data?.totalPages ??
     data?.total_pages ??
     data?.pages ??
     data?.data?.meta?.totalPages ??
+    data?.data?.pagination?.total_pages ??
     data?.data?.totalPages ??
-    data?.data?.total_pages ??
-    data?.data?.pages ??
     1
   );
 }
 
-/** Extract an array of users from any common API response shape */
 function extractItems(data: any): UserItem[] {
   if (!data) return [];
   if (Array.isArray(data)) return data;
 
-  // your backend: { data: [...], meta: {...} }
+  // common shapes
   if (Array.isArray(data?.data)) return data.data;
-
-  // fallbacks
   if (Array.isArray(data?.data?.data)) return data.data.data;
   if (Array.isArray(data?.users)) return data.users;
   if (Array.isArray(data?.results)) return data.results;
@@ -91,7 +90,10 @@ export const fetchUsersThunk = createAsyncThunk('users/fetch', async (_, { rejec
     let items = extractItems(firstPage)
     const total = extractTotal(firstPage)
     const totalPages = extractTotalPages(firstPage)
-    const pageSize = firstPage?.meta?.limit ?? 100
+    const pageSize =
+      firstPage?.pagination?.per_page ??
+      firstPage?.meta?.limit ??
+      100
 
     console.log("Users pagination:", {
       page1Count: items.length,
