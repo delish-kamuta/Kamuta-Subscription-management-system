@@ -5,7 +5,18 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
 import { Skeleton } from "~/components/ui/skeleton";
-import { Trash2, Plus, ArrowLeft } from "lucide-react";
+import { Input } from "~/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
+import { Badge } from "~/components/ui/badge";
+import { Trash2, Plus, ArrowLeft, Search, Filter, X } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "~/store/hooks";
 import { fetchUsersThunk } from "~/store/usersSlice";
 import { fetchBranchesThunk, removeBranchOptimistic } from "~/store/branchesSlice";
@@ -37,9 +48,27 @@ export default function ManageChefsPage() {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [branchOptions, setBranchOptions] = useState<{id: string, name: string}[]>([]);
+  
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>("all");
 
   // Filter for Chefs (Workers)
   const chefs = users.filter((u) => u.role.toLowerCase() === "worker");
+
+  // Apply Search and Filters
+  const filteredChefs = chefs.filter((chef) => {
+    // Search Filter (Name or Phone)
+    const matchesSearch =
+      (chef.full_name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (chef.phone || "").includes(searchQuery);
+
+    // Branch Filter
+    const matchesBranch =
+      selectedBranchFilter === "all" || chef.branch_id === selectedBranchFilter;
+
+    return matchesSearch && matchesBranch;
+  });
 
   // Load Data
   useEffect(() => {
@@ -123,9 +152,72 @@ export default function ManageChefsPage() {
 
       {/* Chefs Section */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Chefs</h2>
-          <Button onClick={openAddChef} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-1 items-center gap-2">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search by name or phone..."
+                className="pl-8 bg-white border border-slate-200"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2 bg-white border border-slate-200">
+                  <Filter className="h-4 w-4" />
+                  <span className="hidden sm:inline">Filter Branch</span>
+                  {selectedBranchFilter !== "all" && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                      1
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px] bg-white border border-slate-200">
+                <DropdownMenuLabel>Filter by Branch</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={selectedBranchFilter} onValueChange={setSelectedBranchFilter}>
+                  <DropdownMenuRadioItem value="all">All Branches</DropdownMenuRadioItem>
+                  <DropdownMenuSeparator />
+                  {branchOptions.map((branch) => (
+                    <DropdownMenuRadioItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+                {selectedBranchFilter !== "all" && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-center text-xs"
+                      onClick={() => setSelectedBranchFilter("all")}
+                    >
+                      Reset Filter
+                    </Button>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {(searchQuery || selectedBranchFilter !== "all") && (
+               <Button 
+                 variant="ghost" 
+                 size="icon" 
+                 onClick={() => { setSearchQuery(""); setSelectedBranchFilter("all"); }}
+                 title="Clear all filters"
+               >
+                 <X className="h-4 w-4" />
+               </Button>
+            )}
+          </div>
+
+          <Button onClick={openAddChef} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 shrink-0">
             <Plus className="h-4 w-4 text-white" />
             <span className="text-white">Add Chef</span>
           </Button>
@@ -147,18 +239,20 @@ export default function ManageChefsPage() {
                     <TableRow key={i}>
                         <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-[80px]" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                         <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                     </TableRow>
                  ))
-              ) : chefs.length === 0 ? (
+              ) : filteredChefs.length === 0 ? (
                 <TableRow>
                     <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                        No chefs found. Add one to get started.
+                        {searchQuery || selectedBranchFilter !== "all" 
+                          ? "No chefs found matching your filters." 
+                          : "No chefs found. Add one to get started."}
                     </TableCell>
                 </TableRow>
               ) : (
-                chefs.map((chef) => (
+                filteredChefs.map((chef) => (
                     <TableRow key={chef.id}>
                         <TableCell className="font-medium">{chef.full_name}</TableCell>
                         <TableCell>{chef.phone}</TableCell>

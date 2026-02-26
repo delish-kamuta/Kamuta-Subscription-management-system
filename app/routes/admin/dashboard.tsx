@@ -5,6 +5,7 @@ import { dashboardStats, subscriptionData } from "app/constants";
 import { ChartPieSimple } from "../../../components/pie-chart";
 import { ChartBarMultiple} from "../../../components/BarChart";
 import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router";
 import Client from "components/client";
 import { listMealLogs, type MealLogItem } from "~/services/mealLogs";
 import { getOverviewStats, getDashboardOverview, type MonthlyData } from "~/services/overview";
@@ -21,6 +22,7 @@ import { fetchSubscriptions } from "~/store/subscriptionsSlice";
 const Dashboard = () => {
   const { user, isAuthenticated, token } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { items: subscriptions } = useAppSelector((state) => state.subscriptions);
   
   const userName = user?.name || "Guest";
@@ -118,7 +120,7 @@ const Dashboard = () => {
   const [logsError, setLogsError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (userRole === UserRole.STUDENT || userRole === UserRole.WORKER) {
+    if (userRole === UserRole.STUDENT) {
       setLogsLoading(true);
       setLogsError(null);
       const clientId = String(user?.id || "");
@@ -132,7 +134,15 @@ const Dashboard = () => {
     }
   }, [userRole, user]);
 
-  if (userRole === UserRole.STUDENT || userRole === UserRole.WORKER) {
+  useEffect(() => {
+    if (userRole === UserRole.WORKER) {
+      navigate('/chef-dashboard');
+    }
+  }, [userRole, navigate]);
+
+  if (userRole === UserRole.WORKER) return null;
+
+  if (userRole === UserRole.STUDENT) {
     return (
       <main className='dashboard wrapper'>
         {/* Client view handles its own welcome header; avoid duplicate */}
@@ -142,6 +152,8 @@ const Dashboard = () => {
       </main>
     );
   }
+
+
 
   // Admin/Staff Dashboard
   return (

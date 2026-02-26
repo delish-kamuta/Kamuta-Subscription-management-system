@@ -26,6 +26,7 @@ export default [
     route("users", "routes/admin/users.tsx"),
     route("branches", "routes/admin/branches.tsx"),
     route("feedback", "routes/admin/feedback.tsx"),
+    route("chef-dashboard", "routes/chef/ingredients-approval.tsx"),
   ]),
   route("/auth/login", "routes/auth/login.tsx"),
   route("/auth/signup", "routes/auth/signup.tsx"),

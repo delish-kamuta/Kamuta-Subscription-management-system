@@ -37,6 +37,8 @@ export function mapApiRoleToUserRole(role?: string | null): UserRole {
     case 'worker':
     case 'campus_worker':
     case 'campus-worker':
+    case 'chef':
+    case 'kitchen_staff':
       return UserRole.WORKER;
     default:
       return UserRole.STUDENT;

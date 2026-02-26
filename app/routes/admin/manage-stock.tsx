@@ -2,12 +2,40 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { Header } from "../../../components/Header";
 import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { ArrowLeft, TrendingUp, AlertTriangle } from "lucide-react";
+import { ArrowLeft, TrendingUp, AlertTriangle, Plus, Pencil } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Badge } from "~/components/ui/badge";
+import { useState, useEffect } from "react";
+import { AddIngredientSheet } from "~/components/inventory/AddIngredientSheet";
+import { listIngredients, Ingredient } from "~/services/inventory";
 
 export default function ManageStockPage() {
   const navigate = useNavigate();
+  const [isAddIngredientOpen, setIsAddIngredientOpen] = useState(false);
+  const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchIngredients = async () => {
+      try {
+          setLoading(true);
+          const data = await listIngredients();
+          // Adjust based on actual API response structure (e.g., data.data or directly data)
+          if (Array.isArray(data)) {
+              setIngredients(data);
+          } else if (data.data && Array.isArray(data.data)) {
+               setIngredients(data.data);
+          }
+      } catch (error) {
+          console.error("Failed to fetch ingredients", error);
+      } finally {
+          setLoading(false);
+      }
+  };
+
+  useEffect(() => {
+    fetchIngredients();
+  }, []);
 
   // Mock data matching the screenshot
   const stats = {
@@ -25,11 +53,6 @@ export default function ManageStockPage() {
       { id: 2, item: "Cooking Oil", quantity: "2L", threshold: "10L" }
   ];
 
-  const ingredients = [
-      { id: 1, name: "Rice", available: "200g", qualityPerMeal: "200g", cost: "2000", status: "Enough" },
-      { id: 2, name: "Carrot", available: "200g", qualityPerMeal: "200g", cost: "2000", status: "Low" }
-  ];
-
   return (
     <main className="dashboard wrapper flex flex-col gap-6 p-4 md:p-6">
        <div className="flex flex-col items-center gap-4">
@@ -40,19 +63,33 @@ export default function ManageStockPage() {
               <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
             }
           />
-           <div className="w-full p-0">
-            <Button variant="ghost" size="icon" className="w-full flex justify-start pl-0 hover:bg-transparent hover:text-blue-600" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
-          </Button>
-            </div>
+           <div className="w-full p-0 flex justify-between items-center">
+             <Button variant="ghost" size="icon" className="flex justify-start pl-0 hover:bg-transparent hover:text-blue-600" onClick={() => navigate(-1)}>
+               <ArrowLeft className="h-5 w-5 mr-2" />
+               Back
+             </Button>
+
+             <Button 
+                onClick={() => setIsAddIngredientOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+             >
+                <Plus className="h-4 w-4" />
+                Add New Ingredient
+             </Button>
+           </div>
       </div>
 
-      <div className="flex justify-end">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              Add New Ingredient
-          </Button>
-      </div>
+      <AddIngredientSheet 
+        open={isAddIngredientOpen} 
+        onOpenChange={(open) => {
+            setIsAddIngredientOpen(open);
+            if (!open) setSelectedIngredient(null);
+        }} 
+        initialData={selectedIngredient}
+        onSuccess={() => {
+            fetchIngredients();
+        }}
+      />
 
         {/* Stats Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -113,26 +150,50 @@ export default function ManageStockPage() {
                 <TableHead className="font-bold text-gray-500 text-xs uppercase tracking-wider">QUALITY PER MEAL</TableHead>
                 <TableHead className="font-bold text-gray-500 text-xs uppercase tracking-wider">COST</TableHead>
                 <TableHead className="font-bold text-gray-500 text-xs uppercase tracking-wider">STATUS</TableHead>
+                <TableHead className="font-bold text-gray-500 text-xs uppercase tracking-wider text-right">ACTIONS</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {ingredients.map((row) => (
+                {loading ? (
+                    <TableRow>
+                        <TableCell colSpan={6} className="text-center py-4">Loading ingredients...</TableCell>
+                    </TableRow>
+                ) : ingredients.length === 0 ? (
+                    <TableRow>
+                        <TableCell colSpan={6} className="text-center py-4">No ingredients found.</TableCell>
+                    </TableRow>
+                ) : (
+                ingredients.map((row) => (
                 <TableRow key={row.id}>
                     <TableCell className="font-bold text-gray-900">{row.name}</TableCell>
-                    <TableCell className="text-gray-600">{row.available}</TableCell>
-                    <TableCell className="text-gray-600">{row.qualityPerMeal}</TableCell>
-                    <TableCell className="text-gray-600">{row.cost}</TableCell>
+                    <TableCell className="text-gray-600">0 {row.unit}</TableCell> {/* TODO: Use actual quantity when available */}
+                    <TableCell className="text-gray-600">N/A</TableCell> {/* TODO: Integrate quality per meal */}
+                    <TableCell className="text-gray-600">N/A</TableCell> {/* TODO: Integrate cost */}
                     <TableCell>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            row.status === 'Enough' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-red-100 text-red-700'
+                            (0 >= row.min_quantity) // Assuming current quantity is 0 for now
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-green-100 text-green-700' 
                         }`}>
-                            {row.status}
+                            {(0 >= row.min_quantity) ? 'Low' : 'Enough'}
                         </span>
                     </TableCell>
+                    <TableCell className="text-right">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8"
+                            onClick={() => {
+                                setSelectedIngredient(row);
+                                setIsAddIngredientOpen(true);
+                            }}
+                        >
+                            <Pencil className="h-4 w-4 text-gray-500" />
+                        </Button>
+                    </TableCell>
                 </TableRow>
-                ))}
+                ))
+                )}
             </TableBody>
             </Table>
           </div>

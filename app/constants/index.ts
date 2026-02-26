@@ -1,4 +1,4 @@
-import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode, ScanLine, Users, MessageSquare, Building2, UtensilsCrossed } from "lucide-react"
+import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode, ScanLine, Users, MessageSquare, Building2, UtensilsCrossed, ClipboardCheck } from "lucide-react"
 
 export const sidebarItems = [
   {
@@ -6,7 +6,14 @@ export const sidebarItems = [
     icon: LayoutDashboard,
     label: "Overview",
     href: "/dashboard",
-    roles: ["student", "worker", "cashier", "admin"], // Available to supported roles
+    roles: ["student", "cashier", "admin"], // Available to supported roles
+  },
+  {
+    id: 11,
+    icon: ClipboardCheck,
+    label: "Dairy Usage Report",
+    href: "/chef-dashboard",
+    roles: ["worker"], // Only for chefs
   },
   {
     id: 10,
@@ -20,7 +27,7 @@ export const sidebarItems = [
     icon: QrCode,
     label: "My QR Code",
     href: "/my-qr-code",
-    roles: ["student","worker"], // Only for students
+    roles: ["student"], // Only for students
   },
   {
     id: 3,
