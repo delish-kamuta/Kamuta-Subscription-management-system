@@ -292,7 +292,7 @@ const MealsLogs = () => {
           {/* Date Range and Actions */}
           <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
             {/* Date Range */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col md:flex-row items-center gap-2">
               <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-2 bg-white">
                 <Calendar className="w-4 h-4 text-gray-400" />
                 <input
