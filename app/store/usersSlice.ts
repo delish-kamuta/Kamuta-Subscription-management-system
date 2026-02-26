@@ -26,63 +26,102 @@ const initialState: UsersState = {
   loading: false,
 }
 
-/** Extract an array of users from any common API response shape */
-function extractItems(data: any): UserItem[] {
-  if (!data) return []
-  if (Array.isArray(data)) return data
-  if (Array.isArray(data?.data)) return data.data
-  if (data?.data?.data && Array.isArray(data.data.data)) return data.data.data
-  if (Array.isArray(data?.users)) return data.users
-  if (Array.isArray(data?.results)) return data.results
-  if (Array.isArray(data?.items)) return data.items
-  return []
-}
-
 /** Extract total count from a paginated response */
 function extractTotal(data: any): number {
-  if (!data || Array.isArray(data)) return 0
-  return data.total || data.count || data.totalItems ||
-    data.data?.total || data.data?.count || 0
+  if (!data || Array.isArray(data)) return 0;
+
+  return (
+    data?.meta?.total ??
+    data?.total ??
+    data?.count ??
+    data?.totalItems ??
+    data?.data?.meta?.total ??
+    data?.data?.total ??
+    data?.data?.count ??
+    0
+  );
 }
 
 /** Extract total pages from a paginated response */
 function extractTotalPages(data: any): number {
-  if (!data || Array.isArray(data)) return 1
-  return data.totalPages || data.total_pages || data.pages ||
-    data.data?.totalPages || data.data?.total_pages || data.data?.pages || 1
+  if (!data || Array.isArray(data)) return 1;
+
+  return (
+    data?.meta?.totalPages ??
+    data?.totalPages ??
+    data?.total_pages ??
+    data?.pages ??
+    data?.data?.meta?.totalPages ??
+    data?.data?.totalPages ??
+    data?.data?.total_pages ??
+    data?.data?.pages ??
+    1
+  );
 }
+
+/** Extract an array of users from any common API response shape */
+function extractItems(data: any): UserItem[] {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+
+  // your backend: { data: [...], meta: {...} }
+  if (Array.isArray(data?.data)) return data.data;
+
+  // fallbacks
+  if (Array.isArray(data?.data?.data)) return data.data.data;
+  if (Array.isArray(data?.users)) return data.users;
+  if (Array.isArray(data?.results)) return data.results;
+  if (Array.isArray(data?.items)) return data.items;
+
+  return [];
+}
+
+const normalize = (x: any) => {
+  if (typeof x === "string") {
+    try { return JSON.parse(x); } catch { return x; }
+  }
+  return x;
+};
 
 export const fetchUsersThunk = createAsyncThunk('users/fetch', async (_, { rejectWithValue }) => {
   try {
-    // First, try to fetch all users in a single request with a large limit
-    let data = await apiClient<any>('/users?limit=10000')
+    // Fetch page 1 to discover the response shape and total count
+    let firstPage = normalize(await apiClient<any>('/users?page=1&limit=100'));
 
-    if (typeof data === 'string') {
-      try { data = JSON.parse(data) } catch {}
+    let items = extractItems(firstPage)
+    const total = extractTotal(firstPage)
+    const totalPages = extractTotalPages(firstPage)
+    const pageSize = firstPage?.meta?.limit ?? 100
+
+    console.log("Users pagination:", {
+      page1Count: items.length,
+      total,
+      totalPages,
+      limit: firstPage?.meta?.limit,
+    })
+
+    // If we already have all users, we're done
+    if (total > 0 && items.length >= total) {
+      console.log("Users fetched:", items.length, "expected:", total)
+      return items as UserItem[]
     }
 
-    let items = extractItems(data)
+    // Fetch remaining pages using backend-provided totalPages and pageSize
+    if (totalPages > 1) {
 
-    // If we got a paginated response with fewer items than the total,
-    // fetch the remaining pages
-    const total = extractTotal(data)
-    const totalPages = extractTotalPages(data)
-
-    if (total > 0 && items.length < total && totalPages > 1) {
-      // We only got page 1, fetch the rest
       const pagePromises: Promise<any>[] = []
-      for (let p = 2; p <= totalPages && p <= 100; p++) {
-        pagePromises.push(apiClient<any>(`/users?page=${p}`))
+      for (let p = 2; p <= totalPages; p++) {
+        pagePromises.push(apiClient<any>(`/users?page=${p}&limit=${pageSize}`))
       }
       const results = await Promise.allSettled(pagePromises)
       for (const result of results) {
         if (result.status === 'fulfilled') {
-          const pageItems = extractItems(result.value)
-          items = [...items, ...pageItems]
+          items = [...items, ...extractItems(normalize(result.value))]
         }
       }
     }
 
+    console.log("Users fetched:", items.length, "expected:", total)
     return items as UserItem[]
   } catch (e: any) {
     return rejectWithValue(e instanceof Error ? e.message : e?.message || 'Failed to fetch users')
