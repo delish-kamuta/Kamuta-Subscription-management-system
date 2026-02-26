@@ -69,7 +69,7 @@ export const MealsByBranchTable = ({
         {dailyLogsData.length > 0 && onDateSelect && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-1">
+              <Button variant="default" size="sm" className="h-8 gap-1 border border-gray-200">
                 <Filter className="h-3.5 w-3.5" />
                 <span className="truncate max-w-[120px]">
                   {displayLabel}
@@ -77,7 +77,7 @@ export const MealsByBranchTable = ({
                 <ChevronDown className="h-3 w-3 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px] bg-white">
+            <DropdownMenuContent align="end" className="w-[200px] bg-white border-gray-200">
               <DropdownMenuLabel>Filter by Date</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
