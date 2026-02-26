@@ -34,6 +34,7 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [qrOpen, setQrOpen] = useState(false);
   const [editForm, setEditForm] = useState<SubscriptionItem>(item);
   const [topUpForm, setTopUpForm] = useState({ days: 0, mealsToAdd: 0, paymentMethod: 'Cash', amountPaid: 0 });
+  const [topUpLoading, setTopUpLoading] = useState(false);
   
   // QR State
   const [qrState, setQrState] = useState<{
@@ -142,10 +143,12 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
     }
   };
 const handleTopUpSave = async () => {
+    if (topUpLoading) return;
     if (!item.subscriptionId) {
       alert("Cannot top up: Missing subscription ID");
       return;
     }
+    setTopUpLoading(true);
     try {
       await dispatch(updateSubscription({
         token,
@@ -163,6 +166,8 @@ const handleTopUpSave = async () => {
       setTopUpForm({ days: 0, mealsToAdd: 0, paymentMethod: 'Cash', amountPaid: 0 });
     } catch (e) {
       alert(`Failed to top up: ${e}`);
+    } finally {
+      setTopUpLoading(false);
     }
   };
 
@@ -370,7 +375,7 @@ const handleTopUpSave = async () => {
               </select>
             </div>
             <div className="flex gap-2 pt-4">
-              <Button onClick={handleTopUpSave} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">Confirm Top Up</Button>
+              <Button onClick={handleTopUpSave} disabled={topUpLoading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">{topUpLoading ? 'Processing...' : 'Confirm Top Up'}</Button>
               <Button onClick={() => setTopUpOpen(false)} variant="outline" className="flex-1">Cancel</Button>
             </div>
           </div>
