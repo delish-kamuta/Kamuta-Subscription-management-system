@@ -2,16 +2,18 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { Header } from "../../../components/Header";
 import { Button } from "~/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { ArrowLeft, TrendingUp, AlertTriangle, Plus, Pencil } from "lucide-react";
+import { ArrowLeft, TrendingUp, AlertTriangle, Plus, Pencil, Archive } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Badge } from "~/components/ui/badge";
 import { useState, useEffect } from "react";
 import { AddIngredientSheet } from "~/components/inventory/AddIngredientSheet";
-import { listIngredients, Ingredient } from "~/services/inventory";
+import { AddStockSheet } from "~/components/inventory/AddStockSheet";
+import { listIngredients, type Ingredient } from "~/services/inventory";
 
 export default function ManageStockPage() {
   const navigate = useNavigate();
   const [isAddIngredientOpen, setIsAddIngredientOpen] = useState(false);
+  const [isAddStockOpen, setIsAddStockOpen] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +79,15 @@ export default function ManageStockPage() {
                 Add New Ingredient
              </Button>
            </div>
+             <div className="w-full flex justify-end">
+                <Button 
+                    onClick={() => setIsAddStockOpen(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white gap-2"
+                >
+                    <Archive className="h-4 w-4" />
+                    Restock
+                </Button>
+             </div>
       </div>
 
       <AddIngredientSheet 
@@ -87,6 +98,15 @@ export default function ManageStockPage() {
         }} 
         initialData={selectedIngredient}
         onSuccess={() => {
+            fetchIngredients();
+        }}
+      />
+      
+      <AddStockSheet 
+        open={isAddStockOpen} 
+        onOpenChange={setIsAddStockOpen} 
+        onSuccess={() => {
+            // Refresh logic if needed, stats might change
             fetchIngredients();
         }}
       />

@@ -2,7 +2,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Input } from "~/components/ui/input"
 import { Button } from "~/components/ui/button"
 import { useState, useEffect } from "react"
-import { createIngredient, updateIngredient, Ingredient } from "~/services/inventory"
+import { createIngredient, updateIngredient, type Ingredient } from "~/services/inventory"
 
 type Props = {
   open: boolean

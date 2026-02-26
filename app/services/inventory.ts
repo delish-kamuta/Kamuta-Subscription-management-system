@@ -22,6 +22,13 @@ export const updateIngredient = async (id: string, data: Partial<Omit<Ingredient
   });
 };
 
+export const addStock = async (data: { items: { ingredient_id: string; quantity: number; unit_cost: number }[]; branch_id: string }) => {
+    return await apiClient("/inventory/stock/add", {
+        method: "POST",
+        body: JSON.stringify(data),
+    });
+}
+
 export const listIngredients = async (branchId?: string) => {
     let url = "/inventory/ingredients";
     if (branchId) {

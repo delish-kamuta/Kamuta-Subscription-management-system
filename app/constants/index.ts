@@ -23,6 +23,13 @@ export const sidebarItems = [
     roles: ["admin"],
   },
   {
+    id: 12,
+    icon: ClipboardCheck,
+    label: "Manage Stock",
+    href: "/manage-stock",
+    roles: ["admin", "worker"], 
+  },
+  {
     id: 2,
     icon: QrCode,
     label: "My QR Code",
