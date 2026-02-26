@@ -32,8 +32,10 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   const [editOpen, setEditOpen] = useState(false);
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
-  const [editForm, setEditForm] = useState<SubscriptionItem>(item);
+  const [editForm, setEditForm] = useState<SubscriptionItem & { mealsLeftEdit?: number }>({ ...item, mealsLeftEdit: item.mealsLeft });
   const [topUpForm, setTopUpForm] = useState({ days: 0, mealsToAdd: 0, paymentMethod: 'Cash', amountPaid: 0 });
+  const [topUpLoading, setTopUpLoading] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
   
   // QR State
   const [qrState, setQrState] = useState<{
@@ -114,6 +116,7 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
   };
 
   const handleEditSave = async () => {
+    if (editLoading) return;
     const studentId = item.studentId;
     if (!studentId) {
       console.warn("Missing studentId on item", item);
@@ -121,6 +124,7 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
       return;
     }
     
+    setEditLoading(true);
     try {
       await dispatch(updateStudentDetails({
         token,
@@ -133,19 +137,34 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
           branch_id: editForm.branch
         }
       })).unwrap();
+
+      // If meals left was changed, update the subscription too
+      const newMeals = editForm.mealsLeftEdit ?? item.mealsLeft;
+      if (newMeals !== item.mealsLeft && item.subscriptionId) {
+        await dispatch(updateSubscription({
+          token,
+          id: item.subscriptionId,
+          payload: { remaining_meals: newMeals }
+        })).unwrap();
+      }
+
       alert(`Student details for ${editForm.clientName} have been updated`);
       setEditOpen(false);
       // Refresh list to show changes
       dispatch(fetchSubscriptions({ token }));
     } catch (e) {
       alert(`Failed to update: ${e}`);
+    } finally {
+      setEditLoading(false);
     }
   };
 const handleTopUpSave = async () => {
+    if (topUpLoading) return;
     if (!item.subscriptionId) {
       alert("Cannot top up: Missing subscription ID");
       return;
     }
+    setTopUpLoading(true);
     try {
       await dispatch(updateSubscription({
         token,
@@ -163,6 +182,8 @@ const handleTopUpSave = async () => {
       setTopUpForm({ days: 0, mealsToAdd: 0, paymentMethod: 'Cash', amountPaid: 0 });
     } catch (e) {
       alert(`Failed to top up: ${e}`);
+    } finally {
+      setTopUpLoading(false);
     }
   };
 
@@ -191,7 +212,7 @@ const handleTopUpSave = async () => {
           </DropdownMenuItem>
           {isAdmin && (
             <>
-              <DropdownMenuItem onClick={() => { setEditForm(item); setEditOpen(true); }}>
+              <DropdownMenuItem onClick={() => { setEditForm({ ...item, mealsLeftEdit: item.mealsLeft }); setEditOpen(true); }}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
@@ -307,6 +328,15 @@ const handleTopUpSave = async () => {
               </select>
             </div>
             <div>
+              <label className="text-sm font-medium">Meals Left</label>
+              <Input
+                type="number"
+                min={0}
+                value={editForm.mealsLeftEdit ?? editForm.mealsLeft}
+                onChange={(e) => setEditForm({ ...editForm, mealsLeftEdit: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+            <div>
               <label className="text-sm font-medium">Branch</label>
               <select
                 value={editForm.branch}
@@ -323,7 +353,7 @@ const handleTopUpSave = async () => {
               </select>
             </div>
             <div className="flex gap-2 pt-4">
-              <Button onClick={handleEditSave} className="flex-1">Save Changes</Button>
+              <Button onClick={handleEditSave} disabled={editLoading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">{editLoading ? 'Saving...' : 'Save Changes'}</Button>
               <Button onClick={() => setEditOpen(false)} variant="outline" className="flex-1">Cancel</Button>
             </div>
           </div>
@@ -370,7 +400,7 @@ const handleTopUpSave = async () => {
               </select>
             </div>
             <div className="flex gap-2 pt-4">
-              <Button onClick={handleTopUpSave} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">Confirm Top Up</Button>
+              <Button onClick={handleTopUpSave} disabled={topUpLoading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">{topUpLoading ? 'Processing...' : 'Confirm Top Up'}</Button>
               <Button onClick={() => setTopUpOpen(false)} variant="outline" className="flex-1">Cancel</Button>
             </div>
           </div>
