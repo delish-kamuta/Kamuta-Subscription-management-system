@@ -64,18 +64,15 @@ export default function ViewProfitReport() {
               <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
             }
           />
-           <div className="w-full p-0 flex justify-between items-center">
-                <Button variant="ghost" size="icon" className="flex justify-start pl-0 hover:bg-transparent hover:text-blue-600 w-auto" onClick={() => navigate(-1)}>
-                    <ArrowLeft className="h-5 w-5 mr-2" /> Back
-                </Button>
+           <div className="w-full p-0 flex justify-end items-center">
                 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="min-w-[120px] justify-between bg-white">
+                        <Button variant="outline" className="min-w-[120px] justify-between bg-white border border-slate-200">
                             Week <ChevronDown className="h-4 w-4 opacity-50 ml-2" />
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="border border-slate-200">
                         <DropdownMenuItem>Week</DropdownMenuItem>
                         <DropdownMenuItem>Month</DropdownMenuItem>
                         <DropdownMenuItem>Year</DropdownMenuItem>

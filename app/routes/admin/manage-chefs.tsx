@@ -142,12 +142,6 @@ export default function ManageChefsPage() {
               <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
             }
           />
-            <div className="w-full p-0">
-            <Button variant="ghost" size="icon" className="w-full flex justify-start" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-5 w-5" />
-              <span className="text-bold">Return To Dashboard</span>
-          </Button>
-            </div>
       </div>
 
       {/* Chefs Section */}

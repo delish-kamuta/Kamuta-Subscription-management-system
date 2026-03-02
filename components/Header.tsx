@@ -30,7 +30,6 @@ export const Header = ({title , description, action}:props) => {
         </div>
     </article>
     <Breadcrumbs />
-   
    </header>
   )
 }

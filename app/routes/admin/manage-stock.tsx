@@ -65,12 +65,7 @@ export default function ManageStockPage() {
               <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
             }
           />
-           <div className="w-full p-0 flex justify-between items-center">
-             <Button variant="ghost" size="icon" className="flex justify-start pl-0 hover:bg-transparent hover:text-blue-600" onClick={() => navigate(-1)}>
-               <ArrowLeft className="h-5 w-5 mr-2" />
-               Back
-             </Button>
-
+           <div className="w-full p-0 flex justify-end items-center">
              <Button 
                 onClick={() => setIsAddIngredientOpen(true)}
                 className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
