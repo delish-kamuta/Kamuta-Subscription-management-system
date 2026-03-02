@@ -1,5 +1,11 @@
 import { apiClient, ensureValidTokenOrMessage } from "~/lib/api";
 
+export interface Branch {
+  id: string;
+  name: string;
+  campus?: string;
+}
+
 export interface BranchPayload {
   name: string;
   campus: string;
@@ -15,6 +21,21 @@ export interface BranchPayload {
   irregular_worker_regular_price: string | number;
   irregular_worker_vip_price: string | number;
   irregular_worker_vvip_price: string | number;
+}
+
+export async function getAllBranches(): Promise<{ branches: Branch[] }> {
+  const tokenError = ensureValidTokenOrMessage();
+  if (tokenError) throw new Error(tokenError);
+
+  const data = await apiClient<any>("/branches");
+  const list = Array.isArray(data?.data) ? data.data : [];
+  return {
+    branches: list.map((b: any) => ({
+      id: String(b.id),
+      name: String(b.name || ""),
+      campus: String(b.campus || ""),
+    })),
+  };
 }
 
 export async function createBranch(payload: BranchPayload) {

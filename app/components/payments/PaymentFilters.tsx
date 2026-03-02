@@ -9,6 +9,8 @@ interface PaymentFiltersProps {
   setBranchFilter: (value: string) => void;
   cashierFilter: string;
   setCashierFilter: (value: string) => void;
+  typeFilter: string;
+  setTypeFilter: (value: string) => void;
   startDate: string;
   setStartDate: (value: string) => void;
   endDate: string;
@@ -25,6 +27,8 @@ export default function PaymentFilters({
   setBranchFilter,
   cashierFilter,
   setCashierFilter,
+  typeFilter,
+  setTypeFilter,
   startDate,
   setStartDate,
   endDate,
@@ -75,6 +79,15 @@ export default function PaymentFilters({
                 {cashier.name}
               </option>
             ))}
+          </select>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="text-sm border border-gray-300 rounded-md px-3 py-2 bg-white"
+          >
+            <option value="All">Type: All</option>
+            <option value="Subscription">Subscription</option>
+            <option value="Top Up">Top Up</option>
           </select>
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-2 border border-gray-300 rounded-md px-2 py-1">

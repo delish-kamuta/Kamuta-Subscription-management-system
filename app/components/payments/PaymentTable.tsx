@@ -21,6 +21,7 @@ interface Payment {
   customerName: string;
   regNumber: string;
   amount: string;
+  type?: string;
   paymentMethod: string;
   date: string;
   branch: string;
@@ -59,6 +60,7 @@ export default function PaymentTable({
         <TableRow>
           <TableHead>ID</TableHead>
           <TableHead>Customer Name</TableHead>
+          <TableHead>Type</TableHead>
           <TableHead>Amount</TableHead>
           <TableHead>Payment Method</TableHead>
           <TableHead>Date</TableHead>
@@ -71,6 +73,15 @@ export default function PaymentTable({
           <TableRow key={`${payment.id}-${idx}`}>
             <TableCell className="font-medium">#{payment.id}</TableCell>
             <TableCell>{payment.customerName}</TableCell>
+            <TableCell>
+              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                payment.type === "Top Up" 
+                  ? "bg-blue-100 text-blue-800" 
+                  : "bg-purple-100 text-purple-800"
+              }`}>
+                {payment.type || "Subscription"}
+              </span>
+            </TableCell>
             <TableCell className="font-semibold text-green-600">{payment.amount}</TableCell>
             <TableCell>{payment.paymentMethod}</TableCell>
             <TableCell className="text-muted-foreground">

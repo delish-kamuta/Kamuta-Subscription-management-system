@@ -24,7 +24,11 @@ export function Breadcrumbs() {
   }
 
   const customParents: Record<string, { label: string; href: string }[]> = {
-    'wallet': [{ label: 'Subscription', href: '/subscription' }]
+    'wallet': [{ label: 'Subscription', href: '/subscription' }],
+    'dairy-usage-report': [{ label: 'Dashboard', href: '/dashboard' }],
+    'manage-stock': [{ label: 'Dashboard', href: '/dashboard' }],
+    'view-profit-report': [{ label: 'Dashboard', href: '/dashboard' }],
+    'manage-chefs': [{ label: 'Dashboard', href: '/dashboard' }]
   };
 
   return (

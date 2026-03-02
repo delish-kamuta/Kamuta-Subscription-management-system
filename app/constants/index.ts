@@ -1,61 +1,87 @@
-import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode, ScanLine, Users, MessageSquare, Building2 } from "lucide-react"
+import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode, ScanLine, Users, MessageSquare, Building2, ClipboardCheck, UtensilsCrossed, ChefHat, TrendingUp } from "lucide-react"
 
-export const sidebarItems = [
+import type { DashboardView } from "~/hooks/useDashboardView";
+
+export type SidebarItem = {
+  id: number;
+  icon: any;
+  label: string;
+  href: string;
+  roles?: string[];
+  dashboard?: DashboardView;
+};
+
+export const sidebarItems: SidebarItem[] = [
+  // === Overview dashboard items ===
   {
     id: 1,
     icon: LayoutDashboard,
     label: "Overview",
     href: "/dashboard",
-    roles: ["student", "worker", "cashier", "admin"], // Available to supported roles
+    roles: ["student", "cashier", "admin"],
+    dashboard: "overview",
+  },
+  {
+    id: 11,
+    icon: ClipboardCheck,
+    label: "Dairy Usage Report",
+    href: "/chef-dashboard",
+    roles: ["worker"],
   },
   {
     id: 2,
     icon: QrCode,
     label: "My QR Code",
     href: "/my-qr-code",
-    roles: ["student","worker"], // Only for students
+    roles: ["student"],
   },
   {
     id: 3,
     icon: ScanLine,
     label: "Scan QR Code",
     href: "/scan-qr",
-    roles: ["scanner", "admin"], // Allow scanner, admin
+    roles: ["scanner", "admin"],
+    dashboard: "overview",
   },
   {
     id: 4,
     icon: HandPlatter,
     label: "Meals Logs",
     href: "/meals-logs",
-    roles: ["admin","cashier"], // Only for staff and cashier
+    roles: ["admin", "cashier"],
+    dashboard: "overview",
   },
   {
     id: 5,
     icon: WalletCards,
     label: "Subscriptions",
     href: "/subscription",
-    roles: ["cashier", "admin"], // Only for cashier and admin
+    roles: ["cashier", "admin"],
+    dashboard: "overview",
   },
   {
     id: 6,
     icon: Banknote,
     label: "Payments",
     href: "/payments",
-    roles: ["admin"], // Only for admin
+    roles: ["admin"],
+    dashboard: "overview",
   },
   {
     id: 7,
     icon: Users,
     label: "Users",
     href: "/users",
-    roles: ["admin"], // Only for admin
+    roles: ["admin"],
+    dashboard: "overview",
   },
   {
     id: 8,
     icon: Building2,
     label: "Branches",
     href: "/branches",
-    roles: ["admin"], // Only for admin
+    roles: ["admin"],
+    dashboard: "overview",
   },
   {
     id: 9,
@@ -63,6 +89,49 @@ export const sidebarItems = [
     label: "Feedback",
     href: "/feedback",
     roles: ["admin"],
+    dashboard: "overview",
+  },
+
+  // === Management dashboard items ===
+  {
+    id: 20,
+    icon: LayoutDashboard,
+    label: "Management",
+    href: "/dashboard",
+    roles: ["admin"],
+    dashboard: "management",
+  },
+  {
+    id: 21,
+    icon: ClipboardCheck,
+    label: "Dairy Usage Report",
+    href: "/dairy-usage-report",
+    roles: ["admin"],
+    dashboard: "management",
+  },
+  {
+    id: 22,
+    icon: UtensilsCrossed,
+    label: "Manage Stock",
+    href: "/manage-stock",
+    roles: ["admin", "worker"],
+    dashboard: "management",
+  },
+  {
+    id: 23,
+    icon: ChefHat,
+    label: "Manage Chefs",
+    href: "/manage-chefs",
+    roles: ["admin"],
+    dashboard: "management",
+  },
+  {
+    id: 24,
+    icon: TrendingUp,
+    label: "View Profit Report",
+    href: "/view-profit-report",
+    roles: ["admin"],
+    dashboard: "management",
   },
 ];
 

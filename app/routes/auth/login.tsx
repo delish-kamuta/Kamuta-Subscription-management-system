@@ -71,7 +71,9 @@ export default function LoginPage() {
       console.log('User logged in successfully:', result);
       
       // Redirect based on role
-      if (normalizedRole === UserRole.WAITSTAFF) {
+      if (normalizedRole === UserRole.WORKER) {
+        navigate("/chef-dashboard");
+      } else if (normalizedRole === UserRole.WAITSTAFF) {
         navigate("/scan-qr");
       } else {
         navigate("/dashboard");
