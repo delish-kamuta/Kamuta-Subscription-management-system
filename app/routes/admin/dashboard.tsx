@@ -17,6 +17,9 @@ import ResetPasswordButton from "../../../components/ResetPasswordButton"
 import SubscriptionTable from "~/components/subscriptions/SubscriptionTable";
 import { toDateKey } from "~/lib/date";
 import { fetchSubscriptions } from "~/store/subscriptionsSlice";
+import { Button } from "~/components/ui/button";
+import { AlertTriangle } from "lucide-react";
+import { useDashboardView } from "~/hooks/useDashboardView";
 
 
 const Dashboard = () => {
@@ -30,6 +33,9 @@ const Dashboard = () => {
   const isCashier = userRole === UserRole.CASHIER;
   const isAdmin = userRole === UserRole.ADMIN;
 
+  // Use shared dashboard view context
+  const { activeView, toggleView } = useDashboardView();
+
   const [stats, setStats] = useState<{
     id: string;
     title: string;
@@ -40,6 +46,49 @@ const Dashboard = () => {
 
   const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([]);
   const [mealUsageSummary, setMealUsageSummary] = useState<{ zero: number; low: number; plenty: number }>({ zero: 0, low: 0, plenty: 0 });
+
+  // Management dashboard mock data
+  const managementStats = [
+    {
+      id: "stockValue",
+      title: "Current Stock Value(RWF)",
+      value: "12,450",
+      currentDay: 12450,
+      lastDayCount: 11116,
+      trendLabel: "vs last month",
+    },
+    {
+      id: "todayIngredient",
+      title: "Today's Ingredient(RWF)",
+      value: "3,210",
+      currentDay: 3210,
+      lastDayCount: 3275,
+      trendLabel: "vs last month",
+    },
+    {
+      id: "revenueToday",
+      title: "Revenue Today(RWF)",
+      value: "520",
+      currentDay: 520,
+      lastDayCount: 510,
+      trendLabel: "vs last month",
+    }
+  ];
+
+  const alerts = [
+    {
+      id: 1,
+      item: "Rice",
+      quantity: "8kg",
+      threshold: "10kg",
+    },
+    {
+      id: 2,
+      item: "Cooking Oil",
+      quantity: "2L",
+      threshold: "10L",
+    }
+  ];
 
   useEffect(() => {
     if (isAdmin) {
@@ -153,51 +202,107 @@ const Dashboard = () => {
     );
   }
 
-
-
   // Admin/Staff Dashboard
   return (
     <main className='dashboard wrapper'>
       <Header
-        title={`Welcome ${userName} 🤚`}
+        title={activeView === 'management' ? "Management  Overview" : `Welcome ${userName} 🤚`}
         description="Track activity, trends, and popular destinations in real time"
         action={
           <SidebarTrigger className="rounded-md p-1 border border-transparent md:border-slate-200" />
         }
       />
 
-      {/* Stats Cards Section */}
-      <section className="flex flex-col gap-6">
-        {isAdmin && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-            {stats.map((stat) => (
+      {/* Overview Dashboard */}
+      {(activeView === 'overview' || !isAdmin) && (
+        <>
+          {/* Stats Cards Section */}
+          <section className="flex flex-col gap-6">
+            {isAdmin && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                {stats.map((stat) => (
+                  <StatsCard
+                    key={stat.id}
+                    title={stat.title}
+                    value={stat.value}
+                    currentDay={stat.currentDay}
+                    lastDayCount={stat.lastDayCount}
+                  />
+                ))}
+              </div>
+            )}
+
+            {(isCashier || isAdmin)&&(<QuickAction/>)}
+
+          </section>
+          {isCashier ? (
+            <section className="mt-6 bg-white rounded-lg shadow-sm">
+              <div className="p-4 md:p-6 border-b border-gray-200">
+                <h2 className="text-lg font-semibold">Recent Subscriptions</h2>
+                <p className="text-sm text-gray-500">Latest subscription activity</p>
+              </div>
+              <SubscriptionTable items={recentSubscriptions as any} isCashier={true} />
+            </section>
+          ) : (
+            <section className="grid grid-cols-1 gap-2 md:grid-cols-2">
+              <ChartBarMultiple data={monthlyData} />
+              <ChartPieSimple data={mealUsageSummary} />
+            </section>
+          )}
+        </>
+      )}
+
+      {/* Management Dashboard (Admin only) */}
+      {activeView === 'management' && isAdmin && (
+        <>
+          {/* Management Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {managementStats.map((stat) => (
               <StatsCard
                 key={stat.id}
                 title={stat.title}
                 value={stat.value}
                 currentDay={stat.currentDay}
                 lastDayCount={stat.lastDayCount}
+                trendLabel={stat.trendLabel}
               />
             ))}
           </div>
-        )}
 
-        {(isCashier || isAdmin)&&(<QuickAction/>)}
-
-      </section>
-      {isCashier ? (
-        <section className="mt-6 bg-white rounded-lg shadow-sm">
-          <div className="p-4 md:p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold">Recent Subscriptions</h2>
-            <p className="text-sm text-gray-500">Latest subscription activity</p>
+          {/* Quick Actions */}
+          <h3 className="text-lg font-bold text-gray-900 mt-2">Quick Actions</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Button className="h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm w-full" onClick={() => navigate("/dairy-usage-report")}>
+              Dairy Usage Report
+            </Button>
+            <Button className="h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm w-full" onClick={() => navigate("/manage-stock")}>
+              Manage Stock
+            </Button>
+            <Button className="h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm w-full" onClick={() => navigate("/manage-chefs")}>
+              Manage Chefs
+            </Button>
+            <Button className="h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm w-full" onClick={() => navigate("/view-profit-report")}>
+              View Profit Report
+            </Button>
           </div>
-          <SubscriptionTable items={recentSubscriptions as any} isCashier={true} />
-        </section>
-      ) : (
-        <section className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          <ChartBarMultiple data={monthlyData} />
-          <ChartPieSimple data={mealUsageSummary} />
-        </section>
+
+          {/* Alerts Section */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 flex flex-col gap-4 mt-2">
+            {alerts.map((alert) => (
+              <div key={alert.id} className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3 text-gray-900">
+                  <AlertTriangle className="h-5 w-5 text-orange-400 fill-orange-50 stroke-orange-500" />
+                  <span className="font-semibold">
+                    {alert.item}: {alert.quantity} <span className="font-normal text-gray-500">(below {alert.threshold})</span>
+                  </span>
+                </div>
+                <Button variant="outline" className="bg-[#FEFCE8] text-[#854D0E] border-[#FEF08A] hover:bg-[#FEF08A] font-medium px-6">
+                  Refill Stock
+                </Button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </main>
   )

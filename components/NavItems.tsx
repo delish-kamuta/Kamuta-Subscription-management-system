@@ -4,9 +4,11 @@ import { sidebarItems } from '~/constants'
 import {cn} from '~/lib/utils';
 import { useAppSelector } from '~/store/hooks';
 import { UserRole, CustomerType } from '~/types/auth';
+import { useDashboardView } from '~/hooks/useDashboardView';
 
 const NavItems = () => {
   const { setOpenMobile, isMobile } = useSidebar()
+  const { activeView } = useDashboardView();
   // Filter sidebar items based on user role
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   // Default to STUDENT for guests
@@ -22,14 +24,21 @@ const NavItems = () => {
   };
   
   const mappedRole = roleMap[userRole];
+  const isAdmin = userRole === UserRole.ADMIN;
   
   const filteredItems = sidebarItems
     .filter((item) => item.roles?.includes(mappedRole))
     .filter((item) => {
+      // For admin users, filter by active dashboard view
+      if (isAdmin && item.dashboard) {
+        return item.dashboard === activeView;
+      }
+      return true;
+    })
+    .filter((item) => {
       // Hide "My QR Code" for guests and regular clients
       if (item.label === "My QR Code") {
         if (!isAuthenticated) return false;
-        // return user?.customerType === CustomerType.STUDENT || user?.customerType === CustomerType.CAMPUS_WORKER;
         return true;
       }
       return true;

@@ -4,12 +4,14 @@ import { SidebarProvider } from '~/components/ui/sidebar';
 import { AppSidebar } from '../../../components/app-sidebar';
 import { ProtectedRoute } from '../../../components/ProtectedRoute';
 import { UserRole } from '~/types/auth';
+import { DashboardViewProvider } from '~/hooks/useDashboardView';
 
 const AdminLayout = () => {
   return (
+    <DashboardViewProvider>
     <SidebarProvider>
       <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CASHIER, UserRole.WAITSTAFF, UserRole.STUDENT, UserRole.WORKER]}>
-        <div className="admin-layout flex w-full">
+        <div className="admin-layout flex w-full relative">
           <aside className=''>
             <AppSidebar />
           </aside>
@@ -22,6 +24,7 @@ const AdminLayout = () => {
         </div>
       </ProtectedRoute>
     </SidebarProvider>
+    </DashboardViewProvider>
   )
 }
 
