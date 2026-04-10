@@ -26,7 +26,7 @@ interface ScanResult {
 const ScanQR = () => {
   const navigate = useNavigate();
   const { user } = useAppSelector((state) => state.auth);
-//now the cashier is allowed to access the scanning page,
+//Now the cashier is allowed to access the scanning page,
   // useEffect(() => {
   //   if (user?.role === UserRole.CASHIER) {
   //     navigate('/unauthorized');
