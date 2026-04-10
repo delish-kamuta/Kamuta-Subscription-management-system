@@ -10,6 +10,7 @@ export interface User {
   student?: Student
   // Optional field used only when admins update a user's password
   password?: string
+  allowed_meal_types?: string[]
 }
 
 export interface BranchOption {

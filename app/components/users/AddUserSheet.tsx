@@ -5,6 +5,8 @@ import {useAppSelector } from "~/store/hooks"
 
 type BranchOption = { id: string; name: string }
 
+const MEAL_TYPES = ["VIP", "VVIP", "Regular"] as const
+
 type Props = {
   open: boolean
   onOpenChange: (v: boolean) => void
@@ -20,6 +22,7 @@ type Props = {
     password: string
     reg_number: string
     student_type?: string
+    allowed_meal_types?: string[]
   }
   setFormData: (data: any) => void
   branches: BranchOption[]
@@ -78,6 +81,37 @@ export function AddUserSheet({ open, onOpenChange, error, successMessage, isLoad
               ))}
             </select>
           </div>
+
+          {(formData.role.toLowerCase() === 'scanner' || formData.role.toLowerCase() === 'cashier') && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Allowed Meal Types
+                <span className="ml-1 text-xs font-normal text-gray-500">(leave unchecked to allow all)</span>
+              </label>
+              <div className="flex gap-4 flex-wrap">
+                {MEAL_TYPES.map((type) => {
+                  const checked = (formData.allowed_meal_types ?? []).includes(type)
+                  return (
+                    <label key={type} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          const current = formData.allowed_meal_types ?? []
+                          const next = e.target.checked
+                            ? [...current, type]
+                            : current.filter((t) => t !== type)
+                          setFormData({ ...formData, allowed_meal_types: next })
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      {type}
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {formData.role.toLowerCase() === 'student' && (
             <>
