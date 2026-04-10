@@ -5,14 +5,16 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { Camera, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Camera, CheckCircle2, XCircle, AlertCircle, Loader2, ShieldAlert } from "lucide-react";
 import { useAppSelector } from "~/store/hooks";
 import type { Html5Qrcode } from "html5-qrcode";
 import { scanQrOtp } from "~/services/qr";
 import { scanIrregularTicket } from "~/services/irregularTickets";
+import { apiClient } from "~/lib/api";
 
 interface ScanResult {
   success: boolean;
+  isUnauthorized?: boolean;
   message: string;
   timestamp?: string;
   userName?: string;
@@ -24,12 +26,12 @@ interface ScanResult {
 const ScanQR = () => {
   const navigate = useNavigate();
   const { user } = useAppSelector((state) => state.auth);
-
-  useEffect(() => {
-    if (user?.role === UserRole.CASHIER) {
-      navigate('/unauthorized');
-    }
-  }, [user, navigate]);
+//now the cashier is allowed to access the scanning page,
+  // useEffect(() => {
+  //   if (user?.role === UserRole.CASHIER) {
+  //     navigate('/unauthorized');
+  //   }
+  // }, [user, navigate]);
 
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
@@ -38,8 +40,19 @@ const ScanQR = () => {
   const [scanError, setScanError] = useState<string | null>(null);
   const [rawContent, setRawContent] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [allowedMealTypes, setAllowedMealTypes] = useState<string[]>([]);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerElementId = "qr-reader";
+
+  // Fetch scanner profile on mount to know which meal types are authorised
+  useEffect(() => {
+    apiClient<any>('/auth/me')
+      .then((data) => {
+        const types: string[] = data?.allowed_meal_types ?? data?.data?.allowed_meal_types ?? []
+        setAllowedMealTypes(types)
+      })
+      .catch(() => {/* silently ignore — 403 guard is the authoritative layer */})
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -85,10 +98,12 @@ const ScanQR = () => {
 
       // Fallback: subscription QR-OTP scan
       const res = await scanQrOtp(qrCode);
+      const isUnauthorized = !res.success && res.status === 403;
       setScanResult({
         success: res.success,
-        message: res.success 
-          ? `Meal payment processed for ${res.data?.user_name}` 
+        isUnauthorized,
+        message: res.success
+          ? `Meal payment processed for ${res.data?.user_name}`
           : (res.message || "QR scan failed"),
         timestamp: new Date().toLocaleString(),
         userName: res.data?.user_name,
@@ -98,7 +113,8 @@ const ScanQR = () => {
       });
       setRecentScans(prev => [{
         success: res.success,
-        message: res.success ? "Payment processed" : "Payment failed",
+        isUnauthorized,
+        message: res.success ? "Payment processed" : (isUnauthorized ? "Not authorised" : "Payment failed"),
         timestamp: new Date().toLocaleString(),
         userName: res.data?.user_name,
         remainingMeals: res.data?.payment_result?.remaining_meals,
@@ -222,6 +238,26 @@ const ScanQR = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {/* Authorised meal types indicator */}
+              <div className="flex items-center gap-2 flex-wrap text-xs">
+                <span className="text-gray-500 font-medium">Authorised for:</span>
+                {(allowedMealTypes.length === 0 ? ['VIP', 'VVIP', 'Regular'] : allowedMealTypes).map((type) => {
+                  const active = allowedMealTypes.length === 0 || allowedMealTypes.includes(type)
+                  return (
+                    <span
+                      key={type}
+                      className={`px-2 py-0.5 rounded-full border font-medium ${
+                        active
+                          ? 'border-green-400 bg-green-50 text-green-700'
+                          : 'border-gray-200 bg-gray-100 text-gray-400'
+                      }`}
+                    >
+                      {type}
+                    </span>
+                  )
+                })}
+              </div>
+
               {/* Scanner Display */}
               <div className="relative aspect-square bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
                 {isScanning ? (
@@ -290,19 +326,26 @@ const ScanQR = () => {
               {/* Scan Result */}
               {scanResult && (
                 <div className={`p-4 rounded-lg border-2 ${
-                  scanResult.success 
-                    ? 'bg-green-50 border-green-500' 
-                    : 'bg-red-50 border-red-500'
+                  scanResult.success
+                    ? 'bg-green-50 border-green-500'
+                    : scanResult.isUnauthorized
+                      ? 'bg-orange-50 border-orange-500'
+                      : 'bg-red-50 border-red-500'
                 }`}>
                   <div className="flex items-start gap-3">
                     {scanResult.success ? (
                       <CheckCircle2 className="w-6 h-6 text-green-600 shrink-0 mt-0.5" />
+                    ) : scanResult.isUnauthorized ? (
+                      <ShieldAlert className="w-6 h-6 text-orange-600 shrink-0 mt-0.5" />
                     ) : (
                       <XCircle className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
                     )}
                     <div className="flex-1">
+                      {scanResult.isUnauthorized && (
+                        <p className="text-xs font-bold uppercase tracking-wide text-orange-600 mb-1">Not Authorised</p>
+                      )}
                       <h3 className={`font-semibold ${
-                        scanResult.success ? 'text-green-900' : 'text-red-900'
+                        scanResult.success ? 'text-green-900' : scanResult.isUnauthorized ? 'text-orange-900' : 'text-red-900'
                       }`}>
                         {scanResult.message}
                       </h3>
@@ -325,7 +368,7 @@ const ScanQR = () => {
                           </p>
                         </div>
                       )}
-                      {!scanResult.success && (
+                      {!scanResult.success && !scanResult.isUnauthorized && (
                         <div className="mt-2 space-y-1 text-sm text-red-800">
                           {scanError && (
                             <p><strong>Error:</strong> {scanError}</p>
@@ -334,6 +377,9 @@ const ScanQR = () => {
                             {scanResult.timestamp}
                           </p>
                         </div>
+                      )}
+                      {scanResult.isUnauthorized && (
+                        <p className="mt-1 text-xs text-orange-600">{scanResult.timestamp}</p>
                       )}
                     </div>
                   </div>

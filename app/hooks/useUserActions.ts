@@ -66,6 +66,9 @@ export function useUserActions(
       if (selectedUser.password) {
         body.password = selectedUser.password
       }
+      if (selectedUser.role.toLowerCase() === 'scanner' || selectedUser.role.toLowerCase() === 'cashier') {
+        body.allowed_meal_types = selectedUser.allowed_meal_types ?? []
+      }
       // if (selectedUser.role.toLowerCase() === 'student' && selectedUser.student?.reg_number) {
       //   body.reg_number = selectedUser.student.reg_number
       // }
@@ -76,7 +79,7 @@ export function useUserActions(
       })
       
       setSuccessMessage('User updated')
-      dispatch(updateUserOptimistic({ id: selectedUser.id, ...body, student: selectedUser.student }))
+      dispatch(updateUserOptimistic({ id: selectedUser.id, ...body, student: selectedUser.student, allowed_meal_types: selectedUser.allowed_meal_types }))
       setIsEditUserOpen(false)
       setTimeout(() => setSuccessMessage(''), 2000)
     } catch (err: any) {

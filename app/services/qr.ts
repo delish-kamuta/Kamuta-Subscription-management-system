@@ -41,6 +41,7 @@ export async function generateSelfQrOtp(): Promise<GenerateQrOtpResponse> {
 
 export interface ScanQrOtpResponse {
   success: boolean
+  status?: number
   data?: {
     user_name: string
     payment_result: {
@@ -57,7 +58,7 @@ export interface ScanQrOtpResponse {
 export async function scanQrOtp(qrCode: string): Promise<ScanQrOtpResponse> {
   const tokenError = ensureValidTokenOrMessage()
   if (tokenError) return { success: false, message: tokenError }
-  
+
   try {
     const data = await apiClient<any>("/qr-otp/scan", {
       method: "POST",
@@ -65,6 +66,6 @@ export async function scanQrOtp(qrCode: string): Promise<ScanQrOtpResponse> {
     })
     return data as ScanQrOtpResponse
   } catch (e: any) {
-    return { success: false, message: e?.message || "QR scan failed" }
+    return { success: false, status: e?.status, message: e?.message || "QR scan failed" }
   }
 }

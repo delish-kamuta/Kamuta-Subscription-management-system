@@ -20,6 +20,7 @@ export function useUserForm(
     password: "",
     reg_number: "",
     student_type: "regular",
+    allowed_meal_types: [] as string[],
   })
 
 
@@ -48,6 +49,10 @@ export function useUserForm(
       
       if (isStudent) {
         payload.student_type = formData.student_type
+      }
+
+      if (formData.role.toLowerCase() === 'scanner' || formData.role.toLowerCase() === 'cashier') {
+        payload.allowed_meal_types = formData.allowed_meal_types ?? []
       }
 
       if (!formData.branch_id) {
@@ -101,6 +106,7 @@ export function useUserForm(
         password: "",
         reg_number: "",
         student_type: "regular",
+        allowed_meal_types: [],
       })
 
       

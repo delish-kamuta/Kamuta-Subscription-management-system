@@ -121,7 +121,8 @@ export default function UsersPage() {
             branch_id: selectedUser.branch_id,
             password: '',
             reg_number: selectedUser?.student?.reg_number || '',
-            student_type: 'regular' // Defaults to regular as we don't have it on User object yet
+            student_type: 'regular',
+            allowed_meal_types: selectedUser.allowed_meal_types ?? [],
           }}
           setFormData={() => {}}
           branches={branches}
@@ -147,7 +148,8 @@ export default function UsersPage() {
             branch_id: selectedUser.branch_id,
             password: selectedUser.password || '',
             reg_number: selectedUser?.student?.reg_number || '',
-            student_type: 'regular' // Defaults to regular
+            student_type: 'regular',
+            allowed_meal_types: selectedUser.allowed_meal_types ?? [],
           }}
           setFormData={(fd) => {
             if (!selectedUser) return
@@ -159,6 +161,7 @@ export default function UsersPage() {
               branch_id: fd.branch_id,
               password: fd.password,
               student: { reg_number: fd.reg_number },
+              allowed_meal_types: fd.allowed_meal_types ?? [],
             })
           }}
           branches={branches}
