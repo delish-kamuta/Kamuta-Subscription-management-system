@@ -138,13 +138,18 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
         }
       })).unwrap();
 
-      // If meals left was changed, update the subscription too
+      // If meals left or meal type was changed, update the subscription too
+      const subscriptionPayload: Record<string, unknown> = {};
       const newMeals = editForm.mealsLeftEdit ?? item.mealsLeft;
-      if (newMeals !== item.mealsLeft && item.subscriptionId) {
+      if (newMeals !== item.mealsLeft) subscriptionPayload.remaining_meals = newMeals;
+      if (editForm.subscriptionType && editForm.subscriptionType !== item.subscriptionType) {
+        subscriptionPayload.meal_type = editForm.subscriptionType;
+      }
+      if (Object.keys(subscriptionPayload).length > 0 && item.subscriptionId) {
         await dispatch(updateSubscription({
           token,
           id: item.subscriptionId,
-          payload: { remaining_meals: newMeals }
+          payload: subscriptionPayload
         })).unwrap();
       }
 
@@ -314,6 +319,18 @@ const handleTopUpSave = async () => {
                 value={editForm.tel || ''}
                 onChange={(e) => setEditForm({ ...editForm, tel: e.target.value })}
               />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Meal Type</label>
+              <select
+                value={editForm.subscriptionType || 'Regular'}
+                onChange={(e) => setEditForm({ ...editForm, subscriptionType: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option value="VVIP">VVIP</option>
+                <option value="VIP">VIP</option>
+                <option value="Regular">Regular</option>
+              </select>
             </div>
             <div>
               <label className="text-sm font-medium">Status</label>

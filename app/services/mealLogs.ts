@@ -8,29 +8,27 @@ export interface MealLogItem {
   branch_id?: string
   client_user_id?: string
   scanned_by?: string
-  scanner?: {
-    id: string
-    full_name: string
-  }
-  scannedBy?: {
-    id: string
-    full_name: string
-  }
+  scanner?: { id: string; full_name: string }
+  scannedBy?: { id: string; full_name: string }
+  clientUser?: { id: string; full_name: string; role: string }
+  branch?: { id: string; name: string; campus?: string }
   created_at: string
+}
+
+export interface MealLogsPagination {
+  current_page: number
+  per_page: number
+  total_items: number
+  total_pages: number
+  has_next: boolean
+  has_prev: boolean
 }
 
 export interface MealLogsResponse {
   success: boolean
   message?: string
   data?: MealLogItem[]
-  pagination?: {
-    current_page: number
-    per_page: number
-    total_items: number
-    total_pages: number
-    has_next: boolean
-    has_prev: boolean
-  }
+  pagination?: MealLogsPagination
 }
 
 export type MealLogsQuery = Partial<{
@@ -52,8 +50,18 @@ export async function listMealLogs(query: MealLogsQuery = {}): Promise<MealLogsR
   const queryString = params.toString() ? `?${params.toString()}` : ''
   
   try {
-    const data = await apiClient<any>(`/meal-logs${queryString}`)
-    return data as MealLogsResponse
+    const raw = await apiClient<any>(`/meal-logs${queryString}`)
+
+    // The API wraps items in a double-nested shape: { data: { data: [...], pagination: {...} } }
+    const items: MealLogItem[] =
+      Array.isArray(raw?.data?.data) ? raw.data.data
+      : Array.isArray(raw?.data)     ? raw.data
+      : []
+
+    const pagination: MealLogsPagination | undefined =
+      raw?.data?.pagination ?? raw?.pagination ?? undefined
+
+    return { success: raw?.success ?? true, message: raw?.message, data: items, pagination }
   } catch (e: any) {
     return { success: false, message: e?.message || "Network error" }
   }
