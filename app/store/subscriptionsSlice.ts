@@ -97,6 +97,9 @@ const subscriptionsSlice = createSlice({
           const item = state.items[idx];
           item.totalMeals = Number(updatedData.total_meals ?? item.totalMeals);
           item.mealsLeft = Number(updatedData.remaining_meals ?? item.mealsLeft);
+          if (updatedData.meal_type) {
+             item.subscriptionType = updatedData.meal_type;
+          }
           if (updatedData.payment_history && updatedData.payment_history.length > 0) {
              item.payment = updatedData.payment_history[0].payment_method;
           }

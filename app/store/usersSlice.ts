@@ -10,6 +10,7 @@ export interface UserItem {
   branch_id: string
   created_at: string
   student?: Student
+  allowed_meal_types?: string[]
 }
 
 interface UsersState {

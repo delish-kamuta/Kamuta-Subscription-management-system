@@ -40,8 +40,7 @@ export const sidebarItems: SidebarItem[] = [
     icon: ScanLine,
     label: "Scan QR Code",
     href: "/scan-qr",
-    roles: ["scanner", "admin"],
-    dashboard: "overview",
+    roles: ["scanner","admin","cashier"], // Allow scanner, admin,cashier
   },
   {
     id: 4,

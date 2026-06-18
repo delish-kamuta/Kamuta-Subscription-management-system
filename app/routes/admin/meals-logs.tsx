@@ -364,6 +364,11 @@ const MealsLogs = () => {
           <>
             <div className="px-4 md:px-6 py-2 text-sm text-gray-500  border-gray-100 bg-gray-50/50 flex w-full justify-end gap-2">
                Found <span className="font-medium text-green-600">{filteredData.length}</span> meal logs
+               {mealLogsState.totalItems > 0 && (
+                 <span className="text-gray-400 text-xs self-center">
+                   (of {mealLogsState.totalItems.toLocaleString()} total on server)
+                 </span>
+               )}
             </div>
             {/* Logs Table */}
             <div className="mt-0 overflow-x-auto">
@@ -387,8 +392,8 @@ const MealsLogs = () => {
                 .map((item) => (
                   <TableRow key={item.id}>
                     <TableCell className="text-sm font-medium">
-                      {resolveUserName((item as any).client_user_id) || 
-                        (item.client_type === 'irregular_client' ? 'Irregular Client' : 
+                      {item.clientUser?.full_name || resolveUserName(item.client_user_id) ||
+                        (item.client_type === 'irregular_client' ? 'Irregular Client' :
                          item.client_type === 'worker' ? 'Worker' : '-')}
                     </TableCell>
                     <TableCell className="text-sm">{item.client_type}</TableCell>
@@ -399,7 +404,9 @@ const MealsLogs = () => {
                       {item.scannedBy?.full_name || item.scanner?.full_name || resolveUserName(item.scanned_by) || (item.scanned_by ? String(item.scanned_by) : "")}
                     </TableCell>
                     {!isCashier && (
-                      <TableCell className="whitespace-nowrap hidden xl:table-cell text-sm">{resolveBranchName(item.branch_id)}</TableCell>
+                      <TableCell className="whitespace-nowrap hidden xl:table-cell text-sm">
+                        {item.branch?.name || resolveBranchName(item.branch_id)}
+                      </TableCell>
                     )}
                   </TableRow>
                 ))}

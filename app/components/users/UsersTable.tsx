@@ -14,6 +14,7 @@ export interface UserRow {
   branch_id: string
   reg_number?: string
   student?: Student
+  allowed_meal_types?: string[]
 }
 
 type Props = {
@@ -161,6 +162,13 @@ export function UsersTable({ users, isLoading = false, onView, onEdit, onDelete,
                     <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
                       {user.role}
                     </span>
+                    {(user.role.toLowerCase() === 'scanner' || user.role.toLowerCase() === 'cashier') && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        {!user.allowed_meal_types || user.allowed_meal_types.length === 0
+                          ? 'All types'
+                          : user.allowed_meal_types.join(', ')}
+                      </p>
+                    )}
                   </TableCell>
                   <TableCell>{branches.find(b => String(b.id) === String(user.branch_id))?.name || '-'}</TableCell>
                   <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
