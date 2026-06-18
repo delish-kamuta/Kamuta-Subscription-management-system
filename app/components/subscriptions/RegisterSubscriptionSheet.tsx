@@ -119,11 +119,11 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
 
       if (formData.role === 'student') {
         const days = Number(formData.days)
-        if (days < 15 || days > 30) {
-          setError('Number of days must be between 15 and 30.')
-          setSubmitting(false)
-          return
-        }
+        // if (days < 15 || days > 30) {
+        //   setError('Number of days must be between 15 and 30.')
+        //   setSubmitting(false)
+        //   return
+        // }
       }
 
       const payload: any = {
@@ -366,8 +366,8 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
                   <label className='text-sm font-medium text-gray-700'>Number of Days *</label>
                   <input 
                     type='number' 
-                    min={15}
-                    max={30}
+                    // min={15}
+                    // max={30}
                     className='w-full border rounded-md px-3 py-2' 
                     placeholder='e.g., 30'
                     value={formData.days}
