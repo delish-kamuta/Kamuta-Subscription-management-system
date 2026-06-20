@@ -11,6 +11,7 @@ export interface SubscriptionItem {
   tel: string;
   clientName: string;
   subscriptionType: string;
+  studentType?: string;
   customerType: string;
   dateStarted: string;
   branch?: string;

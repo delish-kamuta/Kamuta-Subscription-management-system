@@ -72,11 +72,21 @@ export function useUserActions(
       // if (selectedUser.role.toLowerCase() === 'student' && selectedUser.student?.reg_number) {
       //   body.reg_number = selectedUser.student.reg_number
       // }
-      
+
       await apiClient(`/users/${selectedUser.id}`, {
         method: 'PUT',
         body: JSON.stringify(body),
       })
+
+      // student_type lives on the Student model, so update it via PUT /students/:id
+      if (selectedUser.role.toLowerCase() === 'student' && selectedUser.student?.id) {
+        await apiClient(`/students/${selectedUser.student.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            student_type: selectedUser.student?.student_type || 'regular',
+          }),
+        })
+      }
       
       setSuccessMessage('User updated')
       dispatch(updateUserOptimistic({ id: selectedUser.id, ...body, student: selectedUser.student, allowed_meal_types: selectedUser.allowed_meal_types }))

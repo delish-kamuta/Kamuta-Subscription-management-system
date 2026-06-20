@@ -134,6 +134,7 @@ function ActionDropdown({ item }: { item: SubscriptionItem }) {
           phone: editForm.tel,
           reg_number: editForm.id,
           status: editForm.status || 'active',
+          student_type: editForm.studentType || 'regular',
           branch_id: editForm.branch
         }
       })).unwrap();
@@ -330,6 +331,17 @@ const handleTopUpSave = async () => {
                 <option value="VVIP">VVIP</option>
                 <option value="VIP">VIP</option>
                 <option value="Regular">Regular</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Student Type</label>
+              <select
+                value={editForm.studentType || 'regular'}
+                onChange={(e) => setEditForm({ ...editForm, studentType: e.target.value })}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option value="regular">Regular Student</option>
+                <option value="leader">Student Leader</option>
               </select>
             </div>
             <div>

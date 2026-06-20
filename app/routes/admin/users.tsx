@@ -121,7 +121,7 @@ export default function UsersPage() {
             branch_id: selectedUser.branch_id,
             password: '',
             reg_number: selectedUser?.student?.reg_number || '',
-            student_type: 'regular',
+            student_type: selectedUser?.student?.student_type || 'regular',
             allowed_meal_types: selectedUser.allowed_meal_types ?? [],
           }}
           setFormData={() => {}}
@@ -148,7 +148,7 @@ export default function UsersPage() {
             branch_id: selectedUser.branch_id,
             password: selectedUser.password || '',
             reg_number: selectedUser?.student?.reg_number || '',
-            student_type: 'regular',
+            student_type: selectedUser?.student?.student_type || 'regular',
             allowed_meal_types: selectedUser.allowed_meal_types ?? [],
           }}
           setFormData={(fd) => {
@@ -160,7 +160,7 @@ export default function UsersPage() {
               role: fd.role,
               branch_id: fd.branch_id,
               password: fd.password,
-              student: { reg_number: fd.reg_number },
+              student: { reg_number: fd.reg_number, student_type: fd.student_type },
               allowed_meal_types: fd.allowed_meal_types ?? [],
             })
           }}

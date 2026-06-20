@@ -16,6 +16,7 @@ export interface ApiSubscription {
     id?: string;
     user_id?: string;
     reg_number?: string;
+    student_type?: string;
     status?: string;
     created_at?: string;
     updated_at?: string;
@@ -53,6 +54,7 @@ export function mapApiToSubscriptionItem(item: ApiSubscription): SubscriptionIte
     tel: phone,
     clientName,
     subscriptionType: item.meal_type || "",
+    studentType: item.student?.student_type || "regular",
     // Customer Type: the endpoint represents student subscriptions, so default to Student
     customerType: 'Student',
     branch: branchName,

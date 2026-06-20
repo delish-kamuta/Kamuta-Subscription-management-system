@@ -12,6 +12,7 @@ export enum CustomerType {
 }
 
 export interface Student {
+  id?: string;
   reg_number?: string;
   student_type?: string;
 }
