@@ -13,6 +13,14 @@ interface RegisterSubscriptionSheetProps {
   onOpenChange: (open: boolean) => void
 }
 
+// Nyagatare branch only serves lunch for VIP subscribers, so 1 meal/day instead of 2.
+function getMealsForDays(days: number, mealType: string, branchName?: string): number {
+  if (branchName?.toLowerCase() === 'nyagatare' && mealType === 'VIP') {
+    return days
+  }
+  return days * 2
+}
+
 export default function RegisterSubscriptionSheet({ open, onOpenChange }: RegisterSubscriptionSheetProps) {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -66,7 +74,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         return
       }
 
-      const number_of_meal = days * 2;
+      const number_of_meal = getMealsForDays(days, formData.meal_type, selectedBranch.name);
       let pricePerMeal = 0
       
       if (formData.meal_type === 'Regular') {
@@ -119,12 +127,17 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
 
       if (formData.role === 'student') {
         const days = Number(formData.days)
-        if (days < 15 || days > 30) {
-          setError('Number of days must be between 15 and 30.')
-          setSubmitting(false)
-          return
-        }
+        // if (days < 15 || days > 30) {
+        //   setError('Number of days must be between 15 and 30.')
+        //   setSubmitting(false)
+        //   return
+        // }
       }
+
+      const selectedBranchId = (currentUser?.role === 'ADMIN' ? formData.branch_id : (userBranchId || '')) || ''
+      const selectedBranch = Array.isArray(branches) ? branches.find((b) => b.id === selectedBranchId) : null
+      const branchName = selectedBranch?.name || selectedBranchId
+      const totalMeals = getMealsForDays(Number(formData.days), formData.meal_type, branchName) || 30
 
       const payload: any = {
         full_name: formData.full_name.trim(),
@@ -133,7 +146,7 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
         branch_id: currentUser?.role === 'ADMIN'? formData.branch_id : userBranchId,
         subscription: {
           meal_type: formData.meal_type,
-          total_meals: Number(formData.days)*2 || 30,
+          total_meals: totalMeals,
           amount_paid: Number(formData.amount_paid) || 0,
           payment_method: formData.payment_method.toLowerCase()
         }
@@ -182,9 +195,6 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
 
       // Optimistically add new subscription and user to Redux store
       if (created) {
-        const selectedBranchId = (currentUser?.role === 'ADMIN' ? formData.branch_id : (userBranchId || '')) || ''
-        const selectedBranch = Array.isArray(branches) ? branches.find((b) => b.id === selectedBranchId) : null
-        const branchName = selectedBranch?.name || selectedBranchId
         const newSubscription = {
           id: created.student?.reg_number || created.reg_number || String(Date.now()),
           userId: String(created.id || created.user_id || ''),
@@ -194,8 +204,8 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
           customerType: formData.role === 'student' ? 'Student' : 'Worker',
           branch: branchName,
           dateStarted: new Date().toISOString(),
-          totalMeals: Number(formData.days) * 2 || 30,
-          mealsLeft: Number(formData.days) * 2 || 30,
+          totalMeals: totalMeals,
+          mealsLeft: totalMeals,
           payment: formData.payment_method,
         }
         dispatch(upsertSubscription(newSubscription))
@@ -366,8 +376,8 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
                   <label className='text-sm font-medium text-gray-700'>Number of Days *</label>
                   <input 
                     type='number' 
-                    min={15}
-                    max={30}
+                    // min={15}
+                    // max={30}
                     className='w-full border rounded-md px-3 py-2' 
                     placeholder='e.g., 30'
                     value={formData.days}
