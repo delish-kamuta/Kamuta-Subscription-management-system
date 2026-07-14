@@ -22,16 +22,16 @@ import { Skeleton as UiSkeleton } from "~/components/ui/skeleton";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { exportToCsv } from "~\/lib\/utils";
-import { toDateKey, isWithinRange } from "~\/lib\/date";
 import { useAppSelector, useAppDispatch } from "~/store/hooks";
 import { fetchUsersThunk } from "~/store/usersSlice";
 import { fetchBranchesThunk } from "~/store/branchesSlice";
 import { fetchMealLogsThunk } from "~/store/mealLogsSlice";
-import { type MealLogsQuery } from "~/services/mealLogs";
+import { listMealLogs, type MealLogItem, type MealLogsQuery } from "~/services/mealLogs";
 import { MealLogsStats } from "~/components/meal-logs/MealLogsStats";
 
 const MealsLogs = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [branchFilter, setBranchFilter] = useState<string>("");
   const [clientTypeFilter, setClientTypeFilter] = useState<string>("");
@@ -40,18 +40,26 @@ const MealsLogs = () => {
   const [mealTimeFilter, setMealTimeFilter] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const itemsPerPage = 8;
+  const [exporting, setExporting] = useState(false);
+  const itemsPerPage = 20;
   const dispatch = useAppDispatch();
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { user } = useAppSelector((state) => state.auth);
   const mealLogsState = useAppSelector((state) => state.mealLogs);
   const mealLogs = Array.isArray(mealLogsState.items) ? mealLogsState.items : [];
   const mealLogsLoading = mealLogsState.loading;
-  const mealLogsLoaded = mealLogsState.loaded;
   const mealLogsError = mealLogsState.error;
+  const totalPages = mealLogsState.totalPages || 1;
+  const totalItems = mealLogsState.totalItems || 0;
   const branches = useAppSelector((state) => state.branches.items);
   const branchesLoaded = useAppSelector((state) => state.branches.loaded);
   const users = useAppSelector((state) => state.users.items);
   const usersLoaded = useAppSelector((state) => state.users.loaded);
+
+  // Debounce search input (~300ms) before pushing into the query
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
   const resolveBranchName = useMemo(() => {
     const map = new Map<string, string>();
@@ -75,12 +83,17 @@ const MealsLogs = () => {
     const userRole = user?.role || UserRole.CASHIER;
     const isCashier = userRole === UserRole.CASHIER;
 
-  // Build role-aware query for API (Broad fetch for local filtering)
+  // Build role-aware query for API — server-side pagination + filtering
   const query: MealLogsQuery = useMemo(() => {
-    const base: MealLogsQuery = {
-      // Don't include local filters (client_type, etc) here to allow client-side filtering on full dataset
-      per_page: 1000, 
-    };
+    const base: MealLogsQuery = { page: currentPage, limit: itemsPerPage };
+    if (clientTypeFilter) base.client_type = clientTypeFilter;
+    if (mealTypeFilter)   base.meal_type = mealTypeFilter;
+    if (sourceFilter)     base.deduction_source = sourceFilter;
+    if (debouncedSearch)  base.search = debouncedSearch;   // backend support pending
+    if (startDate)        base.date_from = startDate;      // backend support pending
+    if (endDate)          base.date_to = endDate;          // backend support pending
+    if (mealTimeFilter)   base.meal_time = mealTimeFilter; // backend support pending
+
     if (userRole === UserRole.ADMIN) {
       if (branchFilter) base.branch_id = branchFilter;
     } else if (userRole === UserRole.CASHIER) {
@@ -91,80 +104,71 @@ const MealsLogs = () => {
       base.client_user_id = String(user?.id || "");
     }
     return base;
-  }, [branchFilter, userRole, user]); // Removed local filter dependencies
+  }, [currentPage, itemsPerPage, clientTypeFilter, mealTypeFilter, sourceFilter,
+      debouncedSearch, startDate, endDate, mealTimeFilter, branchFilter, userRole, user]);
+
+  // Any filter change resets to page 1 so the next fetch is a fresh view
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, branchFilter, clientTypeFilter, mealTypeFilter,
+      sourceFilter, mealTimeFilter, startDate, endDate]);
 
   useEffect(() => {
-    // Fetch data on mount or when core query constraints change
-    // Removed !mealLogsLoaded check to ensure we get fresh data with new per_page limit
     dispatch(fetchMealLogsThunk(query));
-    
     if (!usersLoaded) dispatch(fetchUsersThunk());
     if (!branchesLoaded) dispatch(fetchBranchesThunk());
-  }, [dispatch, query, usersLoaded, branchesLoaded]); // Added query to dependencies
+  }, [dispatch, query, usersLoaded, branchesLoaded]);
 
-  const filteredData = mealLogs.filter((item) => {
-    // Apply local filters to cached data
-    const matchesSearch = [item.id, item.client_user_id].some((v) => String(v || '').toLowerCase().includes(searchTerm.toLowerCase()));
-    const itemKey = toDateKey(new Date(item.created_at).toISOString());
-    const fromKey = toDateKey(startDate);
-    const toKey = toDateKey(endDate);
-    const withinRange = isWithinRange(itemKey, fromKey, toKey);
-    
-    // Apply filter criteria locally
-    const matchesClientType = !clientTypeFilter || item.client_type === clientTypeFilter;
-    const matchesMealType = !mealTypeFilter || item.meal_type === mealTypeFilter;
-    const matchesSource = !sourceFilter || item.deduction_source === sourceFilter;
-    const matchesBranch = !branchFilter || item.branch_id === branchFilter;
-    
-    // Meal Time Filter
-    let matchesMealTime = true;
-    if (mealTimeFilter) {
-      const logDate = new Date(item.created_at);
-      const hour = logDate.getHours();
-      if (mealTimeFilter === "Lunch") {
-        matchesMealTime = hour >= 11 && hour < 16;
-      } else if (mealTimeFilter === "Supper") {
-        matchesMealTime = hour >= 16 && hour < 23;
+  const handleExport = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const EXPORT_LIMIT = 100; // backend max page size
+      const MAX_PAGES = 500;    // safety cap: 50k rows
+      const CONCURRENCY = 10;
+
+      // Strip pagination from the current query — we'll page through ourselves
+      const { page: _p, limit: _l, ...baseQuery } = query;
+
+      const first = await listMealLogs({ ...baseQuery, page: 1, limit: EXPORT_LIMIT });
+      if (!first.success) throw new Error(first.message || "Failed to fetch export data");
+
+      let allRows: MealLogItem[] = first.data ?? [];
+      const totalPagesExp = Math.min(first.pagination?.total_pages ?? 1, MAX_PAGES);
+
+      for (let start = 2; start <= totalPagesExp; start += CONCURRENCY) {
+        const batch: Promise<any>[] = [];
+        const end = Math.min(start + CONCURRENCY, totalPagesExp + 1);
+        for (let p = start; p < end; p++) {
+          batch.push(listMealLogs({ ...baseQuery, page: p, limit: EXPORT_LIMIT }));
+        }
+        const results = await Promise.all(batch);
+        for (const r of results) {
+          if (r.success) allRows = allRows.concat(r.data ?? []);
+        }
       }
+
+      const headers = [
+        "Client ID", "Client Name", "Client Type", "Meal Type", "Source",
+        "Date", "Time", "Scanned By", "Branch",
+      ];
+      const rows = allRows.map((item) => [
+        item.client_user_id || '',
+        resolveUserName(item.client_user_id),
+        item.client_type,
+        item.meal_type,
+        item.deduction_source,
+        new Date(item.created_at).toLocaleDateString(),
+        new Date(item.created_at).toLocaleTimeString(),
+        resolveUserName(item.scanned_by) || item.scanned_by || '',
+        resolveBranchName(item.branch_id) || item.branch_id || '',
+      ]);
+      exportToCsv(headers, rows, "meals_logs");
+    } catch (e: any) {
+      alert(`Export failed: ${e?.message || e}`);
+    } finally {
+      setExporting(false);
     }
-
-    return matchesSearch && withinRange && matchesClientType && matchesMealType && matchesSource && matchesBranch && matchesMealTime;
-  }).sort((a, b) => {
-    const dateA = new Date(a.created_at).getTime();
-    const dateB = new Date(b.created_at).getTime();
-    return dateB - dateA;
-  });
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
-  const handleExport = () => {
-    const headers = [
-      "Client ID",
-      "Client Name",
-      "Client Type",
-      "Meal Type",
-      "Source",
-      "Date",
-      "Time",
-      "Scanned By",
-      "Branch",
-    ];
-    const rows = filteredData.map((item) => [
-      item.client_user_id || '',
-      resolveUserName((item as any).client_user_id),
-      item.client_type,
-      item.meal_type,
-      item.deduction_source,
-      new Date(item.created_at).toLocaleDateString(),
-      new Date(item.created_at).toLocaleTimeString(),
-      resolveUserName(item.scanned_by) || item.scanned_by || '',
-      resolveBranchName(item.branch_id) || item.branch_id || '',
-    ]);
-    exportToCsv(headers, rows, "meals_logs");
   };
 
   return (
@@ -321,8 +325,8 @@ const MealsLogs = () => {
             </div>
 
             {/* Export Button */}
-            <Button variant="outline" className="text-sm border-gray-300" onClick={handleExport}>
-              <Download className="w-4 h-4 mr-2" /> Export
+            <Button variant="outline" className="text-sm border-gray-300" onClick={handleExport} disabled={exporting}>
+              <Download className="w-4 h-4 mr-2" /> {exporting ? "Exporting..." : "Export"}
             </Button>
           </div>
         </div>
@@ -363,12 +367,10 @@ const MealsLogs = () => {
         {!mealLogsLoading && !mealLogsState.error && (
           <>
             <div className="px-4 md:px-6 py-2 text-sm text-gray-500  border-gray-100 bg-gray-50/50 flex w-full justify-end gap-2">
-               Found <span className="font-medium text-green-600">{filteredData.length}</span> meal logs
-               {mealLogsState.totalItems > 0 && (
-                 <span className="text-gray-400 text-xs self-center">
-                   (of {mealLogsState.totalItems.toLocaleString()} total on server)
-                 </span>
-               )}
+               Found <span className="font-medium text-green-600">{totalItems.toLocaleString()}</span> meal logs
+               <span className="text-gray-400 text-xs self-center">
+                 (page {mealLogsState.currentPage || currentPage} of {totalPages})
+               </span>
             </div>
             {/* Logs Table */}
             <div className="mt-0 overflow-x-auto">
@@ -387,30 +389,28 @@ const MealsLogs = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredData
-                .slice((currentPage - 1) * itemsPerPage, (currentPage - 1) * itemsPerPage + itemsPerPage)
-                .map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="text-sm font-medium">
-                      {item.clientUser?.full_name || resolveUserName(item.client_user_id) ||
-                        (item.client_type === 'irregular_client' ? 'Irregular Client' :
-                         item.client_type === 'worker' ? 'Worker' : '-')}
+              {mealLogs.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="text-sm font-medium">
+                    {item.clientUser?.full_name || resolveUserName(item.client_user_id) ||
+                      (item.client_type === 'irregular_client' ? 'Irregular Client' :
+                       item.client_type === 'worker' ? 'Worker' : '-')}
+                  </TableCell>
+                  <TableCell className="text-sm">{item.client_type}</TableCell>
+                  <TableCell className="text-sm">{item.meal_type}</TableCell>
+                  <TableCell className="text-sm">{item.deduction_source}</TableCell>
+                  <TableCell className="whitespace-nowrap hidden lg:table-cell text-sm">{new Date(item.created_at).toLocaleString()}</TableCell>
+                  <TableCell className="whitespace-nowrap hidden md:table-cell text-sm">
+                    {item.scannedBy?.full_name || item.scanner?.full_name || resolveUserName(item.scanned_by) || (item.scanned_by ? String(item.scanned_by) : "")}
+                  </TableCell>
+                  {!isCashier && (
+                    <TableCell className="whitespace-nowrap hidden xl:table-cell text-sm">
+                      {item.branch?.name || resolveBranchName(item.branch_id)}
                     </TableCell>
-                    <TableCell className="text-sm">{item.client_type}</TableCell>
-                    <TableCell className="text-sm">{item.meal_type}</TableCell>
-                    <TableCell className="text-sm">{item.deduction_source}</TableCell>
-                    <TableCell className="whitespace-nowrap hidden lg:table-cell text-sm">{new Date(item.created_at).toLocaleString()}</TableCell>
-                    <TableCell className="whitespace-nowrap hidden md:table-cell text-sm">
-                      {item.scannedBy?.full_name || item.scanner?.full_name || resolveUserName(item.scanned_by) || (item.scanned_by ? String(item.scanned_by) : "")}
-                    </TableCell>
-                    {!isCashier && (
-                      <TableCell className="whitespace-nowrap hidden xl:table-cell text-sm">
-                        {item.branch?.name || resolveBranchName(item.branch_id)}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              {!mealLogsLoading && filteredData.length === 0 && (
+                  )}
+                </TableRow>
+              ))}
+              {!mealLogsLoading && mealLogs.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-sm text-gray-500">
                     No logs found
@@ -430,19 +430,28 @@ const MealsLogs = () => {
               >
                 ← Previous
               </Button>
-              <div className="flex gap-2 flex-wrap justify-center">
-                {Array.from(
-                  { length: Math.min(6, totalPages) },
-                  (_, i) => i + 1
-                ).map((page) => (
-                  <Button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={currentPage === page ? "bg-blue-600 w-8 h-8 p-0 text-white" : "outline w-8 h-8 p-0"}
-                  >
-                    {page}
-                  </Button>
-                ))}
+              <div className="flex gap-2 flex-wrap justify-center items-center">
+                {(() => {
+                  const windowSize = 5;
+                  const half = Math.floor(windowSize / 2);
+                  const start = Math.max(1, Math.min(currentPage - half, totalPages - windowSize + 1));
+                  const pages = Array.from(
+                    { length: Math.min(windowSize, totalPages) },
+                    (_, i) => start + i
+                  );
+                  return pages.map((page) => (
+                    <Button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={currentPage === page ? "bg-blue-600 w-8 h-8 p-0 text-white" : "outline w-8 h-8 p-0"}
+                    >
+                      {page}
+                    </Button>
+                  ));
+                })()}
+                {totalPages > 5 && (
+                  <span className="text-xs text-gray-500 ml-2">of {totalPages}</span>
+                )}
               </div>
               <Button
                 onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}

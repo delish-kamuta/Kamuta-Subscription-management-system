@@ -374,8 +374,8 @@ export default function RegisterSubscriptionSheet({ open, onOpenChange }: Regist
                 )}
                 <div className='space-y-2'>
                   <label className='text-sm font-medium text-gray-700'>Number of Days *</label>
-                  <input 
-                    type='number' 
+                  <input
+                    type='number'
                     min={15}
                     // max={30}
                     className='w-full border rounded-md px-3 py-2' 
