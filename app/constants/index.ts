@@ -1,4 +1,4 @@
-import { LayoutDashboard, Banknote, HandPlatter, WalletCards, QrCode, ScanLine, Users, MessageSquare, Building2, ClipboardCheck, Warehouse, ShoppingBasket, Package, Ruler, Scale, Wallet } from "lucide-react"
+import { LayoutDashboard, Banknote, HandPlatter, WalletCards, QrCode, ScanLine, Users, MessageSquare, Building2, ClipboardCheck, Warehouse, ShoppingBasket, Package, Ruler, Scale, Wallet, LineChart, CalendarClock } from "lucide-react"
 
 import type { DashboardView } from "~/hooks/useDashboardView";
 
@@ -48,6 +48,14 @@ export const sidebarItems: SidebarItem[] = [
     icon: WalletCards,
     label: "Subscriptions",
     href: "/subscription",
+    roles: ["cashier", "admin"],
+    dashboard: "overview",
+  },
+  {
+    id: 33,
+    icon: CalendarClock,
+    label: "Event Orders",
+    href: "/orders",
     roles: ["cashier", "admin"],
     dashboard: "overview",
   },
@@ -135,6 +143,14 @@ export const sidebarItems: SidebarItem[] = [
     icon: Scale,
     label: "Reconciliation",
     href: "/reconciliation",
+    roles: ["admin"],
+    dashboard: "management",
+  },
+  {
+    id: 32,
+    icon: LineChart,
+    label: "Financial Overview",
+    href: "/financial-overview",
     roles: ["admin"],
     dashboard: "management",
   },

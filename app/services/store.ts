@@ -59,13 +59,17 @@ export interface PurchasePayload {
   direct_use_for?: "buffet" | "snacks";
 }
 
-export type IssuePurpose = "buffet" | "snacks";
+// Third purpose "order" was added so the storekeeper can attribute directly-issued
+// ingredients to a specific event order (student-group party, campus meeting…).
+// When purpose is "order", order_id is required.
+export type IssuePurpose = "buffet" | "snacks" | "order";
 
 export interface IssueLineInput {
   item_id: string;
   quantity: number;
   purpose: IssuePurpose;
   intended_product?: string;
+  order_id?: string;   // required when purpose === "order"
 }
 
 export interface IssueLine extends IssueLineInput {

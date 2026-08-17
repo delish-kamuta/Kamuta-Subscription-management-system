@@ -13,6 +13,7 @@ import type {
   WasteEntry,
   WastePayload,
 } from "../store";
+import { _internalAttachOrderDirectCost } from "./orders.mock";
 
 let _nextId = 1;
 const uid = () => String(_nextId++);
@@ -144,14 +145,23 @@ export async function mockIssueToKitchen(payload: IssuePayload): Promise<Issue> 
     if (item.valuation_mode === "stocked" && line.quantity > item.quantity_on_hand) {
       throw new Error(`Cannot issue ${line.quantity} ${item.unit} of ${item.name} — only ${item.quantity_on_hand} on hand`);
     }
+    if (line.purpose === "order" && !line.order_id) {
+      throw new Error(`Purpose "Order" requires an order to be selected`);
+    }
   }
 
   // Apply the issue: decrement on-hand, keep avg cost, snapshot cost per line.
+  // For "order" lines, forward the total cost to the orders mock so the order's
+  // direct_ingredients_cost stays in sync without exposing a public mutator.
   const enrichedLines = payload.lines.map((line) => {
     const item = _items.find((i) => i.id === line.item_id)!;
     if (item.valuation_mode === "stocked") {
       item.quantity_on_hand -= line.quantity;
       recomputeLowStock(item);
+    }
+    const total_cost = Number((line.quantity * item.avg_unit_cost).toFixed(2));
+    if (line.purpose === "order" && line.order_id) {
+      _internalAttachOrderDirectCost(line.order_id, total_cost);
     }
     return {
       item_id: item.id,
@@ -160,8 +170,9 @@ export async function mockIssueToKitchen(payload: IssuePayload): Promise<Issue> 
       quantity: line.quantity,
       purpose: line.purpose,
       intended_product: line.intended_product,
+      order_id: line.order_id,
       unit_cost: item.avg_unit_cost,
-      total_cost: Number((line.quantity * item.avg_unit_cost).toFixed(2)),
+      total_cost,
     };
   });
 

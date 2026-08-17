@@ -29,6 +29,8 @@ export default [
     route("products", "routes/admin/products.tsx"),
     route("yield-standards", "routes/admin/yield-standards.tsx"),
     route("reconciliation", "routes/admin/reconciliation.tsx"),
+    route("financial-overview", "routes/admin/financial-overview.tsx"),
+    route("orders", "routes/admin/orders.tsx"),
     route("payroll", "routes/admin/payroll.tsx"),
   ]),
   route("/auth/login", "routes/auth/login.tsx"),

@@ -11,6 +11,7 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { useAppDispatch, useAppSelector } from "~/store/hooks";
 import { issueToKitchenThunk } from "~/store/storeSlice";
+import { fetchOrdersThunk } from "~/store/ordersSlice";
 import type { IssuePurpose } from "~/services/store";
 
 type Line = {
@@ -19,6 +20,7 @@ type Line = {
   quantity: string;
   purpose: IssuePurpose;
   intended_product: string;
+  order_id: string;   // required when purpose === "order"
 };
 
 const blankLine = (): Line => ({
@@ -27,6 +29,7 @@ const blankLine = (): Line => ({
   quantity: "",
   purpose: "buffet",
   intended_product: "",
+  order_id: "",
 });
 
 type Props = {
@@ -37,9 +40,20 @@ type Props = {
 
 // Storekeeper enters ITEMS + QUANTITIES + PURPOSE per line. No money.
 // Server attaches unit_cost + total_cost at current average.
+// Purpose "order" is used to attribute ingredients to a specific event order
+// (student group / campus meeting) — the order picker appears when selected.
 export function IssueSheet({ open, onOpenChange, onSuccess }: Props) {
   const dispatch = useAppDispatch();
   const items = useAppSelector((s) => s.store.items);
+  const orders = useAppSelector((s) => s.orders.items);
+  const ordersLoaded = useAppSelector((s) => s.orders.loaded);
+
+  // Load orders once when the sheet opens so the picker has options.
+  useEffect(() => {
+    if (open && !ordersLoaded) {
+      dispatch(fetchOrdersThunk({ status: "outstanding" }));
+    }
+  }, [open, ordersLoaded, dispatch]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -92,6 +106,11 @@ export function IssueSheet({ open, onOpenChange, onSuccess }: Props) {
         setLoading(false);
         return;
       }
+      if (l.purpose === "order" && !l.order_id) {
+        setError("Every 'Order' line needs an order selected");
+        setLoading(false);
+        return;
+      }
     }
     if (overIssuedLines.length > 0) {
       setError(
@@ -109,6 +128,7 @@ export function IssueSheet({ open, onOpenChange, onSuccess }: Props) {
             quantity: Number(l.quantity),
             purpose: l.purpose,
             intended_product: l.intended_product.trim() || undefined,
+            order_id: l.purpose === "order" ? l.order_id : undefined,
           })),
         }),
       ).unwrap();
@@ -187,14 +207,44 @@ export function IssueSheet({ open, onOpenChange, onSuccess }: Props) {
                       <label className="text-xs text-gray-500 block mb-1">Purpose</label>
                       <select
                         value={l.purpose}
-                        onChange={(e) => setLine(l.key, { purpose: e.target.value as IssuePurpose })}
+                        onChange={(e) => setLine(l.key, {
+                          purpose: e.target.value as IssuePurpose,
+                          // Clear order_id when moving away from "order"
+                          order_id: e.target.value === "order" ? l.order_id : "",
+                        })}
                         className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm"
                       >
                         <option value="buffet">Buffet</option>
                         <option value="snacks">Shop production (chapati, mandazi…)</option>
+                        <option value="order">Order (event)</option>
                       </select>
                     </div>
                   </div>
+                  {l.purpose === "order" && (
+                    <div>
+                      <label className="text-xs text-gray-500 block mb-1">Order *</label>
+                      <select
+                        value={l.order_id}
+                        onChange={(e) => setLine(l.key, { order_id: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm"
+                      >
+                        <option value="" disabled>Pick an order</option>
+                        {orders
+                          .slice()
+                          .sort((a, b) => (a.event_date < b.event_date ? 1 : -1))
+                          .map((o) => (
+                            <option key={o.id} value={o.id}>
+                              {o.event_date} — {o.customer_name} ({o.portions} portions)
+                            </option>
+                          ))}
+                      </select>
+                      {orders.length === 0 && (
+                        <p className="text-xs text-amber-700 mt-1">
+                          No orders yet. Create one on the Event Orders page first.
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <div>
                     <label className="text-xs text-gray-500 block mb-1">Intended product (optional)</label>
                     <Input

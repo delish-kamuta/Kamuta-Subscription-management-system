@@ -11,6 +11,7 @@ import storeReducer from './storeSlice';
 import shopReducer from './shopSlice';
 import buffetReducer from './buffetSlice';
 import payrollReducer from './payrollSlice';
+import ordersReducer from './ordersSlice';
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
     shop: shopReducer,
     buffet: buffetReducer,
     payroll: payrollReducer,
+    orders: ordersReducer,
   },
 });
 
