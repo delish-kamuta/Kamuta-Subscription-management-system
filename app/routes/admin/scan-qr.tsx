@@ -11,6 +11,7 @@ import type { Html5Qrcode } from "html5-qrcode";
 import { scanQrOtp } from "~/services/qr";
 import { scanIrregularTicket } from "~/services/irregularTickets";
 import { apiClient } from "~/lib/api";
+import { BuffetPanel } from "~/components/buffet/BuffetPanel";
 
 interface ScanResult {
   success: boolean;
@@ -224,7 +225,7 @@ const ScanQR = () => {
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         {/* Scanner Section */}
         <Card className="border-black/10">
           <CardHeader>
@@ -449,6 +450,9 @@ const ScanQR = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Buffet Panel — plate counting stays independent from scan-derived meal logs */}
+        <BuffetPanel />
       </div>
 
       {/* Instructions */}

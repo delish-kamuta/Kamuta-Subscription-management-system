@@ -7,6 +7,11 @@ import subscriptionsReducer from './subscriptionsSlice';
 import allSubscriptionsReducer from './allSubscriptionsSlice';
 import mealLogsReducer from './mealLogsSlice';
 import paymentsReducer from './paymentsSlice';
+import storeReducer from './storeSlice';
+import shopReducer from './shopSlice';
+import buffetReducer from './buffetSlice';
+import payrollReducer from './payrollSlice';
+import ordersReducer from './ordersSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +23,11 @@ export const store = configureStore({
     allSubscriptions: allSubscriptionsReducer,
     mealLogs: mealLogsReducer,
     payments: paymentsReducer,
+    store: storeReducer,
+    shop: shopReducer,
+    buffet: buffetReducer,
+    payroll: payrollReducer,
+    orders: ordersReducer,
   },
 });
 

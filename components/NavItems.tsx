@@ -21,6 +21,7 @@ const NavItems = () => {
     [UserRole.ADMIN]: "admin",
     [UserRole.STUDENT]: "student",
     [UserRole.WORKER]: "worker",
+    [UserRole.STOCKKEEPER]: "stockkeeper",
   };
   
   const mappedRole = roleMap[userRole];

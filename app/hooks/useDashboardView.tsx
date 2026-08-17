@@ -30,15 +30,14 @@ export function DashboardViewProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [activeView, setActiveView] = useState<DashboardView>(() => getViewForPath(location.pathname));
 
-  // Sync activeView when navigating to a route that belongs to a different dashboard
+  // Sync activeView from the URL both ways: management URL → management view,
+  // any other URL (including /dashboard) → overview view. The SwitchDashboardButton
+  // can still toggle to management while staying on /dashboard; because that click
+  // doesn't change the URL, this effect won't fire and won't undo the toggle.
   useEffect(() => {
-    const viewForRoute = getViewForPath(location.pathname);
-    // Only auto-switch if the current route explicitly belongs to the other dashboard
-    const path = "/" + location.pathname.replace(/^\/+/, "").split("/")[0];
-    const isExplicitRoute = managementRoutes.includes(path);
-    if (isExplicitRoute && activeView !== "management") {
-      setActiveView("management");
-    }
+    const target = getViewForPath(location.pathname);
+    if (activeView !== target) setActiveView(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   const toggleView = () => {

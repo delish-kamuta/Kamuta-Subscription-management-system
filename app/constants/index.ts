@@ -1,4 +1,4 @@
-import { LayoutDashboard, Banknote, Settings, HandPlatter, WalletCards, QrCode, ScanLine, Users, MessageSquare, Building2, ClipboardCheck, UtensilsCrossed, ChefHat, TrendingUp } from "lucide-react"
+import { LayoutDashboard, Banknote, HandPlatter, WalletCards, QrCode, ScanLine, Users, MessageSquare, Building2, ClipboardCheck, Warehouse, ShoppingBasket, Package, Ruler, Scale, Wallet, LineChart, CalendarClock } from "lucide-react"
 
 import type { DashboardView } from "~/hooks/useDashboardView";
 
@@ -20,13 +20,6 @@ export const sidebarItems: SidebarItem[] = [
     href: "/dashboard",
     roles: ["student", "cashier", "admin"],
     dashboard: "overview",
-  },
-  {
-    id: 11,
-    icon: ClipboardCheck,
-    label: "Dairy Usage Report",
-    href: "/chef-dashboard",
-    roles: ["worker"],
   },
   {
     id: 2,
@@ -55,6 +48,14 @@ export const sidebarItems: SidebarItem[] = [
     icon: WalletCards,
     label: "Subscriptions",
     href: "/subscription",
+    roles: ["cashier", "admin"],
+    dashboard: "overview",
+  },
+  {
+    id: 33,
+    icon: CalendarClock,
+    label: "Event Orders",
+    href: "/orders",
     roles: ["cashier", "admin"],
     dashboard: "overview",
   },
@@ -92,43 +93,72 @@ export const sidebarItems: SidebarItem[] = [
   },
 
   // === Management dashboard items ===
+  // (No "Management Overview" entry — /dashboard is Overview-only. Admin
+  // toggles into the Management view via SwitchDashboardButton which lands
+  // them on the Store as the natural entry point.)
+  // === Store & Shop (Phase 1) ===
   {
-    id: 20,
-    icon: LayoutDashboard,
-    label: "Management",
-    href: "/dashboard",
-    roles: ["admin"],
+    id: 25,
+    icon: Warehouse,
+    label: "Store",
+    href: "/store",
+    roles: ["stockkeeper", "admin"],
     dashboard: "management",
   },
   {
-    id: 21,
+    id: 26,
+    icon: ShoppingBasket,
+    label: "Shop Session",
+    href: "/shop",
+    roles: ["cashier", "admin"],
+    dashboard: "management",
+  },
+  {
+    id: 30,
     icon: ClipboardCheck,
-    label: "Dairy Usage Report",
-    href: "/dairy-usage-report",
+    label: "Physical Count",
+    href: "/store/count",
+    roles: ["stockkeeper", "admin"],
+    dashboard: "management",
+  },
+  // === Phase 2 admin screens ===
+  {
+    id: 27,
+    icon: Package,
+    label: "Products",
+    href: "/products",
     roles: ["admin"],
     dashboard: "management",
   },
   {
-    id: 22,
-    icon: UtensilsCrossed,
-    label: "Manage Stock",
-    href: "/manage-stock",
-    roles: ["admin", "worker"],
-    dashboard: "management",
-  },
-  {
-    id: 23,
-    icon: ChefHat,
-    label: "Manage Chefs",
-    href: "/manage-chefs",
+    id: 28,
+    icon: Ruler,
+    label: "Yield Standards",
+    href: "/yield-standards",
     roles: ["admin"],
     dashboard: "management",
   },
   {
-    id: 24,
-    icon: TrendingUp,
-    label: "View Profit Report",
-    href: "/view-profit-report",
+    id: 29,
+    icon: Scale,
+    label: "Reconciliation",
+    href: "/reconciliation",
+    roles: ["admin"],
+    dashboard: "management",
+  },
+  {
+    id: 32,
+    icon: LineChart,
+    label: "Financial Overview",
+    href: "/financial-overview",
+    roles: ["admin"],
+    dashboard: "management",
+  },
+  {
+    id: 31,
+    icon: Wallet,
+    label: "Payroll",
+    href: "/payroll",
     roles: ["admin"],
     dashboard: "management",
   },

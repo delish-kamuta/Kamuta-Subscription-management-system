@@ -16,6 +16,7 @@ import NavItems from "./NavItems";
 import { sidebarItems } from "~/constants"
 import { Link, useNavigate } from "react-router"
 import { useState } from "react"
+import { LogOut } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "~/store/hooks"
 import { logout as logoutAction } from "~/store/authSlice"
 
@@ -78,13 +79,14 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex px-6 gap-2 items-center w-full group-data-[collapsible=icon]:px-0">
+        {/* Profile + Logout side-by-side */}
+        <div className="flex items-center gap-2 w-full group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:gap-1">
           <button
             onClick={() => {
               navigate('/profile');
               if (isMobile) setOpenMobile(false);
             }}
-            className="flex items-center gap-2 flex-1 text-left cursor-pointer"
+            className="flex items-center gap-2 flex-1 text-left rounded-md py-1 px-2 cursor-pointer hover:bg-gray-50 group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:border-0 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center"
             title="View profile"
           >
             <img
@@ -97,12 +99,15 @@ export function AppSidebar() {
               <p className="text-xs text-muted-foreground">{user?.role || "No role"}</p>
             </div>
           </button>
+
           <button
             onClick={handleLogout}
-            className="cursor-pointer"
-            title="Logout"
+            disabled={isLoggingOut}
+            className="flex items-center justify-center w-9 h-9 rounded-md text-red-600 hover:bg-red-50 disabled:opacity-50 cursor-pointer shrink-0"
+            title={isLoggingOut ? "Logging out…" : "Logout"}
+            aria-label="Logout"
           >
-            <img src="/assets/icons/logout.svg" alt="Logout" />
+            <LogOut className="w-5 h-5" strokeWidth={2} />
           </button>
         </div>
       </SidebarFooter>

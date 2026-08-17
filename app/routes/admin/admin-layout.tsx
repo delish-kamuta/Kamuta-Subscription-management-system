@@ -10,7 +10,7 @@ const AdminLayout = () => {
   return (
     <DashboardViewProvider>
     <SidebarProvider>
-      <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CASHIER, UserRole.WAITSTAFF, UserRole.STUDENT, UserRole.WORKER]}>
+      <ProtectedRoute allowedRoles={[UserRole.ADMIN, UserRole.CASHIER, UserRole.WAITSTAFF, UserRole.STUDENT, UserRole.WORKER, UserRole.STOCKKEEPER]}>
         <div className="admin-layout flex w-full relative">
           <aside className=''>
             <AppSidebar />
