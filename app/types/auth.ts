@@ -4,6 +4,7 @@ export enum UserRole {
   WAITSTAFF = "WAITSTAFF",
   STUDENT = "STUDENT",
   WORKER = "WORKER",
+  STOCKKEEPER = "STOCKKEEPER",
 }
 
 export enum CustomerType {
@@ -40,6 +41,14 @@ export function mapApiRoleToUserRole(role?: string | null): UserRole {
     case 'chef':
     case 'kitchen_staff':
       return UserRole.WORKER;
+    case 'stockkeeper':
+    case 'stock_keeper':
+    case 'stock-keeper':
+    // Accept the legacy "storekeeper" spelling too so an older token still resolves.
+    case 'storekeeper':
+    case 'store_keeper':
+    case 'store-keeper':
+      return UserRole.STOCKKEEPER;
     default:
       return UserRole.STUDENT;
   }

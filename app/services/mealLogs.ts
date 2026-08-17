@@ -38,8 +38,14 @@ export type MealLogsQuery = Partial<{
   branch_id: string
   client_user_id: string
   scanned_by: string
-  per_page: number
   page: number
+  per_page: number   // legacy — backend ignores this, but meals-logs.tsx still sends it
+  limit: number
+  // Sent for forward compatibility; backend support pending
+  search: string
+  date_from: string
+  date_to: string
+  meal_time: string
 }>
 
 export async function listMealLogs(query: MealLogsQuery = {}): Promise<MealLogsResponse> {

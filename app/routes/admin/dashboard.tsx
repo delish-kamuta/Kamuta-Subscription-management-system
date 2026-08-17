@@ -183,13 +183,8 @@ const Dashboard = () => {
     }
   }, [userRole, user]);
 
-  useEffect(() => {
-    if (userRole === UserRole.WORKER) {
-      navigate('/chef-dashboard');
-    }
-  }, [userRole, navigate]);
-
-  if (userRole === UserRole.WORKER) return null;
+  // Workers used to be auto-redirected to /chef-dashboard, but that route is gone.
+  // They now just see the generic dashboard fallthrough if they navigate here.
 
   if (userRole === UserRole.STUDENT) {
     return (
@@ -267,23 +262,6 @@ const Dashboard = () => {
                 trendLabel={stat.trendLabel}
               />
             ))}
-          </div>
-
-          {/* Quick Actions */}
-          <h3 className="text-lg font-bold text-gray-900 mt-2">Quick Actions</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button className="h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm w-full" onClick={() => navigate("/dairy-usage-report")}>
-              Dairy Usage Report
-            </Button>
-            <Button className="h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm w-full" onClick={() => navigate("/manage-stock")}>
-              Manage Stock
-            </Button>
-            <Button className="h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm w-full" onClick={() => navigate("/manage-chefs")}>
-              Manage Chefs
-            </Button>
-            <Button className="h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm w-full" onClick={() => navigate("/view-profit-report")}>
-              View Profit Report
-            </Button>
           </div>
 
           {/* Alerts Section */}

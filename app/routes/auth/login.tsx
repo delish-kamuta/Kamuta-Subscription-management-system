@@ -72,9 +72,14 @@ export default function LoginPage() {
       
       // Redirect based on role
       if (normalizedRole === UserRole.WORKER) {
-        navigate("/chef-dashboard");
+        // Workers have no dedicated dashboard — land on profile.
+        navigate("/profile");
       } else if (normalizedRole === UserRole.WAITSTAFF) {
         navigate("/scan-qr");
+      } else if (normalizedRole === UserRole.STOCKKEEPER) {
+        navigate("/store");
+      } else if (normalizedRole === UserRole.CASHIER) {
+        navigate("/shop");
       } else {
         navigate("/dashboard");
       }

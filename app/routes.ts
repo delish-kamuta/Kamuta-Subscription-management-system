@@ -18,15 +18,18 @@ export default [
     route("meals-logs", "routes/admin/meals-logs.tsx"),
     route("settings", "routes/admin/settings.tsx"),
     route("payments", "routes/admin/payments.tsx"),
-    route("restaurant-dashboard", "routes/admin/restaurant-dashboard.tsx"),
-    route("dairy-usage-report", "routes/admin/dairy-usage-report.tsx"), // Added new route
-    route("manage-stock", "routes/admin/manage-stock.tsx"),
-    route("view-profit-report", "routes/admin/view-profit-report.tsx"), // Added new route
-    route("manage-chefs", "routes/admin/manage-chefs.tsx"),
     route("users", "routes/admin/users.tsx"),
     route("branches", "routes/admin/branches.tsx"),
     route("feedback", "routes/admin/feedback.tsx"),
-    route("chef-dashboard", "routes/chef/ingredients-approval.tsx"),
+    // Phase 1 — Store & Shop
+    route("store", "routes/admin/store.tsx"),
+    route("store/count", "routes/admin/store-count.tsx"),
+    route("shop", "routes/admin/shop.tsx"),
+    // Phase 2 — Products, Yield standards, Reconciliation (buffet lives inside /scan-qr)
+    route("products", "routes/admin/products.tsx"),
+    route("yield-standards", "routes/admin/yield-standards.tsx"),
+    route("reconciliation", "routes/admin/reconciliation.tsx"),
+    route("payroll", "routes/admin/payroll.tsx"),
   ]),
   route("/auth/login", "routes/auth/login.tsx"),
   route("/auth/signup", "routes/auth/signup.tsx"),
