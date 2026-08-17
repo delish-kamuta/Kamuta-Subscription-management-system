@@ -5,7 +5,7 @@ import { useAppSelector } from "~/store/hooks";
 import { UserRole } from "~/types/auth";
 
 export function SwitchDashboardButton() {
-  const { activeView, toggleView } = useDashboardView();
+  const { activeView } = useDashboardView();
   const { user } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
   const isAdmin = user?.role === UserRole.ADMIN;
@@ -13,9 +13,11 @@ export function SwitchDashboardButton() {
   // Only show for admin users
   if (!isAdmin) return null;
 
+  // Navigate to a canonical page in the target view. The URL is the source of
+  // truth for activeView (see useDashboardView), so this replaces the old
+  // toggle-then-stay-on-/dashboard approach that left admin on an empty page.
   const handleSwitch = () => {
-    toggleView();
-    navigate("/dashboard");
+    navigate(activeView === "overview" ? "/store" : "/dashboard");
   };
 
   return (

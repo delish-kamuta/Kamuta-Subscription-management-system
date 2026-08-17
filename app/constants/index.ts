@@ -85,14 +85,9 @@ export const sidebarItems: SidebarItem[] = [
   },
 
   // === Management dashboard items ===
-  {
-    id: 20,
-    icon: LayoutDashboard,
-    label: "Management",
-    href: "/dashboard",
-    roles: ["admin"],
-    dashboard: "management",
-  },
+  // (No "Management Overview" entry — /dashboard is Overview-only. Admin
+  // toggles into the Management view via SwitchDashboardButton which lands
+  // them on the Store as the natural entry point.)
   // === Store & Shop (Phase 1) ===
   {
     id: 25,
@@ -108,6 +103,7 @@ export const sidebarItems: SidebarItem[] = [
     label: "Shop Session",
     href: "/shop",
     roles: ["cashier", "admin"],
+    dashboard: "management",
   },
   {
     id: 30,
