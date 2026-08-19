@@ -286,11 +286,11 @@ export default function OrdersPage() {
                   <TableCell className="text-sm">{o.branch_name || o.branch_id}</TableCell>
                   <TableCell className="text-right font-mono">{o.portions}</TableCell>
                   <TableCell className="text-right font-mono">{formatCurrency(o.agreed_price)}</TableCell>
-                  <TableCell className="text-right font-mono text-gray-600">
-                    <div>{formatCurrency(o.computed_cost)}</div>
-                    <div className="text-xs text-gray-400">
-                      {formatCurrency(o.direct_ingredients_cost)} + {formatCurrency(o.shared_cost_share)}
-                    </div>
+                  <TableCell
+                    className="text-right font-mono text-gray-600"
+                    title={`Direct ingredients: ${formatCurrency(o.direct_ingredients_cost)}\nShared buffet share: ${formatCurrency(o.shared_cost_share)}`}
+                  >
+                    {formatCurrency(o.computed_cost)}
                   </TableCell>
                   <TableCell className={`text-right font-mono font-semibold ${
                     o.margin < 0 ? "text-red-600" : "text-green-700"
